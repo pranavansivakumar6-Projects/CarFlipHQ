@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # CarFlip HQ MVP
 
 A simple PHP + MySQL car flipping management system.
@@ -30,3 +31,7 @@ A simple PHP + MySQL car flipping management system.
 - Task status update buttons
 - Expense editing/deleting
 - Reports and export
+=======
+# CarFlipHQ
+Vehicle acquisition, repair management, task tracking, expense tracking, and profit analysis platform for automotive flipping businesses.
+>>>>>>> d20ea6c8907711a916f1c696aff2b3ba4515837b
