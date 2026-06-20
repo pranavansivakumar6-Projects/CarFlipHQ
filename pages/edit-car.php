@@ -1,0 +1,21 @@
+<?php
+require '../config/db.php';
+$id = $_GET['id'] ?? null;
+$stmt = $pdo->prepare("SELECT * FROM cars WHERE id=?");
+$stmt->execute([$id]);
+$car = $stmt->fetch(PDO::FETCH_ASSOC);
+$pageTitle='Edit Car | CarFlip HQ'; require '../header.php';
+?>
+<div class="container"><h1>Edit Car</h1>
+<form class="form-card" action="../actions/update-car.php" method="POST">
+<input type="hidden" name="id" value="<?= $car['id'] ?>">
+<label>Status</label><select name="status">
+<?php foreach(['Bought','Waiting for Parts','Under Repair','RWC Pending','Ready for Sale','Listed','Sold'] as $s): ?>
+<option <?= $car['status']===$s?'selected':'' ?>><?= $s ?></option><?php endforeach; ?>
+</select>
+<label>Estimated Sale Price</label><input name="estimated_sale_price" type="number" step="0.01" value="<?= $car['estimated_sale_price'] ?>">
+<label>Actual Sale Price</label><input name="actual_sale_price" type="number" step="0.01" value="<?= $car['actual_sale_price'] ?>">
+<label>Sold Date</label><input name="sold_date" type="date" value="<?= $car['sold_date'] ?>">
+<label>Notes</label><textarea name="notes"><?= htmlspecialchars($car['notes']) ?></textarea><br><br>
+<button class="btn" type="submit">Update Car</button>
+</form></div><?php require '../footer.php'; ?>

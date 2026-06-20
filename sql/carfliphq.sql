@@ -1,0 +1,56 @@
+CREATE DATABASE IF NOT EXISTS carfliphq;
+USE carfliphq;
+
+CREATE TABLE users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  email VARCHAR(150) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  role ENUM('admin','partner') DEFAULT 'partner',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE cars (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  make VARCHAR(100) NOT NULL,
+  model VARCHAR(100) NOT NULL,
+  year INT,
+  vin VARCHAR(100),
+  rego VARCHAR(50),
+  odometer INT,
+  source VARCHAR(100),
+  purchase_price DECIMAL(10,2) DEFAULT 0,
+  purchase_date DATE,
+  status ENUM('Bought','Waiting for Parts','Under Repair','RWC Pending','Ready for Sale','Listed','Sold') DEFAULT 'Bought',
+  estimated_sale_price DECIMAL(10,2) DEFAULT 0,
+  actual_sale_price DECIMAL(10,2) DEFAULT 0,
+  sold_date DATE,
+  damage_notes TEXT,
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE expenses (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  car_id INT NOT NULL,
+  category VARCHAR(100) NOT NULL,
+  expense_name VARCHAR(150) NOT NULL,
+  amount DECIMAL(10,2) NOT NULL,
+  expense_date DATE,
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (car_id) REFERENCES cars(id) ON DELETE CASCADE
+);
+
+CREATE TABLE tasks (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  car_id INT NOT NULL,
+  task_title VARCHAR(150) NOT NULL,
+  description TEXT,
+  assigned_to VARCHAR(100),
+  priority ENUM('Low','Medium','High') DEFAULT 'Medium',
+  status ENUM('To Do','In Progress','Done') DEFAULT 'To Do',
+  due_date DATE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (car_id) REFERENCES cars(id) ON DELETE CASCADE
+);
