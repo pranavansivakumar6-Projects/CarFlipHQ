@@ -21,6 +21,9 @@ Vehicle acquisition, repair management, task tracking, expense tracking, and pro
 - Individual car detail page
 - Add expenses per car
 - Add tasks per car
+- Edit/delete expenses
+- Edit/delete tasks
+- Quick task status updates
 - Profit/loss calculation
 - Update car sale/status details
 - First-admin setup
@@ -31,6 +34,4 @@ Vehicle acquisition, repair management, task tracking, expense tracking, and pro
 - Partner roles
 - Photo upload
 - Document/receipt upload
-- Task status update buttons
-- Expense editing/deleting
 - Reports and export

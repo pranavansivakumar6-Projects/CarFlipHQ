@@ -1,11 +1,11 @@
 <?php
 require '../config/db.php';
-$id = $_GET['id'] ?? null;
-if (!$id) { die('Car ID missing'); }
+$id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+if (!$id) { http_response_code(400); die('Car ID missing'); }
 $stmt = $pdo->prepare("SELECT * FROM cars WHERE id = ?");
 $stmt->execute([$id]);
 $car = $stmt->fetch(PDO::FETCH_ASSOC);
-if (!$car) { die('Car not found'); }
+if (!$car) { http_response_code(404); die('Car not found'); }
 
 $expenseStmt = $pdo->prepare("SELECT * FROM expenses WHERE car_id = ? ORDER BY expense_date DESC, created_at DESC");
 $expenseStmt->execute([$id]);
@@ -49,17 +49,56 @@ require '../header.php';
 
     <h2 class="section-title">Expenses</h2>
     <table>
-        <tr><th>Date</th><th>Category</th><th>Name</th><th>Amount</th><th>Notes</th></tr>
+        <tr><th>Date</th><th>Category</th><th>Name</th><th>Amount</th><th>Notes</th><th>Action</th></tr>
         <?php foreach ($expenses as $e): ?>
-        <tr><td><?= htmlspecialchars($e['expense_date']) ?></td><td><?= htmlspecialchars($e['category']) ?></td><td><?= htmlspecialchars($e['expense_name']) ?></td><td>$<?= number_format($e['amount'], 2) ?></td><td><?= htmlspecialchars($e['notes']) ?></td></tr>
+        <tr>
+            <td><?= htmlspecialchars($e['expense_date']) ?></td>
+            <td><?= htmlspecialchars($e['category']) ?></td>
+            <td><?= htmlspecialchars($e['expense_name']) ?></td>
+            <td>$<?= number_format($e['amount'], 2) ?></td>
+            <td><?= htmlspecialchars($e['notes']) ?></td>
+            <td>
+                <div class="row-actions">
+                    <a class="btn secondary small-btn" href="edit-expense.php?id=<?= (int) $e['id'] ?>">Edit</a>
+                    <form action="../actions/delete-expense.php" method="POST" onsubmit="return confirm('Delete this expense?');">
+                        <input type="hidden" name="id" value="<?= (int) $e['id'] ?>">
+                        <button class="btn danger small-btn" type="submit">Delete</button>
+                    </form>
+                </div>
+            </td>
+        </tr>
         <?php endforeach; ?>
     </table>
 
     <h2 class="section-title">Tasks</h2>
     <table>
-        <tr><th>Due</th><th>Task</th><th>Assigned</th><th>Priority</th><th>Status</th></tr>
+        <tr><th>Due</th><th>Task</th><th>Assigned</th><th>Priority</th><th>Status</th><th>Action</th></tr>
         <?php foreach ($tasks as $t): ?>
-        <tr><td><?= htmlspecialchars($t['due_date']) ?></td><td><?= htmlspecialchars($t['task_title']) ?><div class="small"><?= htmlspecialchars($t['description']) ?></div></td><td><?= htmlspecialchars($t['assigned_to']) ?></td><td><?= htmlspecialchars($t['priority']) ?></td><td><?= htmlspecialchars($t['status']) ?></td></tr>
+        <tr>
+            <td><?= htmlspecialchars($t['due_date']) ?></td>
+            <td><?= htmlspecialchars($t['task_title']) ?><div class="small"><?= htmlspecialchars($t['description']) ?></div></td>
+            <td><?= htmlspecialchars($t['assigned_to']) ?></td>
+            <td><?= htmlspecialchars($t['priority']) ?></td>
+            <td>
+                <form action="../actions/update-task-status.php" method="POST">
+                    <input type="hidden" name="id" value="<?= (int) $t['id'] ?>">
+                    <select class="inline-select" name="status" onchange="this.form.submit()">
+                        <?php foreach(['To Do','In Progress','Done'] as $status): ?>
+                        <option <?= $t['status'] === $status ? 'selected' : '' ?>><?= $status ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </form>
+            </td>
+            <td>
+                <div class="row-actions">
+                    <a class="btn secondary small-btn" href="edit-task.php?id=<?= (int) $t['id'] ?>">Edit</a>
+                    <form action="../actions/delete-task.php" method="POST" onsubmit="return confirm('Delete this task?');">
+                        <input type="hidden" name="id" value="<?= (int) $t['id'] ?>">
+                        <button class="btn danger small-btn" type="submit">Delete</button>
+                    </form>
+                </div>
+            </td>
+        </tr>
         <?php endforeach; ?>
     </table>
 </div>
