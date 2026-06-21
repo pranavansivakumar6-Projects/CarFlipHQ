@@ -233,11 +233,12 @@ require '../header.php';
             <td>
                 <form action="../actions/update-task-assignee.php" method="POST">
                     <input type="hidden" name="id" value="<?= (int) $t['id'] ?>">
-                    <select class="inline-select" name="assigned_to[]" multiple size="<?= max(min(count($users), 4), 2) ?>" onchange="this.form.submit()">
+                    <div class="check-grid compact-checks">
                         <?php foreach ($users as $name): ?>
-                        <option value="<?= htmlspecialchars($name) ?>" <?= in_array($name, $assignedNames, true) ? 'selected' : '' ?>><?= htmlspecialchars($name) ?></option>
+                        <label class="check-pill"><input type="checkbox" name="assigned_to[]" value="<?= htmlspecialchars($name) ?>" <?= in_array($name, $assignedNames, true) ? 'checked' : '' ?>> <?= htmlspecialchars($name) ?></label>
                         <?php endforeach; ?>
-                    </select>
+                    </div>
+                    <button class="btn secondary small-btn" type="submit">Save</button>
                 </form>
             </td>
             <td><?= number_format((float) ($t['hours_spent'] ?? 0), 2) ?></td>

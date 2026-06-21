@@ -22,12 +22,11 @@ require '../header.php';
         <label>Description</label><textarea name="description"><?= htmlspecialchars($task['description']) ?></textarea>
         <label>Assigned To</label>
         <?php $assignedNames = array_map('trim', explode(',', $task['assigned_to'] ?? '')); ?>
-        <select name="assigned_to[]" multiple size="<?= max(min(count($users), 4), 2) ?>">
+        <div class="check-grid">
             <?php foreach ($users as $name): ?>
-            <option value="<?= htmlspecialchars($name) ?>" <?= in_array($name, $assignedNames, true) ? 'selected' : '' ?>><?= htmlspecialchars($name) ?></option>
+            <label class="check-pill"><input type="checkbox" name="assigned_to[]" value="<?= htmlspecialchars($name) ?>" <?= in_array($name, $assignedNames, true) ? 'checked' : '' ?>> <?= htmlspecialchars($name) ?></label>
             <?php endforeach; ?>
-        </select>
-        <p class="small">Hold Ctrl to select more than one person.</p>
+        </div>
         <label>Priority</label>
         <select name="priority">
             <?php foreach(['Low','Medium','High'] as $priority): ?>
