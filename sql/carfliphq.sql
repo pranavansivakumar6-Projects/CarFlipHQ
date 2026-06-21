@@ -15,6 +15,8 @@ CREATE TABLE cars (
   make VARCHAR(100) NOT NULL,
   model VARCHAR(100) NOT NULL,
   year INT,
+  color VARCHAR(50),
+  body_type VARCHAR(80),
   vin VARCHAR(100),
   rego VARCHAR(50),
   odometer INT,

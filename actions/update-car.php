@@ -9,11 +9,13 @@ $carId = post_int('id', true);
 require_car($pdo, $carId);
 $status = require_allowed_value(post_string('status', true), ['Bought','Waiting for Parts','Under Repair','RWC Pending','Ready for Sale','Listed','Sold'], 'status');
 
-$stmt = $pdo->prepare("UPDATE cars SET make=?, model=?, year=?, vin=?, rego=?, odometer=?, source=?, purchase_price=?, purchase_date=?, status=?, estimated_sale_price=?, actual_sale_price=?, sold_date=?, damage_notes=?, notes=? WHERE id=?");
+$stmt = $pdo->prepare("UPDATE cars SET make=?, model=?, year=?, color=?, body_type=?, vin=?, rego=?, odometer=?, source=?, purchase_price=?, purchase_date=?, status=?, estimated_sale_price=?, actual_sale_price=?, sold_date=?, damage_notes=?, notes=? WHERE id=?");
 $stmt->execute([
     post_string('make', true),
     post_string('model', true),
     post_int('year'),
+    post_string('color'),
+    post_string('body_type'),
     post_string('vin'),
     post_string('rego'),
     post_int('odometer'),

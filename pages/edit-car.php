@@ -14,6 +14,8 @@ $pageTitle='Edit Car | CarFlip HQ'; require '../header.php';
 <label>Make</label><input name="make" value="<?= htmlspecialchars($car['make']) ?>" required>
 <label>Model</label><input name="model" value="<?= htmlspecialchars($car['model']) ?>" required>
 <label>Year</label><input name="year" type="number" value="<?= htmlspecialchars($car['year']) ?>">
+<label>Color</label><input name="color" value="<?= htmlspecialchars($car['color'] ?? '') ?>">
+<label>Body Type</label><input name="body_type" value="<?= htmlspecialchars($car['body_type'] ?? '') ?>" placeholder="Sedan, hatch, wagon, SUV">
 <label>VIN</label><input name="vin" value="<?= htmlspecialchars($car['vin']) ?>">
 <label>Rego</label><input name="rego" value="<?= htmlspecialchars($car['rego']) ?>">
 <label>Odometer</label><input name="odometer" type="number" value="<?= htmlspecialchars($car['odometer']) ?>">

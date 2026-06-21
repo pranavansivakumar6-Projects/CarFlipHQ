@@ -16,11 +16,17 @@ header('Content-Type: text/csv');
 header('Content-Disposition: attachment; filename="carfliphq-'.$slug.'.csv"');
 
 $out = fopen('php://output', 'w');
-$header = ['record_type','car_key','make','model','year','vin','rego','odometer','source','purchase_price','purchase_date','status','estimated_sale_price','actual_sale_price','sold_date','damage_notes','notes','category','expense_name','amount','paid_by','expense_date','task_title','description','assigned_to','priority','task_status','hours_spent','due_date','paid_date','part_name','supplier','part_status','ordered_date','arrived_date','installed_date','platform','listing_price','listing_status','listed_date','buyer_name','buyer_contact','offer_amount','deposit_amount'];
+$header = ['record_type','car_key','make','model','year','color','body_type','vin','rego','odometer','source','purchase_price','purchase_date','status','estimated_sale_price','actual_sale_price','sold_date','damage_notes','notes','category','expense_name','amount','paid_by','expense_date','task_title','description','assigned_to','priority','task_status','hours_spent','due_date','paid_date','part_name','supplier','part_status','ordered_date','arrived_date','installed_date','platform','listing_price','listing_status','listed_date','buyer_name','buyer_contact','offer_amount','deposit_amount'];
 fputcsv($out, $header);
 
 $carKey = 'car-'.$car['id'];
-fputcsv($out, ['car',$carKey,$car['make'],$car['model'],$car['year'],$car['vin'],$car['rego'],$car['odometer'],$car['source'],$car['purchase_price'],$car['purchase_date'],$car['status'],$car['estimated_sale_price'],$car['actual_sale_price'],$car['sold_date'],$car['damage_notes'],$car['notes']]);
+$carData = array_fill_keys($header, '');
+$carData['record_type'] = 'car';
+$carData['car_key'] = $carKey;
+foreach ($car as $key => $value) {
+    if (array_key_exists($key, $carData)) { $carData[$key] = $value; }
+}
+fputcsv($out, array_values($carData));
 
 $queries = [
     'purchase_payment' => 'SELECT * FROM car_purchase_payments WHERE car_id = ? ORDER BY paid_date, id',

@@ -102,8 +102,8 @@ function import_paid_by_sheet(PDO $pdo, $handle, array $headerRow, string $filen
     }
 
     [$make, $model, $year] = infer_car_from_filename($filename);
-    $stmt = $pdo->prepare('INSERT INTO cars (make, model, year, source, purchase_price, status, notes) VALUES (?, ?, ?, ?, ?, ?, ?)');
-    $stmt->execute([$make, $model, $year, 'Spreadsheet import', 0, 'Sold', 'Imported from ' . $filename]);
+    $stmt = $pdo->prepare('INSERT INTO cars (make, model, year, color, body_type, source, purchase_price, status, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    $stmt->execute([$make, $model, $year, '', '', 'Spreadsheet import', 0, 'Sold', 'Imported from ' . $filename]);
     $carId = (int) $pdo->lastInsertId();
 
     $imported = 1;
@@ -192,8 +192,8 @@ while (($values = fgetcsv($handle)) !== false) {
         $status = row_value($row, 'status', 'Bought') ?: 'Bought';
         $allowedStatuses = ['Bought','Waiting for Parts','Under Repair','RWC Pending','Ready for Sale','Listed','Sold'];
         if (!in_array($status, $allowedStatuses, true)) { $status = 'Bought'; }
-        $stmt = $pdo->prepare('INSERT INTO cars (make, model, year, vin, rego, odometer, source, purchase_price, purchase_date, status, estimated_sale_price, actual_sale_price, sold_date, damage_notes, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
-        $stmt->execute([row_value($row, 'make', 'Unknown'), row_value($row, 'model', 'Vehicle'), int_or_null_value($row, 'year'), row_value($row, 'vin'), row_value($row, 'rego'), int_or_null_value($row, 'odometer'), row_value($row, 'source'), money_value($row, 'purchase_price'), date_or_null_value($row, 'purchase_date'), $status, money_value($row, 'estimated_sale_price'), money_value($row, 'actual_sale_price'), date_or_null_value($row, 'sold_date'), row_value($row, 'damage_notes'), row_value($row, 'notes')]);
+        $stmt = $pdo->prepare('INSERT INTO cars (make, model, year, color, body_type, vin, rego, odometer, source, purchase_price, purchase_date, status, estimated_sale_price, actual_sale_price, sold_date, damage_notes, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        $stmt->execute([row_value($row, 'make', 'Unknown'), row_value($row, 'model', 'Vehicle'), int_or_null_value($row, 'year'), row_value($row, 'color'), row_value($row, 'body_type'), row_value($row, 'vin'), row_value($row, 'rego'), int_or_null_value($row, 'odometer'), row_value($row, 'source'), money_value($row, 'purchase_price'), date_or_null_value($row, 'purchase_date'), $status, money_value($row, 'estimated_sale_price'), money_value($row, 'actual_sale_price'), date_or_null_value($row, 'sold_date'), row_value($row, 'damage_notes'), row_value($row, 'notes')]);
         $lastCarId = (int) $pdo->lastInsertId();
         if ($carKey !== '') { $carsByKey[$carKey] = $lastCarId; }
         $imported++;

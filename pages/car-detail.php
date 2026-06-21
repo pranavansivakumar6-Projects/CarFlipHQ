@@ -140,6 +140,8 @@ require '../header.php';
 
     <h2 class="section-title">Car Details</h2>
     <div class="card">
+        <p><b>Color:</b> <?= htmlspecialchars($car['color'] ?? '') ?></p>
+        <p><b>Body Type:</b> <?= htmlspecialchars($car['body_type'] ?? '') ?></p>
         <p><b>VIN:</b> <?= htmlspecialchars($car['vin']) ?></p>
         <p><b>Rego:</b> <?= htmlspecialchars($car['rego']) ?></p>
         <p><b>Odometer:</b> <?= number_format((int)$car['odometer']) ?> km</p>
