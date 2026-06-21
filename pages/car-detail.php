@@ -60,9 +60,11 @@ $equalProfitShare = $profitForSplit / $partnerCount;
 $unassignedExpenses = array_sum(array_map(fn($expense) => empty($expense['paid_by']) ? (float) $expense['amount'] : 0.0, $expenses));
 $unassignedPurchase = max((float) $car['purchase_price'] - $purchasePaidTotal, 0);
 $settlements = [];
+$salePayouts = [];
 foreach ($partnerNames as $name) {
     $paidAmount = $paidTotals[$name] ?? 0.0;
     $settlements[$name] = $paidAmount - $equalCostShare;
+    $salePayouts[$name] = $paidAmount + $equalProfitShare;
 }
 $pageTitle = $car['make'].' '.$car['model'].' | CarFlip HQ';
 require '../header.php';
@@ -86,29 +88,30 @@ require '../header.php';
     <h2 class="section-title">Finance Split</h2>
     <div class="grid">
         <div class="card"><b>Sale Value Used</b><div class="stat">$<?= number_format($saleValue, 2) ?></div><div class="small"><?= $car['actual_sale_price'] > 0 ? 'Actual sale price' : 'Estimated sale price' ?></div></div>
-        <div class="card"><b>Purchase Paid</b><div class="stat">$<?= number_format($purchasePaidTotal, 2) ?></div><div class="small">Recorded against $<?= number_format($car['purchase_price'], 2) ?> purchase price</div></div>
-        <div class="card"><b>50/50 Cost Share</b><div class="stat">$<?= number_format($equalCostShare, 2) ?></div><div class="small">Per car investor across <?= $partnerCount ?> person<?= $partnerCount === 1 ? '' : 's' ?></div></div>
-        <div class="card"><b>50/50 Profit Share</b><div class="profit <?= $equalProfitShare >= 0 ? 'positive' : 'negative' ?>">$<?= number_format($equalProfitShare, 2) ?></div><div class="small">Per person after costs</div></div>
+        <div class="card"><b>Total Invested</b><div class="stat">$<?= number_format($totalCost, 2) ?></div><div class="small">$<?= number_format($car['purchase_price'], 2) ?> car + $<?= number_format($totalExpenses, 2) ?> expenses</div></div>
+        <div class="card"><b>Total Profit</b><div class="profit <?= $profitForSplit >= 0 ? 'positive' : 'negative' ?>">$<?= number_format($profitForSplit, 2) ?></div><div class="small">Sale minus total invested</div></div>
+        <div class="card"><b>50/50 Profit Share</b><div class="profit <?= $equalProfitShare >= 0 ? 'positive' : 'negative' ?>">$<?= number_format($equalProfitShare, 2) ?></div><div class="small">Per car investor across <?= $partnerCount ?> person<?= $partnerCount === 1 ? '' : 's' ?></div></div>
     </div>
     <table class="section-title">
-        <tr><th>Person</th><th>Paid So Far</th><th>Cost Share</th><th>Settlement</th><th>Profit Share</th></tr>
+        <tr><th>Person</th><th>Total Paid</th><th>Equal Cost Share</th><th>Cost Balance</th><th>Profit Share</th><th><?= $car['actual_sale_price'] > 0 ? 'Payout From Sale' : 'Expected Payout' ?></th></tr>
         <?php foreach ($settlements as $name => $settlement): ?>
         <tr>
             <td><?= htmlspecialchars($name) ?></td>
             <td>$<?= number_format($paidTotals[$name], 2) ?></td>
             <td>$<?= number_format($equalCostShare, 2) ?></td>
-            <td class="<?= $settlement >= 0 ? 'positive' : 'negative' ?>"><?= $settlement >= 0 ? 'Owed $'.number_format($settlement, 2) : 'Pays $'.number_format(abs($settlement), 2) ?></td>
+            <td class="<?= $settlement >= 0 ? 'positive' : 'negative' ?>"><?= $settlement >= 0 ? 'Ahead $'.number_format($settlement, 2) : 'Behind $'.number_format(abs($settlement), 2) ?></td>
             <td>$<?= number_format($equalProfitShare, 2) ?></td>
+            <td><b>$<?= number_format($salePayouts[$name], 2) ?></b></td>
         </tr>
         <?php endforeach; ?>
         <?php if (!$partnerNames): ?>
-        <tr><td colspan="5">No car investors recorded yet. Add purchase payments or expenses with Paid By to calculate this car's split.</td></tr>
+        <tr><td colspan="6">No car investors recorded yet. Add purchase payments or expenses with Paid By to calculate this car's split.</td></tr>
         <?php endif; ?>
         <?php if ($unassignedExpenses > 0): ?>
-        <tr><td>Unassigned expenses</td><td colspan="4">$<?= number_format($unassignedExpenses, 2) ?> needs Paid By set</td></tr>
+        <tr><td>Unassigned expenses</td><td colspan="5">$<?= number_format($unassignedExpenses, 2) ?> needs Paid By set</td></tr>
         <?php endif; ?>
         <?php if ($unassignedPurchase > 0): ?>
-        <tr><td>Unassigned purchase amount</td><td colspan="4">$<?= number_format($unassignedPurchase, 2) ?> needs purchase payment records</td></tr>
+        <tr><td>Unassigned purchase amount</td><td colspan="5">$<?= number_format($unassignedPurchase, 2) ?> needs purchase payment records</td></tr>
         <?php endif; ?>
     </table>
 

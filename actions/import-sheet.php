@@ -20,11 +20,7 @@ function parse_money($value): float {
     if ($value === '') { return 0.0; }
     $value = str_replace(['$', ',', ' '], '', $value);
     if (str_contains($value, '+')) {
-        $total = 0.0;
-        foreach (explode('+', $value) as $part) {
-            $total += parse_money($part);
-        }
-        return max($total, 0.0);
+        return 0.0;
     }
     return is_numeric($value) ? max((float) $value, 0.0) : 0.0;
 }
@@ -117,6 +113,9 @@ function import_paid_by_sheet(PDO $pdo, $handle, array $headerRow, string $filen
 
         $first = trim($values[0] ?? '');
         $second = trim($values[1] ?? '');
+        if (stripos($first . ' ' . $second, 'total spent') !== false) {
+            continue;
+        }
         $date = parse_date_value($first);
         $payerAmounts = [];
         $payerTotal = 0.0;
