@@ -14,6 +14,7 @@ $expenses = $expenseStmt->fetchAll(PDO::FETCH_ASSOC);
 $taskStmt = $pdo->prepare("SELECT * FROM tasks WHERE car_id = ? ORDER BY due_date ASC, created_at DESC");
 $taskStmt->execute([$id]);
 $tasks = $taskStmt->fetchAll(PDO::FETCH_ASSOC);
+$users = $pdo->query("SELECT name FROM users ORDER BY name")->fetchAll(PDO::FETCH_COLUMN);
 
 $totalExpenses = array_sum(array_column($expenses, 'amount'));
 $totalCost = $car['purchase_price'] + $totalExpenses;
@@ -82,7 +83,20 @@ require '../header.php';
         <tr>
             <td><?= htmlspecialchars($t['due_date']) ?></td>
             <td><?= htmlspecialchars($t['task_title']) ?><div class="small"><?= htmlspecialchars($t['description']) ?></div></td>
-            <td><?= htmlspecialchars($t['assigned_to']) ?></td>
+            <td>
+                <form action="../actions/update-task-assignee.php" method="POST">
+                    <input type="hidden" name="id" value="<?= (int) $t['id'] ?>">
+                    <select class="inline-select" name="assigned_to" onchange="this.form.submit()">
+                        <option value="">Unassigned</option>
+                        <?php foreach ($users as $name): ?>
+                        <option value="<?= htmlspecialchars($name) ?>" <?= $t['assigned_to'] === $name ? 'selected' : '' ?>><?= htmlspecialchars($name) ?></option>
+                        <?php endforeach; ?>
+                        <?php if ($t['assigned_to'] && !in_array($t['assigned_to'], $users, true)): ?>
+                        <option value="<?= htmlspecialchars($t['assigned_to']) ?>" selected><?= htmlspecialchars($t['assigned_to']) ?></option>
+                        <?php endif; ?>
+                    </select>
+                </form>
+            </td>
             <td><?= htmlspecialchars($t['priority']) ?></td>
             <td>
                 <form action="../actions/update-task-status.php" method="POST">
