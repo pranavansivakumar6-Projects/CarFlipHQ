@@ -21,6 +21,7 @@ $user = current_user();
         <a href="<?= app_url('index.php') ?>">Dashboard</a>
         <a href="<?= app_url('pages/cars.php') ?>">Cars</a>
         <a href="<?= app_url('pages/add-car.php') ?>">Add Car</a>
+        <a href="<?= app_url('pages/reports.php') ?>">Reports</a>
         <?php if (($user['role'] ?? '') === 'admin'): ?>
         <a href="<?= app_url('pages/users.php') ?>">Users</a>
         <?php endif; ?>

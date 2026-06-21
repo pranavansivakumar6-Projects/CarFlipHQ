@@ -157,6 +157,52 @@ function save_uploaded_image(string $field, string $folder): ?string
     return 'uploads/' . $safeFolder . '/' . $filename;
 }
 
+function save_uploaded_file(string $field, string $folder): ?string
+{
+    if (empty($_FILES[$field]) || $_FILES[$field]['error'] === UPLOAD_ERR_NO_FILE) {
+        return null;
+    }
+
+    if ($_FILES[$field]['error'] !== UPLOAD_ERR_OK) {
+        http_response_code(400);
+        die('File upload failed.');
+    }
+
+    if ($_FILES[$field]['size'] > 10 * 1024 * 1024) {
+        http_response_code(400);
+        die('File must be 10MB or smaller.');
+    }
+
+    $allowed = [
+        'image/jpeg' => 'jpg',
+        'image/png' => 'png',
+        'image/webp' => 'webp',
+        'image/gif' => 'gif',
+        'application/pdf' => 'pdf',
+    ];
+    $mime = mime_content_type($_FILES[$field]['tmp_name']);
+    if (!isset($allowed[$mime])) {
+        http_response_code(400);
+        die('Only image or PDF files are allowed.');
+    }
+
+    $safeFolder = trim($folder, '/');
+    $uploadDir = dirname(__DIR__) . '/uploads/' . $safeFolder;
+    if (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true)) {
+        http_response_code(500);
+        die('Could not create upload folder.');
+    }
+
+    $filename = bin2hex(random_bytes(16)) . '.' . $allowed[$mime];
+    $target = $uploadDir . '/' . $filename;
+    if (!move_uploaded_file($_FILES[$field]['tmp_name'], $target)) {
+        http_response_code(500);
+        die('Could not save uploaded file.');
+    }
+
+    return 'uploads/' . $safeFolder . '/' . $filename;
+}
+
 function delete_uploaded_file(?string $path): void
 {
     if (!$path) {

@@ -38,8 +38,13 @@ Vehicle acquisition, repair management, task tracking, expense tracking, and pro
 - Multi-person task assignment
 - Quick task assignment updates
 - Task/job hours tracking
+- Car photo and document uploads
+- Parts tracking
+- Sale listing and offer tracking
+- Reports page
+- Expanded dashboard metrics
 
 ## Next features to add
 
 - Partner roles
-- Reports and export
+- Reports export
