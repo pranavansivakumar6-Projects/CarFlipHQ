@@ -86,4 +86,65 @@ function require_car(PDO $pdo, int $carId): void
         die('Car not found.');
     }
 }
+
+function save_uploaded_image(string $field, string $folder): ?string
+{
+    if (empty($_FILES[$field]) || $_FILES[$field]['error'] === UPLOAD_ERR_NO_FILE) {
+        return null;
+    }
+
+    if ($_FILES[$field]['error'] !== UPLOAD_ERR_OK) {
+        http_response_code(400);
+        die('Image upload failed.');
+    }
+
+    if ($_FILES[$field]['size'] > 5 * 1024 * 1024) {
+        http_response_code(400);
+        die('Image must be 5MB or smaller.');
+    }
+
+    $allowed = [
+        'image/jpeg' => 'jpg',
+        'image/png' => 'png',
+        'image/webp' => 'webp',
+        'image/gif' => 'gif',
+    ];
+    $mime = mime_content_type($_FILES[$field]['tmp_name']);
+    if (!isset($allowed[$mime])) {
+        http_response_code(400);
+        die('Only JPG, PNG, WebP, or GIF images are allowed.');
+    }
+
+    $safeFolder = trim($folder, '/');
+    $uploadDir = dirname(__DIR__) . '/uploads/' . $safeFolder;
+    if (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true)) {
+        http_response_code(500);
+        die('Could not create upload folder.');
+    }
+
+    $filename = bin2hex(random_bytes(16)) . '.' . $allowed[$mime];
+    $target = $uploadDir . '/' . $filename;
+    if (!move_uploaded_file($_FILES[$field]['tmp_name'], $target)) {
+        http_response_code(500);
+        die('Could not save uploaded image.');
+    }
+
+    return 'uploads/' . $safeFolder . '/' . $filename;
+}
+
+function delete_uploaded_file(?string $path): void
+{
+    if (!$path) {
+        return;
+    }
+
+    $fullPath = dirname(__DIR__) . '/' . ltrim($path, '/');
+    $uploadsRoot = realpath(dirname(__DIR__) . '/uploads');
+    $filePath = realpath($fullPath);
+
+    $uploadsRoot = $uploadsRoot ? rtrim($uploadsRoot, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR : false;
+    if ($uploadsRoot && $filePath && strpos($filePath, $uploadsRoot) === 0 && is_file($filePath)) {
+        unlink($filePath);
+    }
+}
 ?>

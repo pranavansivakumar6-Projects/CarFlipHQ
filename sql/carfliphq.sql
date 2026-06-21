@@ -37,6 +37,7 @@ CREATE TABLE expenses (
   expense_name VARCHAR(150) NOT NULL,
   amount DECIMAL(10,2) NOT NULL,
   expense_date DATE,
+  receipt_file VARCHAR(255),
   notes TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (car_id) REFERENCES cars(id) ON DELETE CASCADE
@@ -50,6 +51,7 @@ CREATE TABLE tasks (
   assigned_to VARCHAR(100),
   priority ENUM('Low','Medium','High') DEFAULT 'Medium',
   status ENUM('To Do','In Progress','Done') DEFAULT 'To Do',
+  task_photo VARCHAR(255),
   due_date DATE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (car_id) REFERENCES cars(id) ON DELETE CASCADE

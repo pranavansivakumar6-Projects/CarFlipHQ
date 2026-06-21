@@ -15,7 +15,7 @@ require '../header.php';
 <div class="container">
     <h1>Edit Task</h1>
     <p class="small"><?= htmlspecialchars($task['year'].' '.$task['make'].' '.$task['model']) ?></p>
-    <form class="form-card" action="../actions/update-task.php" method="POST">
+    <form class="form-card" action="../actions/update-task.php" method="POST" enctype="multipart/form-data">
         <input type="hidden" name="id" value="<?= (int) $task['id'] ?>">
         <label>Task Title</label><input name="task_title" value="<?= htmlspecialchars($task['task_title']) ?>" required>
         <label>Description</label><textarea name="description"><?= htmlspecialchars($task['description']) ?></textarea>
@@ -32,6 +32,10 @@ require '../header.php';
             <option <?= $task['status'] === $status ? 'selected' : '' ?>><?= $status ?></option>
             <?php endforeach; ?>
         </select>
+        <?php if (!empty($task['task_photo'])): ?>
+        <p><a href="../<?= htmlspecialchars($task['task_photo']) ?>" target="_blank">View current task photo</a></p>
+        <?php endif; ?>
+        <label>Replace Task Photo</label><input name="task_photo" type="file" accept="image/*" capture="environment">
         <label>Due Date</label><input name="due_date" type="date" value="<?= htmlspecialchars($task['due_date']) ?>"><br><br>
         <button class="btn" type="submit">Update Task</button>
         <a class="btn secondary" href="car-detail.php?id=<?= (int) $task['car_id'] ?>">Cancel</a>

@@ -11,13 +11,14 @@ require '../header.php';
 ?>
 <div class="container"><h1>Add Task</h1>
 <p class="small"><?= htmlspecialchars($car['year'].' '.$car['make'].' '.$car['model']) ?></p>
-<form class="form-card" action="../actions/save-task.php" method="POST">
+<form class="form-card" action="../actions/save-task.php" method="POST" enctype="multipart/form-data">
 <input type="hidden" name="car_id" value="<?= $carId ?>">
 <label>Task Title</label><input name="task_title" required>
 <label>Description</label><textarea name="description"></textarea>
 <label>Assigned To</label><input name="assigned_to" placeholder="Pranavan / Partner">
 <label>Priority</label><select name="priority"><option>Low</option><option selected>Medium</option><option>High</option></select>
 <label>Status</label><select name="status"><option selected>To Do</option><option>In Progress</option><option>Done</option></select>
+<label>Task Photo</label><input name="task_photo" type="file" accept="image/*" capture="environment">
 <label>Due Date</label><input name="due_date" type="date"><br><br>
 <button class="btn" type="submit">Save Task</button>
 </form></div><?php require '../footer.php'; ?>

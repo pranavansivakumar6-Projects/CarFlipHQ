@@ -49,13 +49,18 @@ require '../header.php';
 
     <h2 class="section-title">Expenses</h2>
     <table>
-        <tr><th>Date</th><th>Category</th><th>Name</th><th>Amount</th><th>Notes</th><th>Action</th></tr>
+        <tr><th>Date</th><th>Category</th><th>Name</th><th>Amount</th><th>Receipt</th><th>Notes</th><th>Action</th></tr>
         <?php foreach ($expenses as $e): ?>
         <tr>
             <td><?= htmlspecialchars($e['expense_date']) ?></td>
             <td><?= htmlspecialchars($e['category']) ?></td>
             <td><?= htmlspecialchars($e['expense_name']) ?></td>
             <td>$<?= number_format($e['amount'], 2) ?></td>
+            <td>
+                <?php if (!empty($e['receipt_file'])): ?>
+                <a href="../<?= htmlspecialchars($e['receipt_file']) ?>" target="_blank"><img class="thumb" src="../<?= htmlspecialchars($e['receipt_file']) ?>" alt="Receipt"></a>
+                <?php endif; ?>
+            </td>
             <td><?= htmlspecialchars($e['notes']) ?></td>
             <td>
                 <div class="row-actions">
@@ -90,6 +95,9 @@ require '../header.php';
                 </form>
             </td>
             <td>
+                <?php if (!empty($t['task_photo'])): ?>
+                <a href="../<?= htmlspecialchars($t['task_photo']) ?>" target="_blank"><img class="thumb" src="../<?= htmlspecialchars($t['task_photo']) ?>" alt="Task photo"></a>
+                <?php endif; ?>
                 <div class="row-actions">
                     <a class="btn secondary small-btn" href="edit-task.php?id=<?= (int) $t['id'] ?>">Edit</a>
                     <form action="../actions/delete-task.php" method="POST" onsubmit="return confirm('Delete this task?');">

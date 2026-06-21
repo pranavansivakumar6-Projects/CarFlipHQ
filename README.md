@@ -23,6 +23,8 @@ Vehicle acquisition, repair management, task tracking, expense tracking, and pro
 - Add tasks per car
 - Edit/delete expenses
 - Edit/delete tasks
+- Receipt/bill photo uploads for expenses
+- Photo uploads for tasks
 - Quick task status updates
 - Profit/loss calculation
 - Update car sale/status details
@@ -32,6 +34,4 @@ Vehicle acquisition, repair management, task tracking, expense tracking, and pro
 ## Next features to add
 
 - Partner roles
-- Photo upload
-- Document/receipt upload
 - Reports and export
