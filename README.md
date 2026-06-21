@@ -25,6 +25,8 @@ Vehicle acquisition, repair management, task tracking, expense tracking, and pro
 - Edit/delete tasks
 - Receipt/bill photo uploads for expenses
 - Photo uploads for tasks
+- Expense payer tracking
+- 50/50 cost, profit, and settlement summary
 - Quick task status updates
 - Profit/loss calculation
 - Update car sale/status details

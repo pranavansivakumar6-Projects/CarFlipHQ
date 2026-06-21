@@ -20,6 +20,24 @@ $totalExpenses = array_sum(array_column($expenses, 'amount'));
 $totalCost = $car['purchase_price'] + $totalExpenses;
 $estimatedProfit = $car['estimated_sale_price'] - $totalCost;
 $actualProfit = $car['actual_sale_price'] > 0 ? $car['actual_sale_price'] - $totalCost : null;
+$saleValue = $car['actual_sale_price'] > 0 ? (float) $car['actual_sale_price'] : (float) $car['estimated_sale_price'];
+$profitForSplit = $saleValue - $totalCost;
+$partnerCount = max(count($users), 1);
+$equalCostShare = $totalCost / $partnerCount;
+$equalProfitShare = $profitForSplit / $partnerCount;
+$paidTotals = array_fill_keys($users, 0.0);
+foreach ($expenses as $expense) {
+    if (!empty($expense['paid_by'])) {
+        $paidTotals[$expense['paid_by']] = ($paidTotals[$expense['paid_by']] ?? 0) + (float) $expense['amount'];
+    }
+}
+$unassignedExpenses = array_sum(array_map(fn($expense) => empty($expense['paid_by']) ? (float) $expense['amount'] : 0.0, $expenses));
+$buyerName = $users[0] ?? 'Buyer';
+$paidTotals[$buyerName] = ($paidTotals[$buyerName] ?? 0) + (float) $car['purchase_price'];
+$settlements = [];
+foreach ($paidTotals as $name => $paidAmount) {
+    $settlements[$name] = $paidAmount - $equalCostShare;
+}
 $pageTitle = $car['make'].' '.$car['model'].' | CarFlip HQ';
 require '../header.php';
 ?>
@@ -38,6 +56,28 @@ require '../header.php';
         <div class="card"><b>Actual Profit</b><div class="profit <?= ($actualProfit ?? 0) >= 0 ? 'positive' : 'negative' ?>"><?= $actualProfit === null ? 'Not sold' : '$'.number_format($actualProfit, 2) ?></div></div>
     </div>
 
+    <h2 class="section-title">Finance Split</h2>
+    <div class="grid">
+        <div class="card"><b>Sale Value Used</b><div class="stat">$<?= number_format($saleValue, 2) ?></div><div class="small"><?= $car['actual_sale_price'] > 0 ? 'Actual sale price' : 'Estimated sale price' ?></div></div>
+        <div class="card"><b>50/50 Cost Share</b><div class="stat">$<?= number_format($equalCostShare, 2) ?></div><div class="small">Per person across <?= $partnerCount ?> account<?= $partnerCount === 1 ? '' : 's' ?></div></div>
+        <div class="card"><b>50/50 Profit Share</b><div class="profit <?= $equalProfitShare >= 0 ? 'positive' : 'negative' ?>">$<?= number_format($equalProfitShare, 2) ?></div><div class="small">Per person after costs</div></div>
+    </div>
+    <table class="section-title">
+        <tr><th>Person</th><th>Paid So Far</th><th>Cost Share</th><th>Settlement</th><th>Profit Share</th></tr>
+        <?php foreach ($settlements as $name => $settlement): ?>
+        <tr>
+            <td><?= htmlspecialchars($name) ?></td>
+            <td>$<?= number_format($paidTotals[$name], 2) ?></td>
+            <td>$<?= number_format($equalCostShare, 2) ?></td>
+            <td class="<?= $settlement >= 0 ? 'positive' : 'negative' ?>"><?= $settlement >= 0 ? 'Owed $'.number_format($settlement, 2) : 'Pays $'.number_format(abs($settlement), 2) ?></td>
+            <td>$<?= number_format($equalProfitShare, 2) ?></td>
+        </tr>
+        <?php endforeach; ?>
+        <?php if ($unassignedExpenses > 0): ?>
+        <tr><td>Unassigned expenses</td><td colspan="4">$<?= number_format($unassignedExpenses, 2) ?> needs Paid By set</td></tr>
+        <?php endif; ?>
+    </table>
+
     <h2 class="section-title">Car Details</h2>
     <div class="card">
         <p><b>VIN:</b> <?= htmlspecialchars($car['vin']) ?></p>
@@ -50,13 +90,14 @@ require '../header.php';
 
     <h2 class="section-title">Expenses</h2>
     <table>
-        <tr><th>Date</th><th>Category</th><th>Name</th><th>Amount</th><th>Receipt</th><th>Notes</th><th>Action</th></tr>
+        <tr><th>Date</th><th>Category</th><th>Name</th><th>Amount</th><th>Paid By</th><th>Receipt</th><th>Notes</th><th>Action</th></tr>
         <?php foreach ($expenses as $e): ?>
         <tr>
             <td><?= htmlspecialchars($e['expense_date']) ?></td>
             <td><?= htmlspecialchars($e['category']) ?></td>
             <td><?= htmlspecialchars($e['expense_name']) ?></td>
             <td>$<?= number_format($e['amount'], 2) ?></td>
+            <td><?= htmlspecialchars($e['paid_by'] ?? '') ?></td>
             <td>
                 <?php if (!empty($e['receipt_file'])): ?>
                 <a href="../<?= htmlspecialchars($e['receipt_file']) ?>" target="_blank"><img class="thumb" src="../<?= htmlspecialchars($e['receipt_file']) ?>" alt="Receipt"></a>

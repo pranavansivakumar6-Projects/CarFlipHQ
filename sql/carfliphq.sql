@@ -36,6 +36,7 @@ CREATE TABLE expenses (
   category VARCHAR(100) NOT NULL,
   expense_name VARCHAR(150) NOT NULL,
   amount DECIMAL(10,2) NOT NULL,
+  paid_by VARCHAR(100),
   expense_date DATE,
   receipt_file VARCHAR(255),
   notes TEXT,

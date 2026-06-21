@@ -8,6 +8,7 @@ $stmt = $pdo->prepare("SELECT expenses.*, cars.year, cars.make, cars.model FROM 
 $stmt->execute([$id]);
 $expense = $stmt->fetch(PDO::FETCH_ASSOC);
 if (!$expense) { http_response_code(404); die('Expense not found.'); }
+$users = $pdo->query("SELECT name FROM users ORDER BY name")->fetchAll(PDO::FETCH_COLUMN);
 
 $pageTitle = 'Edit Expense | CarFlip HQ';
 require '../header.php';
@@ -25,6 +26,16 @@ require '../header.php';
         </select>
         <label>Expense Name</label><input name="expense_name" value="<?= htmlspecialchars($expense['expense_name']) ?>" required>
         <label>Amount</label><input name="amount" type="number" step="0.01" value="<?= htmlspecialchars($expense['amount']) ?>" required>
+        <label>Paid By</label>
+        <select name="paid_by">
+            <option value="">Select person</option>
+            <?php foreach ($users as $name): ?>
+            <option value="<?= htmlspecialchars($name) ?>" <?= ($expense['paid_by'] ?? '') === $name ? 'selected' : '' ?>><?= htmlspecialchars($name) ?></option>
+            <?php endforeach; ?>
+            <?php if (!empty($expense['paid_by']) && !in_array($expense['paid_by'], $users, true)): ?>
+            <option value="<?= htmlspecialchars($expense['paid_by']) ?>" selected><?= htmlspecialchars($expense['paid_by']) ?></option>
+            <?php endif; ?>
+        </select>
         <label>Date</label><input name="expense_date" type="date" value="<?= htmlspecialchars($expense['expense_date']) ?>">
         <?php if (!empty($expense['receipt_file'])): ?>
         <p><a href="../<?= htmlspecialchars($expense['receipt_file']) ?>" target="_blank">View current receipt</a></p>
