@@ -33,6 +33,16 @@ function require_login(): void
     }
 }
 
+function require_admin(): void
+{
+    require_login();
+
+    if ((current_user()['role'] ?? '') !== 'admin') {
+        http_response_code(403);
+        die('Admin access required.');
+    }
+}
+
 function redirect_if_logged_in(): void
 {
     if (is_logged_in()) {

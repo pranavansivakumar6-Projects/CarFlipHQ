@@ -8,6 +8,7 @@ $stmt = $pdo->prepare("SELECT tasks.*, cars.year, cars.make, cars.model FROM tas
 $stmt->execute([$id]);
 $task = $stmt->fetch(PDO::FETCH_ASSOC);
 if (!$task) { http_response_code(404); die('Task not found.'); }
+$users = $pdo->query("SELECT name FROM users ORDER BY name")->fetchAll(PDO::FETCH_COLUMN);
 
 $pageTitle = 'Edit Task | CarFlip HQ';
 require '../header.php';
@@ -19,7 +20,16 @@ require '../header.php';
         <input type="hidden" name="id" value="<?= (int) $task['id'] ?>">
         <label>Task Title</label><input name="task_title" value="<?= htmlspecialchars($task['task_title']) ?>" required>
         <label>Description</label><textarea name="description"><?= htmlspecialchars($task['description']) ?></textarea>
-        <label>Assigned To</label><input name="assigned_to" value="<?= htmlspecialchars($task['assigned_to']) ?>">
+        <label>Assigned To</label>
+        <select name="assigned_to">
+            <option value="">Unassigned</option>
+            <?php foreach ($users as $name): ?>
+            <option value="<?= htmlspecialchars($name) ?>" <?= $task['assigned_to'] === $name ? 'selected' : '' ?>><?= htmlspecialchars($name) ?></option>
+            <?php endforeach; ?>
+            <?php if ($task['assigned_to'] && !in_array($task['assigned_to'], $users, true)): ?>
+            <option value="<?= htmlspecialchars($task['assigned_to']) ?>" selected><?= htmlspecialchars($task['assigned_to']) ?></option>
+            <?php endif; ?>
+        </select>
         <label>Priority</label>
         <select name="priority">
             <?php foreach(['Low','Medium','High'] as $priority): ?>

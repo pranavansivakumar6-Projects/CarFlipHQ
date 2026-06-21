@@ -30,6 +30,8 @@ Vehicle acquisition, repair management, task tracking, expense tracking, and pro
 - Update car sale/status details
 - First-admin setup
 - Login/logout session protection
+- Admin user management
+- Task assignment from account names
 
 ## Next features to add
 

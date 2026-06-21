@@ -6,6 +6,7 @@ $stmt = $pdo->prepare("SELECT id, year, make, model FROM cars WHERE id = ?");
 $stmt->execute([$carId]);
 $car = $stmt->fetch(PDO::FETCH_ASSOC);
 if (!$car) { http_response_code(404); die('Car not found.'); }
+$users = $pdo->query("SELECT name FROM users ORDER BY name")->fetchAll(PDO::FETCH_COLUMN);
 $pageTitle='Add Task | CarFlip HQ';
 require '../header.php';
 ?>
@@ -15,7 +16,7 @@ require '../header.php';
 <input type="hidden" name="car_id" value="<?= $carId ?>">
 <label>Task Title</label><input name="task_title" required>
 <label>Description</label><textarea name="description"></textarea>
-<label>Assigned To</label><input name="assigned_to" placeholder="Pranavan / Partner">
+<label>Assigned To</label><select name="assigned_to"><option value="">Unassigned</option><?php foreach ($users as $name): ?><option value="<?= htmlspecialchars($name) ?>"><?= htmlspecialchars($name) ?></option><?php endforeach; ?></select>
 <label>Priority</label><select name="priority"><option>Low</option><option selected>Medium</option><option>High</option></select>
 <label>Status</label><select name="status"><option selected>To Do</option><option>In Progress</option><option>Done</option></select>
 <label>Task Photo</label><input name="task_photo" type="file" accept="image/*" capture="environment">
