@@ -11,6 +11,10 @@ $expenseStmt = $pdo->prepare("SELECT * FROM expenses WHERE car_id = ? ORDER BY e
 $expenseStmt->execute([$id]);
 $expenses = $expenseStmt->fetchAll(PDO::FETCH_ASSOC);
 
+$purchaseStmt = $pdo->prepare("SELECT * FROM car_purchase_payments WHERE car_id = ? ORDER BY paid_date DESC, created_at DESC");
+$purchaseStmt->execute([$id]);
+$purchasePayments = $purchaseStmt->fetchAll(PDO::FETCH_ASSOC);
+
 $taskStmt = $pdo->prepare("SELECT * FROM tasks WHERE car_id = ? ORDER BY due_date ASC, created_at DESC");
 $taskStmt->execute([$id]);
 $tasks = $taskStmt->fetchAll(PDO::FETCH_ASSOC);
@@ -31,9 +35,14 @@ foreach ($expenses as $expense) {
         $paidTotals[$expense['paid_by']] = ($paidTotals[$expense['paid_by']] ?? 0) + (float) $expense['amount'];
     }
 }
+$purchasePaidTotal = array_sum(array_column($purchasePayments, 'amount'));
+foreach ($purchasePayments as $payment) {
+    if (!empty($payment['paid_by'])) {
+        $paidTotals[$payment['paid_by']] = ($paidTotals[$payment['paid_by']] ?? 0) + (float) $payment['amount'];
+    }
+}
 $unassignedExpenses = array_sum(array_map(fn($expense) => empty($expense['paid_by']) ? (float) $expense['amount'] : 0.0, $expenses));
-$buyerName = $users[0] ?? 'Buyer';
-$paidTotals[$buyerName] = ($paidTotals[$buyerName] ?? 0) + (float) $car['purchase_price'];
+$unassignedPurchase = max((float) $car['purchase_price'] - $purchasePaidTotal, 0);
 $settlements = [];
 foreach ($paidTotals as $name => $paidAmount) {
     $settlements[$name] = $paidAmount - $equalCostShare;
@@ -46,6 +55,7 @@ require '../header.php';
     <div class="actions">
         <a class="btn" href="add-expense.php?car_id=<?= $id ?>">+ Add Expense</a>
         <a class="btn" href="add-task.php?car_id=<?= $id ?>">+ Add Task</a>
+        <a class="btn" href="add-purchase-payment.php?car_id=<?= $id ?>">+ Add Purchase Payment</a>
         <a class="btn secondary" href="edit-car.php?id=<?= $id ?>">Edit Car</a>
     </div>
 
@@ -59,6 +69,7 @@ require '../header.php';
     <h2 class="section-title">Finance Split</h2>
     <div class="grid">
         <div class="card"><b>Sale Value Used</b><div class="stat">$<?= number_format($saleValue, 2) ?></div><div class="small"><?= $car['actual_sale_price'] > 0 ? 'Actual sale price' : 'Estimated sale price' ?></div></div>
+        <div class="card"><b>Purchase Paid</b><div class="stat">$<?= number_format($purchasePaidTotal, 2) ?></div><div class="small">Recorded against $<?= number_format($car['purchase_price'], 2) ?> purchase price</div></div>
         <div class="card"><b>50/50 Cost Share</b><div class="stat">$<?= number_format($equalCostShare, 2) ?></div><div class="small">Per person across <?= $partnerCount ?> account<?= $partnerCount === 1 ? '' : 's' ?></div></div>
         <div class="card"><b>50/50 Profit Share</b><div class="profit <?= $equalProfitShare >= 0 ? 'positive' : 'negative' ?>">$<?= number_format($equalProfitShare, 2) ?></div><div class="small">Per person after costs</div></div>
     </div>
@@ -76,6 +87,31 @@ require '../header.php';
         <?php if ($unassignedExpenses > 0): ?>
         <tr><td>Unassigned expenses</td><td colspan="4">$<?= number_format($unassignedExpenses, 2) ?> needs Paid By set</td></tr>
         <?php endif; ?>
+        <?php if ($unassignedPurchase > 0): ?>
+        <tr><td>Unassigned purchase amount</td><td colspan="4">$<?= number_format($unassignedPurchase, 2) ?> needs purchase payment records</td></tr>
+        <?php endif; ?>
+    </table>
+
+    <h2 class="section-title">Purchase Payments</h2>
+    <table>
+        <tr><th>Date</th><th>Paid By</th><th>Amount</th><th>Notes</th><th>Action</th></tr>
+        <?php foreach ($purchasePayments as $payment): ?>
+        <tr>
+            <td><?= htmlspecialchars($payment['paid_date']) ?></td>
+            <td><?= htmlspecialchars($payment['paid_by']) ?></td>
+            <td>$<?= number_format($payment['amount'], 2) ?></td>
+            <td><?= htmlspecialchars($payment['notes']) ?></td>
+            <td>
+                <div class="row-actions">
+                    <a class="btn secondary small-btn" href="edit-purchase-payment.php?id=<?= (int) $payment['id'] ?>">Edit</a>
+                    <form action="../actions/delete-purchase-payment.php" method="POST" onsubmit="return confirm('Delete this purchase payment?');">
+                        <input type="hidden" name="id" value="<?= (int) $payment['id'] ?>">
+                        <button class="btn danger small-btn" type="submit">Delete</button>
+                    </form>
+                </div>
+            </td>
+        </tr>
+        <?php endforeach; ?>
     </table>
 
     <h2 class="section-title">Car Details</h2>
