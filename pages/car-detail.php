@@ -90,7 +90,6 @@ require '../header.php';
         <tr><td>Unassigned purchase amount</td><td colspan="4">$<?= number_format($unassignedPurchase, 2) ?> needs purchase payment records</td></tr>
         <?php endif; ?>
     </table>
-    <p><a class="btn" href="add-purchase-payment.php?car_id=<?= $id ?>">+ Add Purchase Payment</a></p>
 
     <h2 class="section-title">Purchase Payments</h2>
     <table>
@@ -113,7 +112,7 @@ require '../header.php';
         </tr>
         <?php endforeach; ?>
     </table>
-    <p><a class="btn" href="add-expense.php?car_id=<?= $id ?>">+ Add Expense</a></p>
+    <p><a class="btn" href="add-purchase-payment.php?car_id=<?= $id ?>">+ Add Purchase Payment</a></p>
 
     <h2 class="section-title">Car Details</h2>
     <div class="card">
@@ -153,6 +152,7 @@ require '../header.php';
         </tr>
         <?php endforeach; ?>
     </table>
+    <p><a class="btn" href="add-expense.php?car_id=<?= $id ?>">+ Add Expense</a></p>
 
     <h2 class="section-title">Tasks</h2>
     <table>
