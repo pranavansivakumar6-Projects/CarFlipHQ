@@ -16,7 +16,8 @@ require '../header.php';
 <input type="hidden" name="car_id" value="<?= $carId ?>">
 <label>Task Title</label><input name="task_title" required>
 <label>Description</label><textarea name="description"></textarea>
-<label>Assigned To</label><select name="assigned_to"><option value="">Unassigned</option><?php foreach ($users as $name): ?><option value="<?= htmlspecialchars($name) ?>"><?= htmlspecialchars($name) ?></option><?php endforeach; ?></select>
+<label>Assigned To</label><select name="assigned_to[]" multiple size="<?= max(min(count($users), 4), 2) ?>"><?php foreach ($users as $name): ?><option value="<?= htmlspecialchars($name) ?>"><?= htmlspecialchars($name) ?></option><?php endforeach; ?></select>
+<p class="small">Hold Ctrl to select more than one person.</p>
 <label>Priority</label><select name="priority"><option>Low</option><option selected>Medium</option><option>High</option></select>
 <label>Status</label><select name="status"><option selected>To Do</option><option>In Progress</option><option>Done</option></select>
 <label>Hours Spent</label><input name="hours_spent" type="number" step="0.25" min="0" value="0">

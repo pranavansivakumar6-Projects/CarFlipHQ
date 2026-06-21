@@ -87,6 +87,31 @@ function require_car(PDO $pdo, int $carId): void
     }
 }
 
+function post_user_names(PDO $pdo, string $key): string
+{
+    $values = $_POST[$key] ?? [];
+    if (!is_array($values)) {
+        $values = [$values];
+    }
+
+    $names = array_values(array_unique(array_filter(array_map('trim', $values))));
+    if (!$names) {
+        return '';
+    }
+
+    $placeholders = implode(',', array_fill(0, count($names), '?'));
+    $stmt = $pdo->prepare("SELECT name FROM users WHERE name IN ($placeholders)");
+    $stmt->execute($names);
+    $validNames = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+    if (count($validNames) !== count($names)) {
+        http_response_code(400);
+        die('Assigned user is invalid.');
+    }
+
+    return implode(', ', $names);
+}
+
 function save_uploaded_image(string $field, string $folder): ?string
 {
     if (empty($_FILES[$field]) || $_FILES[$field]['error'] === UPLOAD_ERR_NO_FILE) {

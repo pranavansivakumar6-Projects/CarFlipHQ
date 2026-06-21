@@ -21,15 +21,13 @@ require '../header.php';
         <label>Task Title</label><input name="task_title" value="<?= htmlspecialchars($task['task_title']) ?>" required>
         <label>Description</label><textarea name="description"><?= htmlspecialchars($task['description']) ?></textarea>
         <label>Assigned To</label>
-        <select name="assigned_to">
-            <option value="">Unassigned</option>
+        <?php $assignedNames = array_map('trim', explode(',', $task['assigned_to'] ?? '')); ?>
+        <select name="assigned_to[]" multiple size="<?= max(min(count($users), 4), 2) ?>">
             <?php foreach ($users as $name): ?>
-            <option value="<?= htmlspecialchars($name) ?>" <?= $task['assigned_to'] === $name ? 'selected' : '' ?>><?= htmlspecialchars($name) ?></option>
+            <option value="<?= htmlspecialchars($name) ?>" <?= in_array($name, $assignedNames, true) ? 'selected' : '' ?>><?= htmlspecialchars($name) ?></option>
             <?php endforeach; ?>
-            <?php if ($task['assigned_to'] && !in_array($task['assigned_to'], $users, true)): ?>
-            <option value="<?= htmlspecialchars($task['assigned_to']) ?>" selected><?= htmlspecialchars($task['assigned_to']) ?></option>
-            <?php endif; ?>
         </select>
+        <p class="small">Hold Ctrl to select more than one person.</p>
         <label>Priority</label>
         <select name="priority">
             <?php foreach(['Low','Medium','High'] as $priority): ?>

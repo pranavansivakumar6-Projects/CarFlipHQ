@@ -35,6 +35,7 @@ Vehicle acquisition, repair management, task tracking, expense tracking, and pro
 - Login/logout session protection
 - Admin user management
 - Task assignment from account names
+- Multi-person task assignment
 - Quick task assignment updates
 - Task/job hours tracking
 

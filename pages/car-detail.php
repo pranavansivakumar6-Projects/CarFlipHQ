@@ -54,9 +54,6 @@ require '../header.php';
 <div class="container">
     <h1><?= htmlspecialchars($car['year'].' '.$car['make'].' '.$car['model']) ?></h1>
     <div class="actions">
-        <a class="btn" href="add-expense.php?car_id=<?= $id ?>">+ Add Expense</a>
-        <a class="btn" href="add-task.php?car_id=<?= $id ?>">+ Add Task</a>
-        <a class="btn" href="add-purchase-payment.php?car_id=<?= $id ?>">+ Add Purchase Payment</a>
         <a class="btn secondary" href="edit-car.php?id=<?= $id ?>">Edit Car</a>
     </div>
 
@@ -93,6 +90,7 @@ require '../header.php';
         <tr><td>Unassigned purchase amount</td><td colspan="4">$<?= number_format($unassignedPurchase, 2) ?> needs purchase payment records</td></tr>
         <?php endif; ?>
     </table>
+    <p><a class="btn" href="add-purchase-payment.php?car_id=<?= $id ?>">+ Add Purchase Payment</a></p>
 
     <h2 class="section-title">Purchase Payments</h2>
     <table>
@@ -115,6 +113,7 @@ require '../header.php';
         </tr>
         <?php endforeach; ?>
     </table>
+    <p><a class="btn" href="add-expense.php?car_id=<?= $id ?>">+ Add Expense</a></p>
 
     <h2 class="section-title">Car Details</h2>
     <div class="card">
@@ -159,20 +158,17 @@ require '../header.php';
     <table>
         <tr><th>Due</th><th>Task</th><th>Assigned</th><th>Hours</th><th>Priority</th><th>Status</th><th>Action</th></tr>
         <?php foreach ($tasks as $t): ?>
+        <?php $assignedNames = array_map('trim', explode(',', $t['assigned_to'] ?? '')); ?>
         <tr>
             <td><?= htmlspecialchars($t['due_date']) ?></td>
             <td><?= htmlspecialchars($t['task_title']) ?><div class="small"><?= htmlspecialchars($t['description']) ?></div></td>
             <td>
                 <form action="../actions/update-task-assignee.php" method="POST">
                     <input type="hidden" name="id" value="<?= (int) $t['id'] ?>">
-                    <select class="inline-select" name="assigned_to" onchange="this.form.submit()">
-                        <option value="">Unassigned</option>
+                    <select class="inline-select" name="assigned_to[]" multiple size="<?= max(min(count($users), 4), 2) ?>" onchange="this.form.submit()">
                         <?php foreach ($users as $name): ?>
-                        <option value="<?= htmlspecialchars($name) ?>" <?= $t['assigned_to'] === $name ? 'selected' : '' ?>><?= htmlspecialchars($name) ?></option>
+                        <option value="<?= htmlspecialchars($name) ?>" <?= in_array($name, $assignedNames, true) ? 'selected' : '' ?>><?= htmlspecialchars($name) ?></option>
                         <?php endforeach; ?>
-                        <?php if ($t['assigned_to'] && !in_array($t['assigned_to'], $users, true)): ?>
-                        <option value="<?= htmlspecialchars($t['assigned_to']) ?>" selected><?= htmlspecialchars($t['assigned_to']) ?></option>
-                        <?php endif; ?>
                     </select>
                 </form>
             </td>
@@ -203,5 +199,6 @@ require '../header.php';
         </tr>
         <?php endforeach; ?>
     </table>
+    <p><a class="btn" href="add-task.php?car_id=<?= $id ?>">+ Add Task</a></p>
 </div>
 <?php require '../footer.php'; ?>
