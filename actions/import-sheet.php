@@ -57,6 +57,17 @@ function payer_name($value): string {
     $name = trim(preg_replace('/^paid\s+by\s+/i', '', (string) $value));
     return $name === '' ? 'Imported' : ucwords(strtolower($name));
 }
+function resolve_payer_name(PDO $pdo, string $name): string {
+    $stmt = $pdo->prepare('SELECT name FROM users WHERE LOWER(name) = LOWER(?) LIMIT 1');
+    $stmt->execute([$name]);
+    $exact = $stmt->fetchColumn();
+    if ($exact) { return $exact; }
+
+    $stmt = $pdo->prepare('SELECT name FROM users WHERE LOWER(name) LIKE LOWER(?) ORDER BY LENGTH(name) ASC LIMIT 1');
+    $stmt->execute([$name . '%']);
+    $prefix = $stmt->fetchColumn();
+    return $prefix ?: $name;
+}
 function infer_car_from_filename(string $filename): array {
     $base = pathinfo($filename, PATHINFO_FILENAME);
     $base = preg_replace('/\s*-\s*sheet\d*$/i', '', $base);
@@ -86,7 +97,7 @@ function import_paid_by_sheet(PDO $pdo, $handle, array $headerRow, string $filen
     $payers = [];
     foreach ($headerRow as $index => $label) {
         if (stripos((string) $label, 'paid by') !== false) {
-            $payers[$index] = payer_name($label);
+            $payers[$index] = resolve_payer_name($pdo, payer_name($label));
         }
     }
     if (!$payers) {

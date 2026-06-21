@@ -41,10 +41,7 @@ $estimatedProfit = $car['estimated_sale_price'] - $totalCost;
 $actualProfit = $car['actual_sale_price'] > 0 ? $car['actual_sale_price'] - $totalCost : null;
 $saleValue = $car['actual_sale_price'] > 0 ? (float) $car['actual_sale_price'] : (float) $car['estimated_sale_price'];
 $profitForSplit = $saleValue - $totalCost;
-$partnerCount = max(count($users), 1);
-$equalCostShare = $totalCost / $partnerCount;
-$equalProfitShare = $profitForSplit / $partnerCount;
-$paidTotals = array_fill_keys($users, 0.0);
+$paidTotals = [];
 foreach ($expenses as $expense) {
     if (!empty($expense['paid_by'])) {
         $paidTotals[$expense['paid_by']] = ($paidTotals[$expense['paid_by']] ?? 0) + (float) $expense['amount'];
@@ -56,10 +53,15 @@ foreach ($purchasePayments as $payment) {
         $paidTotals[$payment['paid_by']] = ($paidTotals[$payment['paid_by']] ?? 0) + (float) $payment['amount'];
     }
 }
+$partnerNames = array_keys($paidTotals);
+$partnerCount = max(count($partnerNames), 1);
+$equalCostShare = $totalCost / $partnerCount;
+$equalProfitShare = $profitForSplit / $partnerCount;
 $unassignedExpenses = array_sum(array_map(fn($expense) => empty($expense['paid_by']) ? (float) $expense['amount'] : 0.0, $expenses));
 $unassignedPurchase = max((float) $car['purchase_price'] - $purchasePaidTotal, 0);
 $settlements = [];
-foreach ($paidTotals as $name => $paidAmount) {
+foreach ($partnerNames as $name) {
+    $paidAmount = $paidTotals[$name] ?? 0.0;
     $settlements[$name] = $paidAmount - $equalCostShare;
 }
 $pageTitle = $car['make'].' '.$car['model'].' | CarFlip HQ';
@@ -85,7 +87,7 @@ require '../header.php';
     <div class="grid">
         <div class="card"><b>Sale Value Used</b><div class="stat">$<?= number_format($saleValue, 2) ?></div><div class="small"><?= $car['actual_sale_price'] > 0 ? 'Actual sale price' : 'Estimated sale price' ?></div></div>
         <div class="card"><b>Purchase Paid</b><div class="stat">$<?= number_format($purchasePaidTotal, 2) ?></div><div class="small">Recorded against $<?= number_format($car['purchase_price'], 2) ?> purchase price</div></div>
-        <div class="card"><b>50/50 Cost Share</b><div class="stat">$<?= number_format($equalCostShare, 2) ?></div><div class="small">Per person across <?= $partnerCount ?> account<?= $partnerCount === 1 ? '' : 's' ?></div></div>
+        <div class="card"><b>50/50 Cost Share</b><div class="stat">$<?= number_format($equalCostShare, 2) ?></div><div class="small">Per car investor across <?= $partnerCount ?> person<?= $partnerCount === 1 ? '' : 's' ?></div></div>
         <div class="card"><b>50/50 Profit Share</b><div class="profit <?= $equalProfitShare >= 0 ? 'positive' : 'negative' ?>">$<?= number_format($equalProfitShare, 2) ?></div><div class="small">Per person after costs</div></div>
     </div>
     <table class="section-title">
@@ -99,6 +101,9 @@ require '../header.php';
             <td>$<?= number_format($equalProfitShare, 2) ?></td>
         </tr>
         <?php endforeach; ?>
+        <?php if (!$partnerNames): ?>
+        <tr><td colspan="5">No car investors recorded yet. Add purchase payments or expenses with Paid By to calculate this car's split.</td></tr>
+        <?php endif; ?>
         <?php if ($unassignedExpenses > 0): ?>
         <tr><td>Unassigned expenses</td><td colspan="4">$<?= number_format($unassignedExpenses, 2) ?> needs Paid By set</td></tr>
         <?php endif; ?>

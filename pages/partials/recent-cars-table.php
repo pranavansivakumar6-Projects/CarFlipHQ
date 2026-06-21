@@ -1,5 +1,5 @@
 <?php
-$cars = $pdo->query("SELECT * FROM cars ORDER BY created_at DESC LIMIT 8")->fetchAll(PDO::FETCH_ASSOC);
+$cars = $recentCars ?? $pdo->query("SELECT * FROM cars ORDER BY created_at DESC LIMIT 8")->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <table>
     <tr><th>Car</th><th>Status</th><th>Purchase</th><th>Estimated Sale</th><th>Action</th></tr>
