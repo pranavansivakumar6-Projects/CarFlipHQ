@@ -1,6 +1,9 @@
 <?php
 require '../config/db.php';
+require '../config/auth.php';
 require '../config/helpers.php';
+
+require_login();
 
 $carId = post_int('id', true);
 require_car($pdo, $carId);

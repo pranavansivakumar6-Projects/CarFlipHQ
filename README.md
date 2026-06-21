@@ -11,6 +11,7 @@ Vehicle acquisition, repair management, task tracking, expense tracking, and pro
 3. Open phpMyAdmin.
 4. Import `sql/carfliphq.sql`.
 5. Open: `http://localhost/carfliphq/index.php`
+6. Create the first admin account when prompted.
 
 ## Current features
 
@@ -22,10 +23,11 @@ Vehicle acquisition, repair management, task tracking, expense tracking, and pro
 - Add tasks per car
 - Profit/loss calculation
 - Update car sale/status details
+- First-admin setup
+- Login/logout session protection
 
 ## Next features to add
 
-- Login system
 - Partner roles
 - Photo upload
 - Document/receipt upload

@@ -1,6 +1,9 @@
 <?php
 require '../config/db.php';
+require '../config/auth.php';
 require '../config/helpers.php';
+
+require_login();
 
 $stmt = $pdo->prepare("INSERT INTO cars (make, model, year, vin, rego, odometer, source, purchase_price, purchase_date, estimated_sale_price, damage_notes, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 $stmt->execute([
