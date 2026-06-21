@@ -6,7 +6,10 @@ $cars = $pdo->query("SELECT * FROM cars ORDER BY created_at DESC")->fetchAll(PDO
 ?>
 <div class="container">
     <h1>Cars</h1>
-    <p><a class="btn" href="add-car.php">+ Add Car</a></p>
+    <div class="actions">
+        <a class="btn" href="add-car.php">+ Add Car</a>
+        <a class="btn secondary" href="import-sheet.php">Import Sheet</a>
+    </div>
     <table>
         <tr><th>Car</th><th>Rego</th><th>Odometer</th><th>Status</th><th>Purchase</th><th>Action</th></tr>
         <?php foreach ($cars as $car): ?>

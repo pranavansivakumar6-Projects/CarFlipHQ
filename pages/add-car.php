@@ -4,6 +4,7 @@ require '../header.php';
 ?>
 <div class="container">
     <h1>Add Car</h1>
+    <p><a class="btn secondary" href="import-sheet.php">Import Cars From Sheet</a></p>
     <form class="form-card" action="../actions/save-car.php" method="POST">
         <label>Make</label><input name="make" required>
         <label>Model</label><input name="model" required>

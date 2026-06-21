@@ -43,6 +43,8 @@ Vehicle acquisition, repair management, task tracking, expense tracking, and pro
 - Sale listing and offer tracking
 - Reports page
 - Expanded dashboard metrics
+- CSV spreadsheet import from Excel or Google Sheets
+- Per-car CSV spreadsheet export
 
 ## Next features to add
 

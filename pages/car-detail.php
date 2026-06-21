@@ -69,6 +69,7 @@ require '../header.php';
     <h1><?= htmlspecialchars($car['year'].' '.$car['make'].' '.$car['model']) ?></h1>
     <div class="actions">
         <a class="btn secondary" href="edit-car.php?id=<?= $id ?>">Edit Car</a>
+        <a class="btn secondary" href="../actions/export-car-sheet.php?id=<?= $id ?>">Download Sheet</a>
     </div>
 
     <div class="grid section-title">
