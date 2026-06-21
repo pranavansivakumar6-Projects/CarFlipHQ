@@ -20,6 +20,7 @@ $taskStmt->execute([$id]);
 $tasks = $taskStmt->fetchAll(PDO::FETCH_ASSOC);
 $users = $pdo->query("SELECT name FROM users ORDER BY name")->fetchAll(PDO::FETCH_COLUMN);
 
+$totalTaskHours = array_sum(array_map(fn($task) => (float) ($task['hours_spent'] ?? 0), $tasks));
 $totalExpenses = array_sum(array_column($expenses, 'amount'));
 $totalCost = $car['purchase_price'] + $totalExpenses;
 $estimatedProfit = $car['estimated_sale_price'] - $totalCost;
@@ -62,6 +63,7 @@ require '../header.php';
     <div class="grid section-title">
         <div class="card"><b>Status</b><div class="stat"><?= htmlspecialchars($car['status']) ?></div></div>
         <div class="card"><b>Total Cost</b><div class="stat">$<?= number_format($totalCost, 2) ?></div></div>
+        <div class="card"><b>Task Hours</b><div class="stat"><?= number_format($totalTaskHours, 2) ?></div></div>
         <div class="card"><b>Estimated Profit</b><div class="profit <?= $estimatedProfit >= 0 ? 'positive' : 'negative' ?>">$<?= number_format($estimatedProfit, 2) ?></div></div>
         <div class="card"><b>Actual Profit</b><div class="profit <?= ($actualProfit ?? 0) >= 0 ? 'positive' : 'negative' ?>"><?= $actualProfit === null ? 'Not sold' : '$'.number_format($actualProfit, 2) ?></div></div>
     </div>
@@ -155,7 +157,7 @@ require '../header.php';
 
     <h2 class="section-title">Tasks</h2>
     <table>
-        <tr><th>Due</th><th>Task</th><th>Assigned</th><th>Priority</th><th>Status</th><th>Action</th></tr>
+        <tr><th>Due</th><th>Task</th><th>Assigned</th><th>Hours</th><th>Priority</th><th>Status</th><th>Action</th></tr>
         <?php foreach ($tasks as $t): ?>
         <tr>
             <td><?= htmlspecialchars($t['due_date']) ?></td>
@@ -174,6 +176,7 @@ require '../header.php';
                     </select>
                 </form>
             </td>
+            <td><?= number_format((float) ($t['hours_spent'] ?? 0), 2) ?></td>
             <td><?= htmlspecialchars($t['priority']) ?></td>
             <td>
                 <form action="../actions/update-task-status.php" method="POST">

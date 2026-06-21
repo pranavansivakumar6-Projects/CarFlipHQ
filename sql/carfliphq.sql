@@ -63,6 +63,7 @@ CREATE TABLE tasks (
   assigned_to VARCHAR(100),
   priority ENUM('Low','Medium','High') DEFAULT 'Medium',
   status ENUM('To Do','In Progress','Done') DEFAULT 'To Do',
+  hours_spent DECIMAL(8,2) DEFAULT 0,
   task_photo VARCHAR(255),
   due_date DATE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

@@ -42,6 +42,7 @@ require '../header.php';
             <option <?= $task['status'] === $status ? 'selected' : '' ?>><?= $status ?></option>
             <?php endforeach; ?>
         </select>
+        <label>Hours Spent</label><input name="hours_spent" type="number" step="0.25" min="0" value="<?= htmlspecialchars($task['hours_spent'] ?? 0) ?>">
         <?php if (!empty($task['task_photo'])): ?>
         <p><a href="../<?= htmlspecialchars($task['task_photo']) ?>" target="_blank">View current task photo</a></p>
         <?php endif; ?>
