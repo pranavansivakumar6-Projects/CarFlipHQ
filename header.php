@@ -1,4 +1,9 @@
-<?php if (!isset($pageTitle)) { $pageTitle = 'CarFlip HQ'; } ?>
+<?php
+require_once __DIR__ . '/config/auth.php';
+if (!isset($pageTitle)) { $pageTitle = 'CarFlip HQ'; }
+if (empty($publicPage)) { require_login(); }
+$user = current_user();
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,8 +16,14 @@
 <div class="topbar">
     <div class="brand">CarFlip HQ</div>
     <nav>
-        <a href="/carfliphq/index.php">Dashboard</a>
-        <a href="/carfliphq/pages/cars.php">Cars</a>
-        <a href="/carfliphq/pages/add-car.php">Add Car</a>
+        <?php if ($user): ?>
+        <span class="nav-user"><?= htmlspecialchars($user['name']) ?></span>
+        <a href="<?= app_url('index.php') ?>">Dashboard</a>
+        <a href="<?= app_url('pages/cars.php') ?>">Cars</a>
+        <a href="<?= app_url('pages/add-car.php') ?>">Add Car</a>
+        <a href="<?= app_url('actions/logout.php') ?>">Logout</a>
+        <?php else: ?>
+        <a href="<?= app_url('pages/login.php') ?>">Login</a>
+        <?php endif; ?>
     </nav>
 </div>

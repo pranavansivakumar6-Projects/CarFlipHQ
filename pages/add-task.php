@@ -1,7 +1,18 @@
-<?php $carId = $_GET['car_id'] ?? ''; $pageTitle='Add Task | CarFlip HQ'; require '../header.php'; ?>
+<?php
+require '../config/db.php';
+$carId = filter_input(INPUT_GET, 'car_id', FILTER_VALIDATE_INT);
+if (!$carId) { http_response_code(400); die('Car ID missing.'); }
+$stmt = $pdo->prepare("SELECT id, year, make, model FROM cars WHERE id = ?");
+$stmt->execute([$carId]);
+$car = $stmt->fetch(PDO::FETCH_ASSOC);
+if (!$car) { http_response_code(404); die('Car not found.'); }
+$pageTitle='Add Task | CarFlip HQ';
+require '../header.php';
+?>
 <div class="container"><h1>Add Task</h1>
+<p class="small"><?= htmlspecialchars($car['year'].' '.$car['make'].' '.$car['model']) ?></p>
 <form class="form-card" action="../actions/save-task.php" method="POST">
-<input type="hidden" name="car_id" value="<?= htmlspecialchars($carId) ?>">
+<input type="hidden" name="car_id" value="<?= $carId ?>">
 <label>Task Title</label><input name="task_title" required>
 <label>Description</label><textarea name="description"></textarea>
 <label>Assigned To</label><input name="assigned_to" placeholder="Pranavan / Partner">
