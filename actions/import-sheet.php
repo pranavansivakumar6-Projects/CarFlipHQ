@@ -12,20 +12,24 @@ if (empty($_FILES['sheet_file']) || $_FILES['sheet_file']['error'] !== UPLOAD_ER
 $handle = fopen($_FILES['sheet_file']['tmp_name'], 'r');
 if (!$handle) { http_response_code(400); die('Could not read CSV.'); }
 
-$headers = fgetcsv($handle);
-if (!$headers) { http_response_code(400); die('CSV is empty.'); }
-$headers = array_map(fn($value) => strtolower(trim(preg_replace('/[^a-zA-Z0-9]+/', '_', $value), '_')), $headers);
-
-$carsByKey = [];
-$lastCarId = null;
-$imported = 0;
-
 function row_value(array $row, string $key, $default = '') {
     return trim($row[$key] ?? $default);
 }
+function parse_money($value): float {
+    $value = trim((string) $value);
+    if ($value === '') { return 0.0; }
+    $value = str_replace(['$', ',', ' '], '', $value);
+    if (str_contains($value, '+')) {
+        $total = 0.0;
+        foreach (explode('+', $value) as $part) {
+            $total += parse_money($part);
+        }
+        return max($total, 0.0);
+    }
+    return is_numeric($value) ? max((float) $value, 0.0) : 0.0;
+}
 function money_value(array $row, string $key): float {
-    $value = row_value($row, $key);
-    return $value === '' ? 0.0 : max((float) $value, 0);
+    return parse_money(row_value($row, $key));
 }
 function int_or_null_value(array $row, string $key): ?int {
     $value = row_value($row, $key);
@@ -33,8 +37,138 @@ function int_or_null_value(array $row, string $key): ?int {
 }
 function date_or_null_value(array $row, string $key): ?string {
     $value = row_value($row, $key);
-    return $value === '' ? null : $value;
+    return parse_date_value($value);
 }
+function parse_date_value($value): ?string {
+    $value = trim((string) $value);
+    if ($value === '') { return null; }
+    foreach (['Y-m-d', 'd.m.Y', 'd/m/Y', 'm/d/Y'] as $format) {
+        $date = DateTime::createFromFormat($format, $value);
+        if ($date && $date->format($format) === $value) {
+            return $date->format('Y-m-d');
+        }
+    }
+    return null;
+}
+function normalise_header($value): string {
+    return strtolower(trim(preg_replace('/[^a-zA-Z0-9]+/', '_', (string) $value), '_'));
+}
+function payer_name($value): string {
+    $name = trim(preg_replace('/^paid\s+by\s+/i', '', (string) $value));
+    return $name === '' ? 'Imported' : ucwords(strtolower($name));
+}
+function infer_car_from_filename(string $filename): array {
+    $base = pathinfo($filename, PATHINFO_FILENAME);
+    $base = preg_replace('/\s*-\s*sheet\d*$/i', '', $base);
+    $base = preg_replace('/\b(expense|expenses|sheet)\b/i', '', $base);
+    $base = trim(preg_replace('/\s+/', ' ', $base));
+
+    $year = null;
+    if (preg_match('/\b((?:19|20)\d{2})\b/', $base, $match)) {
+        $year = (int) $match[1];
+        $base = trim(str_replace($match[1], '', $base));
+    }
+
+    $parts = preg_split('/\s+/', $base) ?: [];
+    $make = $parts[0] ?? 'Imported';
+    $model = trim(implode(' ', array_slice($parts, 1)));
+    if ($model === '') { $model = 'Imported'; }
+
+    return [$make, $model, $year];
+}
+function row_has_value(array $row): bool {
+    foreach ($row as $value) {
+        if (trim((string) $value) !== '') { return true; }
+    }
+    return false;
+}
+function import_paid_by_sheet(PDO $pdo, $handle, array $headerRow, string $filename): int {
+    $payers = [];
+    foreach ($headerRow as $index => $label) {
+        if (stripos((string) $label, 'paid by') !== false) {
+            $payers[$index] = payer_name($label);
+        }
+    }
+    if (!$payers) {
+        http_response_code(400);
+        die('This CSV does not match the CarFlip HQ template or the paid-by expense sheet format.');
+    }
+
+    [$make, $model, $year] = infer_car_from_filename($filename);
+    $stmt = $pdo->prepare('INSERT INTO cars (make, model, year, source, purchase_price, status, notes) VALUES (?, ?, ?, ?, ?, ?, ?)');
+    $stmt->execute([$make, $model, $year, 'Spreadsheet import', 0, 'Sold', 'Imported from ' . $filename]);
+    $carId = (int) $pdo->lastInsertId();
+
+    $imported = 1;
+    $purchaseSet = false;
+    while (($values = fgetcsv($handle)) !== false) {
+        if (!row_has_value($values)) { continue; }
+
+        $first = trim($values[0] ?? '');
+        $second = trim($values[1] ?? '');
+        $date = parse_date_value($first);
+        $payerAmounts = [];
+        $payerTotal = 0.0;
+        foreach ($payers as $index => $payer) {
+            $amount = parse_money($values[$index] ?? '');
+            if ($amount > 0) {
+                $payerAmounts[$payer] = $amount;
+                $payerTotal += $amount;
+            }
+        }
+        $totalAmount = parse_money($values[2] ?? '');
+        $amount = $payerTotal > 0 ? $payerTotal : $totalAmount;
+        if ($amount <= 0) { continue; }
+
+        $isPurchase = stripos($first, 'paid price') !== false || stripos($first . ' ' . $second, 'purchase') !== false;
+        if ($isPurchase && !$purchaseSet) {
+            $purchaseAmount = $totalAmount > 0 ? $totalAmount : $payerTotal;
+            $update = $pdo->prepare('UPDATE cars SET purchase_price = ? WHERE id = ?');
+            $update->execute([$purchaseAmount, $carId]);
+            foreach ($payerAmounts as $payer => $payerAmount) {
+                $stmt = $pdo->prepare('INSERT INTO car_purchase_payments (car_id, paid_by, amount, paid_date, notes) VALUES (?, ?, ?, ?, ?)');
+                $stmt->execute([$carId, $payer, $payerAmount, $date, 'Imported purchase payment']);
+                $imported++;
+            }
+            $purchaseSet = true;
+            continue;
+        }
+
+        $category = $date ? 'Parts' : ($first !== '' ? $first : 'Other');
+        $name = $second !== '' ? $second : ($first !== '' ? $first : 'Imported expense');
+        if ($date && $second === '') { $name = 'Imported expense'; }
+        $notes = 'Imported from ' . $filename;
+
+        if ($payerAmounts) {
+            foreach ($payerAmounts as $payer => $payerAmount) {
+                $stmt = $pdo->prepare('INSERT INTO expenses (car_id, category, expense_name, amount, paid_by, expense_date, notes) VALUES (?, ?, ?, ?, ?, ?, ?)');
+                $stmt->execute([$carId, $category, $name, $payerAmount, $payer, $date, $notes]);
+                $imported++;
+            }
+        } else {
+            $stmt = $pdo->prepare('INSERT INTO expenses (car_id, category, expense_name, amount, paid_by, expense_date, notes) VALUES (?, ?, ?, ?, ?, ?, ?)');
+            $stmt->execute([$carId, $category, $name, $totalAmount, '', $date, $notes]);
+            $imported++;
+        }
+    }
+
+    return $imported;
+}
+
+$rawHeaders = fgetcsv($handle);
+if (!$rawHeaders) { http_response_code(400); die('CSV is empty.'); }
+$headers = array_map('normalise_header', $rawHeaders);
+
+if (!in_array('record_type', $headers, true)) {
+    $imported = import_paid_by_sheet($pdo, $handle, $rawHeaders, $_FILES['sheet_file']['name']);
+    fclose($handle);
+    header('Location: ../pages/import-sheet.php?imported=' . $imported);
+    exit;
+}
+
+$carsByKey = [];
+$lastCarId = null;
+$imported = 0;
 
 while (($values = fgetcsv($handle)) !== false) {
     $row = [];
