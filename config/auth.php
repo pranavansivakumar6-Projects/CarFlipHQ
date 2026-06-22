@@ -3,7 +3,11 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-const BASE_PATH = '/carfliphq';
+if (!defined('BASE_PATH')) {
+    $configuredBasePath = getenv('APP_BASE_PATH');
+    $defaultBasePath = (getenv('RAILWAY_PROJECT_ID') || getenv('RAILWAY_ENVIRONMENT')) ? '' : '/carfliphq';
+    define('BASE_PATH', rtrim($configuredBasePath !== false ? $configuredBasePath : $defaultBasePath, '/'));
+}
 
 function app_url(string $path): string
 {

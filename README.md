@@ -13,6 +13,18 @@ Vehicle acquisition, repair management, task tracking, expense tracking, and pro
 5. Open: `http://localhost/carfliphq/index.php`
 6. Create the first admin account when prompted.
 
+## Deploying on Railway
+
+1. Create a new Railway project from the GitHub repository.
+2. Add a MySQL database service to the same Railway project.
+3. Deploy the web service from this repo. Railway will use the included `Dockerfile`.
+4. Set `APP_BASE_PATH` to an empty value for the Railway web service.
+5. Import `sql/carfliphq.sql` into the Railway MySQL database.
+6. Run any newer migration files in `sql/` that are not already included in the imported database.
+7. Open the Railway public URL and create the first admin account.
+
+Railway storage is not the same as permanent cPanel disk storage. Uploaded receipts/photos may need a Railway volume or external object storage before serious production use.
+
 ## Current features
 
 - Dashboard

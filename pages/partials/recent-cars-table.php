@@ -10,7 +10,7 @@ $cars = $recentCars ?? $pdo->query("SELECT * FROM cars ORDER BY created_at DESC 
         <td>$<?= number_format($car['purchase_price'], 2) ?></td>
         <td>$<?= number_format($car['estimated_sale_price'], 2) ?></td>
         <td><?= (float) $car['actual_sale_price'] > 0 ? '$'.number_format($car['actual_sale_price'], 2) : '-' ?></td>
-        <td><a class="btn secondary" href="/carfliphq/pages/car-detail.php?id=<?= $car['id'] ?>">Open</a></td>
+        <td><a class="btn secondary" href="<?= app_url('pages/car-detail.php?id=' . (int) $car['id']) ?>">Open</a></td>
     </tr>
     <?php endforeach; ?>
 </table>
