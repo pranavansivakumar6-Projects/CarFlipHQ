@@ -78,8 +78,8 @@ if ($currentUserId > 0) {
 }
 
 $sql = file_get_contents($_FILES['backup_file']['tmp_name']);
-if ($sql === false || stripos($sql, 'CREATE TABLE') === false) {
-    redirect_to('pages/restore-backup.php?error=invalid');
+if ($sql === false || trim($sql) === '') {
+    redirect_to('pages/restore-backup.php?error=empty upload');
 }
 
 try {
