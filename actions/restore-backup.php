@@ -57,9 +57,12 @@ function split_sql_statements(string $sql): array
 
 function should_skip_statement(string $statement): bool
 {
-    $normalized = ltrim($statement);
+    $normalized = preg_replace('/^\s*--.*$/m', '', $statement);
+    $normalized = preg_replace('/^\s*\/\*![0-9]+\s+ALTER\s+TABLE.*(?:DISABLE|ENABLE)\s+KEYS\s+\*\/\s*;?\s*$/im', '', $normalized);
+    $normalized = ltrim((string) $normalized);
 
-    return preg_match('/^(CREATE\s+DATABASE|USE\s+|LOCK\s+TABLES|UNLOCK\s+TABLES)/i', $normalized) === 1;
+    return $normalized === ''
+        || preg_match('/^(CREATE\s+DATABASE|USE\s+|LOCK\s+TABLES|UNLOCK\s+TABLES)/i', $normalized) === 1;
 }
 
 if (empty($_FILES['backup_file']['tmp_name']) || !is_uploaded_file($_FILES['backup_file']['tmp_name'])) {
@@ -83,11 +86,17 @@ try {
     $pdo->beginTransaction();
     $pdo->exec('SET FOREIGN_KEY_CHECKS=0');
 
+    $statementNumber = 0;
     foreach (split_sql_statements($sql) as $statement) {
+        $statementNumber++;
         if (should_skip_statement($statement)) {
             continue;
         }
-        $pdo->exec($statement);
+        try {
+            $pdo->exec($statement);
+        } catch (Throwable $e) {
+            throw new RuntimeException('Statement ' . $statementNumber . ' failed: ' . $e->getMessage(), 0, $e);
+        }
     }
 
     $pdo->exec('SET FOREIGN_KEY_CHECKS=1');
@@ -119,7 +128,8 @@ try {
         $pdo->rollBack();
     }
 
-    error_log('Backup restore failed: ' . $e->getMessage());
-    redirect_to('pages/restore-backup.php?error=restore');
+    $message = substr($e->getMessage(), 0, 240);
+    error_log('Backup restore failed: ' . $message);
+    redirect_to('pages/restore-backup.php?error=' . urlencode($message));
 }
 ?>

@@ -14,7 +14,7 @@ require '../header.php';
         <div class="alert success">Backup restored. Your live data is back.</div>
     <?php endif; ?>
     <?php if (isset($_GET['error'])): ?>
-        <div class="alert">Restore failed. Check that you selected the CarFlip HQ SQL backup file.</div>
+        <div class="alert">Restore failed: <?= htmlspecialchars($_GET['error']) ?></div>
     <?php endif; ?>
 
     <form class="form-card" action="../actions/restore-backup.php" method="POST" enctype="multipart/form-data" onsubmit="return confirm('Restore this backup to the live database?');">
