@@ -25,6 +25,7 @@ $user = current_user();
         <a href="<?= app_url('pages/reports.php') ?>">Reports</a>
         <?php if (($user['role'] ?? '') === 'admin'): ?>
         <a href="<?= app_url('pages/users.php') ?>">Users</a>
+        <a href="<?= app_url('pages/restore-backup.php') ?>">Restore</a>
         <?php endif; ?>
         <a href="<?= app_url('actions/logout.php') ?>">Logout</a>
         <?php else: ?>
