@@ -28,6 +28,9 @@ try {
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         PDO::ATTR_EMULATE_PREPARES => false,
     ]);
+
+    require_once __DIR__ . '/schema.php';
+    ensure_database_schema($pdo);
 } catch (PDOException $e) {
     error_log('Database connection failed: ' . $e->getMessage());
     die('Database connection failed.');
