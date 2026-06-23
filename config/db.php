@@ -1,9 +1,10 @@
 <?php
-$databaseUrl = getenv('DATABASE_URL');
+$databaseUrl = getenv('DATABASE_URL') ?: getenv('MYSQL_URL');
+$databaseUrlIsReference = $databaseUrl && str_contains($databaseUrl, '${{');
+$database = $databaseUrl && !$databaseUrlIsReference ? parse_url($databaseUrl) : false;
 
-if ($databaseUrl) {
-    $database = parse_url($databaseUrl);
-    $host = $database['host'] ?? 'localhost';
+if ($database && !empty($database['host'])) {
+    $host = $database['host'];
     $port = $database['port'] ?? 3306;
     $dbname = ltrim($database['path'] ?? '/carfliphq', '/');
     $username = $database['user'] ?? 'root';
@@ -14,6 +15,11 @@ if ($databaseUrl) {
     $dbname = getenv('MYSQLDATABASE') ?: getenv('DB_NAME') ?: 'carfliphq';
     $username = getenv('MYSQLUSER') ?: getenv('DB_USER') ?: 'root';
     $password = getenv('MYSQLPASSWORD') ?: getenv('DB_PASSWORD') ?: '';
+}
+
+if ($host === 'localhost' && (getenv('RAILWAY_ENVIRONMENT') || getenv('RAILWAY_PROJECT_ID'))) {
+    error_log('Database connection failed: Railway database variables are missing or unresolved. Set MYSQLHOST, MYSQLPORT, MYSQLDATABASE, MYSQLUSER, and MYSQLPASSWORD from the MySQL service variables.');
+    die('Database connection failed.');
 }
 
 try {
