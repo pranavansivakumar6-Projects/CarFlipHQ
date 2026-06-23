@@ -1,0 +1,12 @@
+USE carfliphq;
+
+CREATE TABLE IF NOT EXISTS car_purchase_payments (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  car_id INT NOT NULL,
+  paid_by VARCHAR(100) NOT NULL,
+  amount DECIMAL(10,2) NOT NULL,
+  paid_date DATE,
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (car_id) REFERENCES cars(id) ON DELETE CASCADE
+);

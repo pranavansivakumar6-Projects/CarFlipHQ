@@ -3,22 +3,62 @@ require 'config/db.php';
 $pageTitle = 'Dashboard | CarFlip HQ';
 require 'header.php';
 
-$totalCars = $pdo->query("SELECT COUNT(*) FROM cars")->fetchColumn();
+$scope = $_GET['scope'] ?? 'active';
+if (!in_array($scope, ['active', 'sold', 'all'], true)) { $scope = 'active'; }
+
+$scopeWhere = [
+    'active' => "status != 'Sold'",
+    'sold' => "status = 'Sold'",
+    'all' => '1=1',
+][$scope];
+$expenseScopeWhere = [
+    'active' => "c.status != 'Sold'",
+    'sold' => "c.status = 'Sold'",
+    'all' => '1=1',
+][$scope];
+$taskScopeWhere = [
+    'active' => "cars.status != 'Sold'",
+    'sold' => "cars.status = 'Sold'",
+    'all' => '1=1',
+][$scope];
+$salesSql = $scope === 'active'
+    ? 'COALESCE(SUM(estimated_sale_price),0)'
+    : 'COALESCE(SUM(CASE WHEN actual_sale_price > 0 THEN actual_sale_price ELSE estimated_sale_price END),0)';
+$scopeLabel = ['active' => 'Active Cars', 'sold' => 'Sold Cars', 'all' => 'All Cars'][$scope];
+$profitLabel = $scope === 'sold' ? 'Realized Profit' : ($scope === 'active' ? 'Expected Active Profit' : 'Projected/Realized Profit');
+
+$totalCars = $pdo->query("SELECT COUNT(*) FROM cars WHERE $scopeWhere")->fetchColumn();
 $activeCars = $pdo->query("SELECT COUNT(*) FROM cars WHERE status != 'Sold'")->fetchColumn();
 $soldCars = $pdo->query("SELECT COUNT(*) FROM cars WHERE status = 'Sold'")->fetchColumn();
-$openTasks = $pdo->query("SELECT COUNT(*) FROM tasks WHERE status != 'Done'")->fetchColumn();
-$totalPurchase = $pdo->query("SELECT COALESCE(SUM(purchase_price),0) FROM cars")->fetchColumn();
-$totalExpenses = $pdo->query("SELECT COALESCE(SUM(amount),0) FROM expenses")->fetchColumn();
+$openTasks = $pdo->query("SELECT COUNT(*) FROM tasks JOIN cars ON cars.id = tasks.car_id WHERE tasks.status != 'Done' AND $taskScopeWhere")->fetchColumn();
+$overdueTasks = $pdo->query("SELECT COUNT(*) FROM tasks JOIN cars ON cars.id = tasks.car_id WHERE tasks.status != 'Done' AND tasks.due_date IS NOT NULL AND tasks.due_date < CURDATE() AND $taskScopeWhere")->fetchColumn();
+$readyCars = $pdo->query("SELECT COUNT(*) FROM cars WHERE status IN ('Ready for Sale','Listed') AND $scopeWhere")->fetchColumn();
+$totalPurchase = (float) $pdo->query("SELECT COALESCE(SUM(purchase_price),0) FROM cars WHERE $scopeWhere")->fetchColumn();
+$totalExpenses = (float) $pdo->query("SELECT COALESCE(SUM(e.amount),0) FROM expenses e JOIN cars c ON c.id = e.car_id WHERE $expenseScopeWhere")->fetchColumn();
+$salesValue = (float) $pdo->query("SELECT $salesSql FROM cars WHERE $scopeWhere")->fetchColumn();
+$expectedProfit = $salesValue - $totalPurchase - $totalExpenses;
+$recentCars = $pdo->query("SELECT * FROM cars WHERE $scopeWhere ORDER BY created_at DESC LIMIT 8")->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <div class="container">
     <h1>Dashboard</h1>
+    <form class="filter-bar" method="GET">
+        <label for="scope">Summary</label>
+        <select id="scope" name="scope" onchange="this.form.submit()">
+            <option value="active" <?= $scope === 'active' ? 'selected' : '' ?>>Active cars only</option>
+            <option value="sold" <?= $scope === 'sold' ? 'selected' : '' ?>>Sold cars only</option>
+            <option value="all" <?= $scope === 'all' ? 'selected' : '' ?>>All cars</option>
+        </select>
+    </form>
     <div class="grid">
-        <div class="card"><div>Total Cars</div><div class="stat"><?= $totalCars ?></div></div>
+        <div class="card"><div><?= htmlspecialchars($scopeLabel) ?></div><div class="stat"><?= $totalCars ?></div></div>
         <div class="card"><div>Active Cars</div><div class="stat"><?= $activeCars ?></div></div>
         <div class="card"><div>Sold Cars</div><div class="stat"><?= $soldCars ?></div></div>
         <div class="card"><div>Open Tasks</div><div class="stat"><?= $openTasks ?></div></div>
-        <div class="card"><div>Total Purchase Cost</div><div class="stat">$<?= number_format($totalPurchase, 2) ?></div></div>
-        <div class="card"><div>Total Extra Expenses</div><div class="stat">$<?= number_format($totalExpenses, 2) ?></div></div>
+        <div class="card"><div>Overdue Tasks</div><div class="stat"><?= $overdueTasks ?></div></div>
+        <div class="card"><div>Ready/Listable</div><div class="stat"><?= $readyCars ?></div></div>
+        <div class="card"><div>Purchase Cost</div><div class="stat">$<?= number_format($totalPurchase, 2) ?></div><div class="small"><?= htmlspecialchars($scopeLabel) ?></div></div>
+        <div class="card"><div>Extra Expenses</div><div class="stat">$<?= number_format($totalExpenses, 2) ?></div><div class="small"><?= htmlspecialchars($scopeLabel) ?></div></div>
+        <div class="card"><div><?= htmlspecialchars($profitLabel) ?></div><div class="profit <?= $expectedProfit >= 0 ? 'positive' : 'negative' ?>">$<?= number_format($expectedProfit, 2) ?></div></div>
     </div>
     <h2 class="section-title">Recent Cars</h2>
     <p><a class="btn" href="pages/add-car.php">+ Add New Car</a></p>

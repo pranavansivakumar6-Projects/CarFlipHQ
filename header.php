@@ -10,7 +10,7 @@ $user = current_user();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($pageTitle) ?></title>
-    <link rel="stylesheet" href="/carfliphq/assets/css/style.css">
+    <link rel="stylesheet" href="<?= app_url('assets/css/style.css') ?>">
 </head>
 <body>
 <div class="topbar">
@@ -21,6 +21,11 @@ $user = current_user();
         <a href="<?= app_url('index.php') ?>">Dashboard</a>
         <a href="<?= app_url('pages/cars.php') ?>">Cars</a>
         <a href="<?= app_url('pages/add-car.php') ?>">Add Car</a>
+        <a href="<?= app_url('pages/import-sheet.php') ?>">Import Sheet</a>
+        <a href="<?= app_url('pages/reports.php') ?>">Reports</a>
+        <?php if (($user['role'] ?? '') === 'admin'): ?>
+        <a href="<?= app_url('pages/users.php') ?>">Users</a>
+        <?php endif; ?>
         <a href="<?= app_url('actions/logout.php') ?>">Logout</a>
         <?php else: ?>
         <a href="<?= app_url('pages/login.php') ?>">Login</a>

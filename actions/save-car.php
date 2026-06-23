@@ -5,11 +5,13 @@ require '../config/helpers.php';
 
 require_login();
 
-$stmt = $pdo->prepare("INSERT INTO cars (make, model, year, vin, rego, odometer, source, purchase_price, purchase_date, estimated_sale_price, damage_notes, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+$stmt = $pdo->prepare("INSERT INTO cars (make, model, year, color, body_type, vin, rego, odometer, source, purchase_price, purchase_date, estimated_sale_price, damage_notes, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 $stmt->execute([
     post_string('make', true),
     post_string('model', true),
     post_int('year'),
+    post_string('color'),
+    post_string('body_type'),
     post_string('vin'),
     post_string('rego'),
     post_int('odometer'),

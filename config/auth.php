@@ -3,7 +3,11 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-const BASE_PATH = '/carfliphq';
+if (!defined('BASE_PATH')) {
+    $configuredBasePath = getenv('APP_BASE_PATH');
+    $defaultBasePath = (getenv('RAILWAY_PROJECT_ID') || getenv('RAILWAY_ENVIRONMENT')) ? '' : '/carfliphq';
+    define('BASE_PATH', rtrim($configuredBasePath !== false ? $configuredBasePath : $defaultBasePath, '/'));
+}
 
 function app_url(string $path): string
 {
@@ -30,6 +34,16 @@ function require_login(): void
 {
     if (!is_logged_in()) {
         redirect_to('pages/login.php');
+    }
+}
+
+function require_admin(): void
+{
+    require_login();
+
+    if ((current_user()['role'] ?? '') !== 'admin') {
+        http_response_code(403);
+        die('Admin access required.');
     }
 }
 
