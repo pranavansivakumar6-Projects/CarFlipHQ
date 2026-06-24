@@ -72,6 +72,26 @@ function executable_restore_statement(string $statement): ?string
     return $normalized;
 }
 
+function clear_live_tables(PDO $pdo): void
+{
+    $tables = [
+        'car_files',
+        'sale_listings',
+        'parts',
+        'car_purchase_payments',
+        'expenses',
+        'tasks',
+        'cars',
+        'investors',
+        'sources',
+        'users',
+    ];
+
+    foreach ($tables as $table) {
+        $pdo->exec('DELETE FROM ' . $table);
+    }
+}
+
 if (empty($_FILES['backup_file']['tmp_name']) || !is_uploaded_file($_FILES['backup_file']['tmp_name'])) {
     redirect_to('pages/restore-backup.php?error=missing');
 }
@@ -92,6 +112,7 @@ if ($sql === false || trim($sql) === '') {
 try {
     $pdo->beginTransaction();
     $pdo->exec('SET FOREIGN_KEY_CHECKS=0');
+    clear_live_tables($pdo);
 
     $statementNumber = 0;
     $executedStatements = 0;
