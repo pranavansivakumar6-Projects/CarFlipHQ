@@ -20,9 +20,16 @@ $stmt = $pdo->prepare("
     UNION
     SELECT paid_by AS name FROM car_purchase_payments WHERE car_id = ? AND paid_by IS NOT NULL AND paid_by <> ''
     UNION
+    SELECT TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(tasks.assigned_to, ',', numbers.n), ',', -1)) AS name
+    FROM tasks
+    JOIN (
+        SELECT 1 n UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5
+    ) numbers ON CHAR_LENGTH(tasks.assigned_to) - CHAR_LENGTH(REPLACE(tasks.assigned_to, ',', '')) >= numbers.n - 1
+    WHERE tasks.car_id = ? AND tasks.assigned_to IS NOT NULL AND tasks.assigned_to <> ''
+    UNION
     SELECT person_name AS name FROM car_profit_shares WHERE car_id = ?
 ");
-$stmt->execute([$carId, $carId, $carId]);
+$stmt->execute([$carId, $carId, $carId, $carId]);
 $validNames = array_values(array_unique(array_merge($validNames, $stmt->fetchAll(PDO::FETCH_COLUMN))));
 $validNameLookup = array_flip($validNames);
 $cleanShares = [];

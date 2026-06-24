@@ -69,20 +69,23 @@ foreach ($purchasePayments as $payment) {
         $paidTotals[$payment['paid_by']] = ($paidTotals[$payment['paid_by']] ?? 0) + (float) $payment['amount'];
     }
 }
-$partnerNames = array_values(array_unique(array_merge(array_keys($paidTotals), array_keys($savedShares))));
-$partnerCount = max(count($partnerNames), 1);
-$sharePercents = [];
-foreach ($partnerNames as $index => $name) {
-    if (isset($savedShares[$name])) {
-        $sharePercents[$name] = (float) $savedShares[$name];
-        continue;
+$taskParticipantNames = [];
+foreach ($tasks as $task) {
+    foreach (explode(',', (string) ($task['assigned_to'] ?? '')) as $assignedName) {
+        $assignedName = trim($assignedName);
+        if ($assignedName !== '') {
+            $taskParticipantNames[] = $assignedName;
+        }
     }
-
-    $assignedDefault = array_sum($sharePercents);
-    $remainingPeople = count($partnerNames) - $index;
-    $sharePercents[$name] = $remainingPeople <= 1 ? round(100 - $assignedDefault, 2) : round(100 / $partnerCount, 2);
 }
-$shareTotal = array_sum($sharePercents);
+$partnerNames = array_values(array_unique(array_merge(array_keys($paidTotals), $taskParticipantNames, array_keys($savedShares))));
+$partnerCount = max(count($partnerNames), 1);
+$hasSavedShares = count($savedShares) > 0;
+$sharePercents = [];
+foreach ($partnerNames as $name) {
+    $sharePercents[$name] = isset($savedShares[$name]) ? (float) $savedShares[$name] : null;
+}
+$shareTotal = array_sum(array_map(fn($share) => (float) ($share ?? 0), $sharePercents));
 $unassignedExpenses = array_sum(array_map(fn($expense) => empty($expense['paid_by']) ? (float) $expense['amount'] : 0.0, $expenses));
 $unassignedPurchase = max((float) $car['purchase_price'] - $purchasePaidTotal, 0);
 $settlements = [];
@@ -91,11 +94,11 @@ $profitShares = [];
 $salePayouts = [];
 foreach ($partnerNames as $name) {
     $paidAmount = $paidTotals[$name] ?? 0.0;
-    $sharePercent = $sharePercents[$name] ?? 0.0;
-    $costShares[$name] = $totalCost * ($sharePercent / 100);
-    $profitShares[$name] = $profitForSplit * ($sharePercent / 100);
-    $settlements[$name] = $paidAmount - $costShares[$name];
-    $salePayouts[$name] = $paidAmount + $profitShares[$name];
+    $sharePercent = $sharePercents[$name];
+    $costShares[$name] = $sharePercent === null ? null : $totalCost * ($sharePercent / 100);
+    $profitShares[$name] = $sharePercent === null ? null : $profitForSplit * ($sharePercent / 100);
+    $settlements[$name] = $sharePercent === null ? null : $paidAmount - $costShares[$name];
+    $salePayouts[$name] = $sharePercent === null ? null : $paidAmount + $profitShares[$name];
 }
 $pageTitle = $car['make'].' '.$car['model'].' | CarFlip HQ';
 require '../header.php';
@@ -124,19 +127,19 @@ require '../header.php';
         <div class="card"><b>Sale Value Used</b><div class="stat">$<?= number_format($saleValue, 2) ?></div><div class="small"><?= $car['actual_sale_price'] > 0 ? 'Actual sale price' : 'Estimated sale price' ?></div></div>
         <div class="card"><b>Total Invested</b><div class="stat">$<?= number_format($totalCost, 2) ?></div><div class="small">$<?= number_format($car['purchase_price'], 2) ?> car + $<?= number_format($totalExpenses, 2) ?> expenses</div></div>
         <div class="card"><b>Total Profit</b><div class="profit <?= $profitForSplit >= 0 ? 'positive' : 'negative' ?>">$<?= number_format($profitForSplit, 2) ?></div><div class="small">Sale minus total invested</div></div>
-        <div class="card"><b>Profit Split</b><div class="profit <?= $profitForSplit >= 0 ? 'positive' : 'negative' ?>"><?= number_format($shareTotal, 2) ?>%</div><div class="small"><?= $savedShares ? 'Custom split saved' : 'Equal split default' ?></div></div>
+        <div class="card"><b>Profit Split</b><div class="profit <?= $hasSavedShares ? ($profitForSplit >= 0 ? 'positive' : 'negative') : '' ?>"><?= $hasSavedShares ? number_format($shareTotal, 2).'%' : 'Not set' ?></div><div class="small"><?= $hasSavedShares ? 'Custom split saved' : 'Choose custom percentages below' ?></div></div>
     </div>
     <table class="section-title">
         <tr><th>Person</th><th>Split %</th><th>Total Paid</th><th>Cost Share</th><th>Cost Balance</th><th>Profit Share</th><th><?= $car['actual_sale_price'] > 0 ? 'Payout From Sale' : 'Expected Payout' ?></th></tr>
         <?php foreach ($settlements as $name => $settlement): ?>
         <tr>
             <td><?= detail_text($name) ?></td>
-            <td><?= number_format($sharePercents[$name] ?? 0, 2) ?>%</td>
+            <td><?= $sharePercents[$name] === null ? 'Not set' : number_format($sharePercents[$name], 2).'%' ?></td>
             <td>$<?= number_format($paidTotals[$name], 2) ?></td>
-            <td>$<?= number_format($costShares[$name], 2) ?></td>
-            <td class="<?= $settlement >= 0 ? 'positive' : 'negative' ?>"><?= $settlement >= 0 ? 'Ahead $'.number_format($settlement, 2) : 'Behind $'.number_format(abs($settlement), 2) ?></td>
-            <td>$<?= number_format($profitShares[$name], 2) ?></td>
-            <td><b>$<?= number_format($salePayouts[$name], 2) ?></b></td>
+            <td><?= $costShares[$name] === null ? 'Set split' : '$'.number_format($costShares[$name], 2) ?></td>
+            <td class="<?= $settlement === null ? '' : ($settlement >= 0 ? 'positive' : 'negative') ?>"><?= $settlement === null ? 'Set split' : ($settlement >= 0 ? 'Ahead $'.number_format($settlement, 2) : 'Behind $'.number_format(abs($settlement), 2)) ?></td>
+            <td><?= $profitShares[$name] === null ? 'Set split' : '$'.number_format($profitShares[$name], 2) ?></td>
+            <td><b><?= $salePayouts[$name] === null ? 'Set split' : '$'.number_format($salePayouts[$name], 2) ?></b></td>
         </tr>
         <?php endforeach; ?>
         <?php if (!$partnerNames): ?>
@@ -150,16 +153,18 @@ require '../header.php';
         <?php endif; ?>
     </table>
     <?php if ($partnerNames): ?>
-    <form class="form-card section-title" action="../actions/save-profit-shares.php" method="POST">
-        <input type="hidden" name="car_id" value="<?= (int) $id ?>">
-        <h3>Set Profit Split</h3>
-        <?php foreach ($partnerNames as $name): ?>
-        <label><?= detail_text($name) ?> percentage</label>
-        <input name="shares[<?= detail_text($name) ?>]" type="number" step="0.01" min="0" max="100" value="<?= number_format($sharePercents[$name] ?? 0, 2, '.', '') ?>">
-        <?php endforeach; ?>
-        <p class="small">Percentages must add up to 100%.</p>
-        <button class="btn" type="submit">Save Split</button>
-    </form>
+    <details class="dropdown-card section-title" <?= $hasSavedShares ? '' : 'open' ?>>
+        <summary><?= $hasSavedShares ? 'Edit Custom Split' : 'Set Custom Split' ?></summary>
+        <form action="../actions/save-profit-shares.php" method="POST">
+            <input type="hidden" name="car_id" value="<?= (int) $id ?>">
+            <?php foreach ($partnerNames as $name): ?>
+            <label><?= detail_text($name) ?> percentage</label>
+            <input name="shares[<?= detail_text($name) ?>]" type="number" step="0.01" min="0" max="100" value="<?= $sharePercents[$name] === null ? '' : number_format($sharePercents[$name], 2, '.', '') ?>">
+            <?php endforeach; ?>
+            <p class="small">Only the people participating in this car appear here. Percentages must add up to 100%.</p>
+            <button class="btn" type="submit">Save Split</button>
+        </form>
+    </details>
     <?php endif; ?>
 
     <h2 class="section-title">Purchase Payments</h2>
@@ -291,12 +296,15 @@ require '../header.php';
             <td>
                 <form action="../actions/update-task-assignee.php" method="POST">
                     <input type="hidden" name="id" value="<?= (int) $t['id'] ?>">
-                    <div class="check-grid compact-checks">
-                        <?php foreach ($users as $name): ?>
-                        <label class="check-pill"><input type="checkbox" name="assigned_to[]" value="<?= detail_text($name) ?>" <?= in_array($name, $assignedNames, true) ? 'checked' : '' ?>> <?= detail_text($name) ?></label>
-                        <?php endforeach; ?>
-                    </div>
-                    <button class="btn secondary small-btn" type="submit">Save</button>
+                    <details class="assign-menu">
+                        <summary><?= $assignedNames && implode('', $assignedNames) !== '' ? detail_text(implode(', ', array_filter($assignedNames))) : 'Assign people' ?></summary>
+                        <div class="assign-panel">
+                            <?php foreach ($users as $name): ?>
+                            <label class="check-pill"><input type="checkbox" name="assigned_to[]" value="<?= detail_text($name) ?>" <?= in_array($name, $assignedNames, true) ? 'checked' : '' ?>> <?= detail_text($name) ?></label>
+                            <?php endforeach; ?>
+                            <button class="btn secondary small-btn" type="submit">Save</button>
+                        </div>
+                    </details>
                 </form>
             </td>
             <td><?= number_format((float) ($t['hours_spent'] ?? 0), 2) ?></td>
