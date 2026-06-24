@@ -100,6 +100,18 @@ foreach ($partnerNames as $name) {
     $settlements[$name] = $sharePercent === null ? null : $paidAmount - $costShares[$name];
     $salePayouts[$name] = $sharePercent === null ? null : $paidAmount + $profitShares[$name];
 }
+$statusSteps = ['Bought','Waiting for Parts','Under Repair','RWC Pending','Ready for Sale','Listed','Sold'];
+$currentStatusIndex = array_search($car['status'], $statusSteps, true);
+$currentStatusIndex = $currentStatusIndex === false ? 0 : $currentStatusIndex;
+$tasksByStatus = [
+    'To Do' => [],
+    'In Progress' => [],
+    'Done' => [],
+];
+foreach ($tasks as $task) {
+    $taskStatus = $task['status'] ?? 'To Do';
+    $tasksByStatus[$taskStatus][] = $task;
+}
 $pageTitle = $car['make'].' '.$car['model'].' | CarFlip HQ';
 require '../header.php';
 ?>
@@ -108,6 +120,7 @@ require '../header.php';
     <div class="actions">
         <a class="btn secondary" href="edit-car.php?id=<?= $id ?>">Edit Car</a>
         <a class="btn secondary" href="../actions/export-car-sheet.php?id=<?= $id ?>">Download Sheet</a>
+        <a class="btn secondary" href="ai.php?car_id=<?= $id ?>">AI Tools</a>
     </div>
 
     <div class="grid section-title">
@@ -117,6 +130,15 @@ require '../header.php';
         <div class="card"><b>Open Parts</b><div class="stat"><?= $openParts ?></div><div class="small">$<?= number_format($partsCost, 2) ?> tracked</div></div>
         <div class="card"><b>Estimated Profit</b><div class="profit <?= $estimatedProfit >= 0 ? 'positive' : 'negative' ?>">$<?= number_format($estimatedProfit, 2) ?></div></div>
         <div class="card"><b>Actual Profit</b><div class="profit <?= ($actualProfit ?? 0) >= 0 ? 'positive' : 'negative' ?>"><?= $actualProfit === null ? 'Not sold' : '$'.number_format($actualProfit, 2) ?></div></div>
+    </div>
+
+    <div class="timeline-card section-title">
+        <?php foreach ($statusSteps as $stepIndex => $step): ?>
+        <div class="timeline-step <?= $stepIndex < $currentStatusIndex ? 'complete' : ($stepIndex === $currentStatusIndex ? 'current' : '') ?>">
+            <span></span>
+            <b><?= detail_text($step) ?></b>
+        </div>
+        <?php endforeach; ?>
     </div>
 
     <h2 class="section-title">Finance Split</h2>
@@ -286,6 +308,26 @@ require '../header.php';
     <p><a class="btn" href="add-expense.php?car_id=<?= $id ?>">+ Add Expense</a></p>
 
     <h2 class="section-title">Tasks</h2>
+    <div class="task-board">
+        <?php foreach ($tasksByStatus as $statusName => $statusTasks): ?>
+        <section class="task-column">
+            <div class="task-column-head">
+                <b><?= detail_text($statusName) ?></b>
+                <span><?= count($statusTasks) ?></span>
+            </div>
+            <?php foreach ($statusTasks as $boardTask): ?>
+            <a class="task-mini-card" href="edit-task.php?id=<?= (int) $boardTask['id'] ?>">
+                <b><?= detail_text($boardTask['task_title']) ?></b>
+                <span><?= detail_text($boardTask['assigned_to'], 'Unassigned') ?></span>
+                <small><?= number_format((float) ($boardTask['hours_spent'] ?? 0), 2) ?> hrs / <?= detail_text($boardTask['priority']) ?></small>
+            </a>
+            <?php endforeach; ?>
+            <?php if (!$statusTasks): ?>
+            <p class="small">No tasks here.</p>
+            <?php endif; ?>
+        </section>
+        <?php endforeach; ?>
+    </div>
     <table>
         <tr><th>Due</th><th>Task</th><th>Assigned</th><th>Hours</th><th>Priority</th><th>Status</th><th>Action</th></tr>
         <?php foreach ($tasks as $t): ?>
