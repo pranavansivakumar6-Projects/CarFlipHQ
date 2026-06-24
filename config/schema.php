@@ -18,6 +18,19 @@ function ensure_database_schema(PDO $pdo): void
           role ENUM('admin','partner') DEFAULT 'partner',
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )",
+        "CREATE TABLE IF NOT EXISTS investors (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          name VARCHAR(150) NOT NULL,
+          email VARCHAR(150),
+          phone VARCHAR(50),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )",
+        "CREATE TABLE IF NOT EXISTS sources (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          name VARCHAR(150) NOT NULL,
+          website VARCHAR(255),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )",
         "CREATE TABLE IF NOT EXISTS cars (
           id INT AUTO_INCREMENT PRIMARY KEY,
           make VARCHAR(100) NOT NULL,

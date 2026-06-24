@@ -55,14 +55,21 @@ function split_sql_statements(string $sql): array
     return $statements;
 }
 
-function should_skip_statement(string $statement): bool
+function executable_restore_statement(string $statement): ?string
 {
     $normalized = preg_replace('/^\s*--.*$/m', '', $statement);
     $normalized = preg_replace('/^\s*\/\*![0-9]+\s+ALTER\s+TABLE.*(?:DISABLE|ENABLE)\s+KEYS\s+\*\/\s*;?\s*$/im', '', $normalized);
-    $normalized = ltrim((string) $normalized);
+    $normalized = trim((string) $normalized);
 
-    return $normalized === ''
-        || preg_match('/^(CREATE\s+DATABASE|USE\s+|LOCK\s+TABLES|UNLOCK\s+TABLES)/i', $normalized) === 1;
+    if ($normalized === '') {
+        return null;
+    }
+
+    if (preg_match('/^(DROP\s+TABLE|CREATE\s+TABLE|INSERT\s+INTO)/i', $normalized) !== 1) {
+        return null;
+    }
+
+    return $normalized;
 }
 
 if (empty($_FILES['backup_file']['tmp_name']) || !is_uploaded_file($_FILES['backup_file']['tmp_name'])) {
@@ -89,7 +96,8 @@ try {
     $statementNumber = 0;
     foreach (split_sql_statements($sql) as $statement) {
         $statementNumber++;
-        if (should_skip_statement($statement)) {
+        $statement = executable_restore_statement($statement);
+        if ($statement === null) {
             continue;
         }
         try {
