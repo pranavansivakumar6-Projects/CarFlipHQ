@@ -94,6 +94,7 @@ try {
     $pdo->exec('SET FOREIGN_KEY_CHECKS=0');
 
     $statementNumber = 0;
+    $executedStatements = 0;
     foreach (split_sql_statements($sql) as $statement) {
         $statementNumber++;
         $statement = executable_restore_statement($statement);
@@ -102,12 +103,17 @@ try {
         }
         try {
             $pdo->exec($statement);
+            $executedStatements++;
         } catch (Throwable $e) {
             throw new RuntimeException('Statement ' . $statementNumber . ' failed: ' . $e->getMessage(), 0, $e);
         }
     }
 
     $pdo->exec('SET FOREIGN_KEY_CHECKS=1');
+
+    if ($executedStatements === 0) {
+        throw new RuntimeException('No restore statements were found in the uploaded file.');
+    }
 
     if ($currentUser) {
         $stmt = $pdo->prepare('SELECT id FROM users WHERE email = ? LIMIT 1');
@@ -129,8 +135,16 @@ try {
         $_SESSION['user']['role'] = 'admin';
     }
 
+    $carCount = (int) $pdo->query('SELECT COUNT(*) FROM cars')->fetchColumn();
+    $expenseCount = (int) $pdo->query('SELECT COUNT(*) FROM expenses')->fetchColumn();
+    $taskCount = (int) $pdo->query('SELECT COUNT(*) FROM tasks')->fetchColumn();
+
+    if ($carCount === 0) {
+        throw new RuntimeException('Restore ran, but no cars were imported. Check that the SQL backup is the full CarFlip HQ export.');
+    }
+
     $pdo->commit();
-    redirect_to('pages/restore-backup.php?restored=1');
+    redirect_to('pages/restore-backup.php?restored=1&cars=' . $carCount . '&expenses=' . $expenseCount . '&tasks=' . $taskCount);
 } catch (Throwable $e) {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();

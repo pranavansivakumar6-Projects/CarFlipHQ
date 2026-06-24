@@ -11,7 +11,7 @@ require '../header.php';
     <p class="small">Upload a CarFlip HQ SQL backup to restore the live database. This replaces the current live tables with the backup data.</p>
 
     <?php if (isset($_GET['restored'])): ?>
-        <div class="alert success">Backup restored. Your live data is back.</div>
+        <div class="alert success">Backup restored. Cars: <?= (int) ($_GET['cars'] ?? 0) ?>, expenses: <?= (int) ($_GET['expenses'] ?? 0) ?>, tasks: <?= (int) ($_GET['tasks'] ?? 0) ?>.</div>
     <?php endif; ?>
     <?php if (isset($_GET['error'])): ?>
         <div class="alert">Restore failed: <?= htmlspecialchars($_GET['error']) ?></div>
