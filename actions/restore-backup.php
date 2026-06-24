@@ -110,7 +110,8 @@ if ($sql === false || trim($sql) === '') {
 }
 
 try {
-    $pdo->beginTransaction();
+    // MySQL DDL statements like DROP TABLE and CREATE TABLE auto-commit, so a
+    // restore that rebuilds tables cannot be wrapped in a PDO transaction.
     $pdo->exec('SET FOREIGN_KEY_CHECKS=0');
     clear_live_tables($pdo);
 
@@ -164,11 +165,12 @@ try {
         throw new RuntimeException('Restore ran, but no cars were imported. Check that the SQL backup is the full CarFlip HQ export.');
     }
 
-    $pdo->commit();
     redirect_to('pages/restore-backup.php?restored=1&cars=' . $carCount . '&expenses=' . $expenseCount . '&tasks=' . $taskCount);
 } catch (Throwable $e) {
-    if ($pdo->inTransaction()) {
-        $pdo->rollBack();
+    try {
+        $pdo->exec('SET FOREIGN_KEY_CHECKS=1');
+    } catch (Throwable $ignored) {
+        // Keep the original restore error visible.
     }
 
     $message = substr($e->getMessage(), 0, 240);
