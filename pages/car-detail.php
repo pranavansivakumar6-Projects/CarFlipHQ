@@ -1,5 +1,17 @@
 <?php
 require '../config/db.php';
+
+function detail_text($value, string $fallback = ''): string
+{
+    $text = trim((string) ($value ?? ''));
+    return htmlspecialchars($text === '' ? $fallback : $text);
+}
+
+function detail_lines($value): string
+{
+    return nl2br(htmlspecialchars((string) ($value ?? '')));
+}
+
 $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 if (!$id) { http_response_code(400); die('Car ID missing'); }
 $stmt = $pdo->prepare("SELECT * FROM cars WHERE id = ?");
@@ -70,14 +82,14 @@ $pageTitle = $car['make'].' '.$car['model'].' | CarFlip HQ';
 require '../header.php';
 ?>
 <div class="container">
-    <h1><?= htmlspecialchars($car['year'].' '.$car['make'].' '.$car['model']) ?></h1>
+    <h1><?= detail_text($car['year'].' '.$car['make'].' '.$car['model']) ?></h1>
     <div class="actions">
         <a class="btn secondary" href="edit-car.php?id=<?= $id ?>">Edit Car</a>
         <a class="btn secondary" href="../actions/export-car-sheet.php?id=<?= $id ?>">Download Sheet</a>
     </div>
 
     <div class="grid section-title">
-        <div class="card"><b>Status</b><div class="stat"><?= htmlspecialchars($car['status']) ?></div></div>
+        <div class="card"><b>Status</b><div class="stat"><?= detail_text($car['status']) ?></div></div>
         <div class="card"><b>Total Cost</b><div class="stat">$<?= number_format($totalCost, 2) ?></div></div>
         <div class="card"><b>Task Hours</b><div class="stat"><?= number_format($totalTaskHours, 2) ?></div></div>
         <div class="card"><b>Open Parts</b><div class="stat"><?= $openParts ?></div><div class="small">$<?= number_format($partsCost, 2) ?> tracked</div></div>
@@ -96,7 +108,7 @@ require '../header.php';
         <tr><th>Person</th><th>Total Paid</th><th>Equal Cost Share</th><th>Cost Balance</th><th>Profit Share</th><th><?= $car['actual_sale_price'] > 0 ? 'Payout From Sale' : 'Expected Payout' ?></th></tr>
         <?php foreach ($settlements as $name => $settlement): ?>
         <tr>
-            <td><?= htmlspecialchars($name) ?></td>
+            <td><?= detail_text($name) ?></td>
             <td>$<?= number_format($paidTotals[$name], 2) ?></td>
             <td>$<?= number_format($equalCostShare, 2) ?></td>
             <td class="<?= $settlement >= 0 ? 'positive' : 'negative' ?>"><?= $settlement >= 0 ? 'Ahead $'.number_format($settlement, 2) : 'Behind $'.number_format(abs($settlement), 2) ?></td>
@@ -120,10 +132,10 @@ require '../header.php';
         <tr><th>Date</th><th>Paid By</th><th>Amount</th><th>Notes</th><th>Action</th></tr>
         <?php foreach ($purchasePayments as $payment): ?>
         <tr>
-            <td><?= htmlspecialchars($payment['paid_date']) ?></td>
-            <td><?= htmlspecialchars($payment['paid_by']) ?></td>
+            <td><?= detail_text($payment['paid_date'], 'N/A') ?></td>
+            <td><?= detail_text($payment['paid_by'], 'N/A') ?></td>
             <td>$<?= number_format($payment['amount'], 2) ?></td>
-            <td><?= htmlspecialchars($payment['notes']) ?></td>
+            <td><?= detail_text($payment['notes']) ?></td>
             <td>
                 <div class="row-actions">
                     <a class="btn secondary small-btn" href="edit-purchase-payment.php?id=<?= (int) $payment['id'] ?>">Edit</a>
@@ -140,28 +152,28 @@ require '../header.php';
 
     <h2 class="section-title">Car Details</h2>
     <div class="card">
-        <p><b>Color:</b> <?= htmlspecialchars($car['color'] ?? '') ?></p>
-        <p><b>Body Type:</b> <?= htmlspecialchars($car['body_type'] ?? '') ?></p>
-        <p><b>VIN:</b> <?= htmlspecialchars($car['vin']) ?></p>
-        <p><b>Rego:</b> <?= htmlspecialchars($car['rego']) ?></p>
+        <p><b>Color:</b> <?= detail_text($car['color'], 'N/A') ?></p>
+        <p><b>Body Type:</b> <?= detail_text($car['body_type'], 'N/A') ?></p>
+        <p><b>VIN:</b> <?= detail_text($car['vin'], 'N/A') ?></p>
+        <p><b>Rego:</b> <?= detail_text($car['rego'], 'N/A') ?></p>
         <p><b>Odometer:</b> <?= number_format((int)$car['odometer']) ?> km</p>
-        <p><b>Source:</b> <?= htmlspecialchars($car['source']) ?></p>
-        <p><b>Damage:</b> <?= nl2br(htmlspecialchars($car['damage_notes'])) ?></p>
-        <p><b>Notes:</b> <?= nl2br(htmlspecialchars($car['notes'])) ?></p>
+        <p><b>Source:</b> <?= detail_text($car['source'], 'N/A') ?></p>
+        <p><b>Damage:</b> <?= detail_lines($car['damage_notes']) ?></p>
+        <p><b>Notes:</b> <?= detail_lines($car['notes']) ?></p>
     </div>
 
     <h2 class="section-title">Photos & Documents</h2>
     <div class="grid">
         <?php foreach ($carFiles as $file): ?>
         <div class="card">
-            <b><?= htmlspecialchars($file['title']) ?></b>
-            <div class="small"><?= htmlspecialchars($file['file_type']) ?></div>
+            <b><?= detail_text($file['title'], 'Untitled') ?></b>
+            <div class="small"><?= detail_text($file['file_type']) ?></div>
             <?php if (preg_match('/\.(jpg|jpeg|png|webp|gif)$/i', $file['file_path'])): ?>
-            <p><a href="../<?= htmlspecialchars($file['file_path']) ?>" target="_blank"><img class="media-thumb" src="../<?= htmlspecialchars($file['file_path']) ?>" alt="<?= htmlspecialchars($file['title']) ?>"></a></p>
+            <p><a href="../<?= htmlspecialchars($file['file_path']) ?>" target="_blank"><img class="media-thumb" src="../<?= htmlspecialchars($file['file_path']) ?>" alt="<?= detail_text($file['title'], 'Car file') ?>"></a></p>
             <?php else: ?>
             <p><a class="btn secondary small-btn" href="../<?= htmlspecialchars($file['file_path']) ?>" target="_blank">Open Document</a></p>
             <?php endif; ?>
-            <p class="small"><?= htmlspecialchars($file['notes']) ?></p>
+            <p class="small"><?= detail_text($file['notes']) ?></p>
             <form action="../actions/delete-car-file.php" method="POST" onsubmit="return confirm('Delete this file?');">
                 <input type="hidden" name="id" value="<?= (int) $file['id'] ?>">
                 <button class="btn danger small-btn" type="submit">Delete</button>
@@ -176,11 +188,11 @@ require '../header.php';
         <tr><th>Part</th><th>Supplier</th><th>Cost</th><th>Status</th><th>Dates</th><th>Action</th></tr>
         <?php foreach ($parts as $part): ?>
         <tr>
-            <td><?= htmlspecialchars($part['part_name']) ?><div class="small"><?= htmlspecialchars($part['notes']) ?></div></td>
-            <td><?= htmlspecialchars($part['supplier']) ?></td>
+            <td><?= detail_text($part['part_name']) ?><div class="small"><?= detail_text($part['notes']) ?></div></td>
+            <td><?= detail_text($part['supplier']) ?></td>
             <td>$<?= number_format($part['cost'], 2) ?></td>
-            <td><span class="badge"><?= htmlspecialchars($part['status']) ?></span></td>
-            <td class="small">Ordered <?= htmlspecialchars($part['ordered_date']) ?><br>Arrived <?= htmlspecialchars($part['arrived_date']) ?><br>Installed <?= htmlspecialchars($part['installed_date']) ?></td>
+            <td><span class="badge"><?= detail_text($part['status']) ?></span></td>
+            <td class="small">Ordered <?= detail_text($part['ordered_date'], 'N/A') ?><br>Arrived <?= detail_text($part['arrived_date'], 'N/A') ?><br>Installed <?= detail_text($part['installed_date'], 'N/A') ?></td>
             <td><div class="row-actions"><a class="btn secondary small-btn" href="edit-part.php?id=<?= (int) $part['id'] ?>">Edit</a><form action="../actions/delete-part.php" method="POST" onsubmit="return confirm('Delete this part?');"><input type="hidden" name="id" value="<?= (int) $part['id'] ?>"><button class="btn danger small-btn" type="submit">Delete</button></form></div></td>
         </tr>
         <?php endforeach; ?>
@@ -192,11 +204,11 @@ require '../header.php';
         <tr><th>Platform</th><th>Price</th><th>Status</th><th>Buyer / Offer</th><th>Notes</th><th>Action</th></tr>
         <?php foreach ($listings as $listing): ?>
         <tr>
-            <td><?= htmlspecialchars($listing['platform']) ?><div class="small"><?= htmlspecialchars($listing['listed_date']) ?></div></td>
+            <td><?= detail_text($listing['platform']) ?><div class="small"><?= detail_text($listing['listed_date'], 'N/A') ?></div></td>
             <td>$<?= number_format($listing['listing_price'], 2) ?></td>
-            <td><span class="badge"><?= htmlspecialchars($listing['status']) ?></span></td>
-            <td><?= htmlspecialchars($listing['buyer_name']) ?><div class="small"><?= htmlspecialchars($listing['buyer_contact']) ?><br>Offer $<?= number_format($listing['offer_amount'], 2) ?> / Deposit $<?= number_format($listing['deposit_amount'], 2) ?></div></td>
-            <td><?= htmlspecialchars($listing['notes']) ?></td>
+            <td><span class="badge"><?= detail_text($listing['status']) ?></span></td>
+            <td><?= detail_text($listing['buyer_name']) ?><div class="small"><?= detail_text($listing['buyer_contact']) ?><br>Offer $<?= number_format($listing['offer_amount'], 2) ?> / Deposit $<?= number_format($listing['deposit_amount'], 2) ?></div></td>
+            <td><?= detail_text($listing['notes']) ?></td>
             <td><div class="row-actions"><a class="btn secondary small-btn" href="edit-listing.php?id=<?= (int) $listing['id'] ?>">Edit</a><form action="../actions/delete-listing.php" method="POST" onsubmit="return confirm('Delete this listing?');"><input type="hidden" name="id" value="<?= (int) $listing['id'] ?>"><button class="btn danger small-btn" type="submit">Delete</button></form></div></td>
         </tr>
         <?php endforeach; ?>
@@ -208,17 +220,17 @@ require '../header.php';
         <tr><th>Date</th><th>Category</th><th>Name</th><th>Amount</th><th>Paid By</th><th>Receipt</th><th>Notes</th><th>Action</th></tr>
         <?php foreach ($expenses as $e): ?>
         <tr>
-            <td><?= htmlspecialchars($e['expense_date']) ?></td>
-            <td><?= htmlspecialchars($e['category']) ?></td>
-            <td><?= htmlspecialchars($e['expense_name']) ?></td>
+            <td><?= detail_text($e['expense_date'], 'N/A') ?></td>
+            <td><?= detail_text($e['category']) ?></td>
+            <td><?= detail_text($e['expense_name']) ?></td>
             <td>$<?= number_format($e['amount'], 2) ?></td>
-            <td><?= htmlspecialchars($e['paid_by'] ?? '') ?></td>
+            <td><?= detail_text($e['paid_by']) ?></td>
             <td>
                 <?php if (!empty($e['receipt_file'])): ?>
                 <a href="../<?= htmlspecialchars($e['receipt_file']) ?>" target="_blank"><img class="thumb" src="../<?= htmlspecialchars($e['receipt_file']) ?>" alt="Receipt"></a>
                 <?php endif; ?>
             </td>
-            <td><?= htmlspecialchars($e['notes']) ?></td>
+            <td><?= detail_text($e['notes']) ?></td>
             <td>
                 <div class="row-actions">
                     <a class="btn secondary small-btn" href="edit-expense.php?id=<?= (int) $e['id'] ?>">Edit</a>
@@ -239,21 +251,21 @@ require '../header.php';
         <?php foreach ($tasks as $t): ?>
         <?php $assignedNames = array_map('trim', explode(',', $t['assigned_to'] ?? '')); ?>
         <tr>
-            <td><?= htmlspecialchars($t['due_date']) ?></td>
-            <td><?= htmlspecialchars($t['task_title']) ?><div class="small"><?= htmlspecialchars($t['description']) ?></div></td>
+            <td><?= detail_text($t['due_date'], 'N/A') ?></td>
+            <td><?= detail_text($t['task_title']) ?><div class="small"><?= detail_text($t['description']) ?></div></td>
             <td>
                 <form action="../actions/update-task-assignee.php" method="POST">
                     <input type="hidden" name="id" value="<?= (int) $t['id'] ?>">
                     <div class="check-grid compact-checks">
                         <?php foreach ($users as $name): ?>
-                        <label class="check-pill"><input type="checkbox" name="assigned_to[]" value="<?= htmlspecialchars($name) ?>" <?= in_array($name, $assignedNames, true) ? 'checked' : '' ?>> <?= htmlspecialchars($name) ?></label>
+                        <label class="check-pill"><input type="checkbox" name="assigned_to[]" value="<?= detail_text($name) ?>" <?= in_array($name, $assignedNames, true) ? 'checked' : '' ?>> <?= detail_text($name) ?></label>
                         <?php endforeach; ?>
                     </div>
                     <button class="btn secondary small-btn" type="submit">Save</button>
                 </form>
             </td>
             <td><?= number_format((float) ($t['hours_spent'] ?? 0), 2) ?></td>
-            <td><?= htmlspecialchars($t['priority']) ?></td>
+            <td><?= detail_text($t['priority']) ?></td>
             <td>
                 <form action="../actions/update-task-status.php" method="POST">
                     <input type="hidden" name="id" value="<?= (int) $t['id'] ?>">
