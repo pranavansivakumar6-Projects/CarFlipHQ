@@ -78,6 +78,7 @@ function clear_live_tables(PDO $pdo): void
         'car_files',
         'sale_listings',
         'parts',
+        'car_profit_shares',
         'car_purchase_payments',
         'expenses',
         'tasks',

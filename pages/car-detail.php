@@ -39,6 +39,10 @@ $purchaseStmt = $pdo->prepare("SELECT * FROM car_purchase_payments WHERE car_id 
 $purchaseStmt->execute([$id]);
 $purchasePayments = $purchaseStmt->fetchAll(PDO::FETCH_ASSOC);
 
+$shareStmt = $pdo->prepare("SELECT person_name, share_percent FROM car_profit_shares WHERE car_id = ? ORDER BY person_name ASC");
+$shareStmt->execute([$id]);
+$savedShares = $shareStmt->fetchAll(PDO::FETCH_KEY_PAIR);
+
 $taskStmt = $pdo->prepare("SELECT * FROM tasks WHERE car_id = ? ORDER BY due_date ASC, created_at DESC");
 $taskStmt->execute([$id]);
 $tasks = $taskStmt->fetchAll(PDO::FETCH_ASSOC);
@@ -65,18 +69,33 @@ foreach ($purchasePayments as $payment) {
         $paidTotals[$payment['paid_by']] = ($paidTotals[$payment['paid_by']] ?? 0) + (float) $payment['amount'];
     }
 }
-$partnerNames = array_keys($paidTotals);
+$partnerNames = array_values(array_unique(array_merge(array_keys($paidTotals), array_keys($savedShares))));
 $partnerCount = max(count($partnerNames), 1);
-$equalCostShare = $totalCost / $partnerCount;
-$equalProfitShare = $profitForSplit / $partnerCount;
+$sharePercents = [];
+foreach ($partnerNames as $index => $name) {
+    if (isset($savedShares[$name])) {
+        $sharePercents[$name] = (float) $savedShares[$name];
+        continue;
+    }
+
+    $assignedDefault = array_sum($sharePercents);
+    $remainingPeople = count($partnerNames) - $index;
+    $sharePercents[$name] = $remainingPeople <= 1 ? round(100 - $assignedDefault, 2) : round(100 / $partnerCount, 2);
+}
+$shareTotal = array_sum($sharePercents);
 $unassignedExpenses = array_sum(array_map(fn($expense) => empty($expense['paid_by']) ? (float) $expense['amount'] : 0.0, $expenses));
 $unassignedPurchase = max((float) $car['purchase_price'] - $purchasePaidTotal, 0);
 $settlements = [];
+$costShares = [];
+$profitShares = [];
 $salePayouts = [];
 foreach ($partnerNames as $name) {
     $paidAmount = $paidTotals[$name] ?? 0.0;
-    $settlements[$name] = $paidAmount - $equalCostShare;
-    $salePayouts[$name] = $paidAmount + $equalProfitShare;
+    $sharePercent = $sharePercents[$name] ?? 0.0;
+    $costShares[$name] = $totalCost * ($sharePercent / 100);
+    $profitShares[$name] = $profitForSplit * ($sharePercent / 100);
+    $settlements[$name] = $paidAmount - $costShares[$name];
+    $salePayouts[$name] = $paidAmount + $profitShares[$name];
 }
 $pageTitle = $car['make'].' '.$car['model'].' | CarFlip HQ';
 require '../header.php';
@@ -98,34 +117,50 @@ require '../header.php';
     </div>
 
     <h2 class="section-title">Finance Split</h2>
+    <?php if (isset($_GET['shares'])): ?>
+        <div class="alert success">Profit split updated.</div>
+    <?php endif; ?>
     <div class="grid">
         <div class="card"><b>Sale Value Used</b><div class="stat">$<?= number_format($saleValue, 2) ?></div><div class="small"><?= $car['actual_sale_price'] > 0 ? 'Actual sale price' : 'Estimated sale price' ?></div></div>
         <div class="card"><b>Total Invested</b><div class="stat">$<?= number_format($totalCost, 2) ?></div><div class="small">$<?= number_format($car['purchase_price'], 2) ?> car + $<?= number_format($totalExpenses, 2) ?> expenses</div></div>
         <div class="card"><b>Total Profit</b><div class="profit <?= $profitForSplit >= 0 ? 'positive' : 'negative' ?>">$<?= number_format($profitForSplit, 2) ?></div><div class="small">Sale minus total invested</div></div>
-        <div class="card"><b>50/50 Profit Share</b><div class="profit <?= $equalProfitShare >= 0 ? 'positive' : 'negative' ?>">$<?= number_format($equalProfitShare, 2) ?></div><div class="small">Per car investor across <?= $partnerCount ?> person<?= $partnerCount === 1 ? '' : 's' ?></div></div>
+        <div class="card"><b>Profit Split</b><div class="profit <?= $profitForSplit >= 0 ? 'positive' : 'negative' ?>"><?= number_format($shareTotal, 2) ?>%</div><div class="small"><?= $savedShares ? 'Custom split saved' : 'Equal split default' ?></div></div>
     </div>
     <table class="section-title">
-        <tr><th>Person</th><th>Total Paid</th><th>Equal Cost Share</th><th>Cost Balance</th><th>Profit Share</th><th><?= $car['actual_sale_price'] > 0 ? 'Payout From Sale' : 'Expected Payout' ?></th></tr>
+        <tr><th>Person</th><th>Split %</th><th>Total Paid</th><th>Cost Share</th><th>Cost Balance</th><th>Profit Share</th><th><?= $car['actual_sale_price'] > 0 ? 'Payout From Sale' : 'Expected Payout' ?></th></tr>
         <?php foreach ($settlements as $name => $settlement): ?>
         <tr>
             <td><?= detail_text($name) ?></td>
+            <td><?= number_format($sharePercents[$name] ?? 0, 2) ?>%</td>
             <td>$<?= number_format($paidTotals[$name], 2) ?></td>
-            <td>$<?= number_format($equalCostShare, 2) ?></td>
+            <td>$<?= number_format($costShares[$name], 2) ?></td>
             <td class="<?= $settlement >= 0 ? 'positive' : 'negative' ?>"><?= $settlement >= 0 ? 'Ahead $'.number_format($settlement, 2) : 'Behind $'.number_format(abs($settlement), 2) ?></td>
-            <td>$<?= number_format($equalProfitShare, 2) ?></td>
+            <td>$<?= number_format($profitShares[$name], 2) ?></td>
             <td><b>$<?= number_format($salePayouts[$name], 2) ?></b></td>
         </tr>
         <?php endforeach; ?>
         <?php if (!$partnerNames): ?>
-        <tr><td colspan="6">No car investors recorded yet. Add purchase payments or expenses with Paid By to calculate this car's split.</td></tr>
+        <tr><td colspan="7">No car investors recorded yet. Add purchase payments or expenses with Paid By to calculate this car's split.</td></tr>
         <?php endif; ?>
         <?php if ($unassignedExpenses > 0): ?>
-        <tr><td>Unassigned expenses</td><td colspan="5">$<?= number_format($unassignedExpenses, 2) ?> needs Paid By set</td></tr>
+        <tr><td>Unassigned expenses</td><td colspan="6">$<?= number_format($unassignedExpenses, 2) ?> needs Paid By set</td></tr>
         <?php endif; ?>
         <?php if ($unassignedPurchase > 0): ?>
-        <tr><td>Unassigned purchase amount</td><td colspan="5">$<?= number_format($unassignedPurchase, 2) ?> needs purchase payment records</td></tr>
+        <tr><td>Unassigned purchase amount</td><td colspan="6">$<?= number_format($unassignedPurchase, 2) ?> needs purchase payment records</td></tr>
         <?php endif; ?>
     </table>
+    <?php if ($partnerNames): ?>
+    <form class="form-card section-title" action="../actions/save-profit-shares.php" method="POST">
+        <input type="hidden" name="car_id" value="<?= (int) $id ?>">
+        <h3>Set Profit Split</h3>
+        <?php foreach ($partnerNames as $name): ?>
+        <label><?= detail_text($name) ?> percentage</label>
+        <input name="shares[<?= detail_text($name) ?>]" type="number" step="0.01" min="0" max="100" value="<?= number_format($sharePercents[$name] ?? 0, 2, '.', '') ?>">
+        <?php endforeach; ?>
+        <p class="small">Percentages must add up to 100%.</p>
+        <button class="btn" type="submit">Save Split</button>
+    </form>
+    <?php endif; ?>
 
     <h2 class="section-title">Purchase Payments</h2>
     <table>

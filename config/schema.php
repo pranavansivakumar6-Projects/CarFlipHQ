@@ -75,6 +75,15 @@ function ensure_database_schema(PDO $pdo): void
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (car_id) REFERENCES cars(id) ON DELETE CASCADE
         )",
+        "CREATE TABLE IF NOT EXISTS car_profit_shares (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          car_id INT NOT NULL,
+          person_name VARCHAR(100) NOT NULL,
+          share_percent DECIMAL(5,2) NOT NULL DEFAULT 0,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE KEY unique_car_person (car_id, person_name),
+          FOREIGN KEY (car_id) REFERENCES cars(id) ON DELETE CASCADE
+        )",
         "CREATE TABLE IF NOT EXISTS car_files (
           id INT AUTO_INCREMENT PRIMARY KEY,
           car_id INT NOT NULL,
