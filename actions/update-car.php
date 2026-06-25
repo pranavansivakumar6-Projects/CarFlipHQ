@@ -2,12 +2,13 @@
 require '../config/db.php';
 require '../config/auth.php';
 require '../config/helpers.php';
+require_once '../config/status.php';
 
 require_login();
 
 $carId = post_int('id', true);
 require_car($pdo, $carId);
-$status = require_allowed_value(post_string('status', true), ['Bought','Waiting for Parts','Under Repair','RWC Pending','Ready for Sale','Listed','Sold'], 'status');
+$status = require_allowed_value(normalise_car_status(post_string('status', true)), allowed_car_statuses(), 'status');
 
 $stmt = $pdo->prepare("UPDATE cars SET make=?, model=?, year=?, color=?, body_type=?, vin=?, rego=?, odometer=?, source=?, purchase_price=?, purchase_date=?, status=?, estimated_sale_price=?, actual_sale_price=?, sold_date=?, damage_notes=?, notes=? WHERE id=?");
 $stmt->execute([

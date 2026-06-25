@@ -1,5 +1,6 @@
 <?php
 require '../config/db.php';
+require_once '../config/status.php';
 $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 if (!$id) { http_response_code(400); die('Car ID missing.'); }
 $stmt = $pdo->prepare("SELECT * FROM cars WHERE id=?");
@@ -23,8 +24,8 @@ $pageTitle='Edit Car | CarFlip HQ'; require '../header.php';
 <label>Purchase Price</label><input name="purchase_price" type="number" step="0.01" value="<?= $car['purchase_price'] ?>">
 <label>Purchase Date</label><input name="purchase_date" type="date" value="<?= $car['purchase_date'] ?>">
 <label>Status</label><select name="status">
-<?php foreach(['Bought','Waiting for Parts','Under Repair','RWC Pending','Ready for Sale','Listed','Sold'] as $s): ?>
-<option <?= $car['status']===$s?'selected':'' ?>><?= $s ?></option><?php endforeach; ?>
+<?php foreach(allowed_car_statuses() as $s): ?>
+<option value="<?= htmlspecialchars($s) ?>" <?= $car['status']===$s?'selected':'' ?>><?= htmlspecialchars(car_status_label($s)) ?></option><?php endforeach; ?>
 </select>
 <label>Estimated Sale Price</label><input name="estimated_sale_price" type="number" step="0.01" value="<?= $car['estimated_sale_price'] ?>">
 <label>Actual Sale Price</label><input name="actual_sale_price" type="number" step="0.01" value="<?= $car['actual_sale_price'] ?>">

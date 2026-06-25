@@ -2,6 +2,7 @@
 require '../config/db.php';
 require_once '../config/auth.php';
 require_once '../config/ai.php';
+require_once '../config/status.php';
 
 $pageTitle = 'AI Tools | CarFlip HQ';
 $cars = $pdo->query("SELECT id, year, make, model, status FROM cars ORDER BY created_at DESC")->fetchAll(PDO::FETCH_ASSOC);
@@ -44,7 +45,7 @@ require '../header.php';
             <label>Car</label>
             <select name="car_id" required>
                 <?php foreach ($cars as $car): ?>
-                    <option value="<?= (int) $car['id'] ?>" <?= (int) $selectedCarId === (int) $car['id'] ? 'selected' : '' ?>><?= htmlspecialchars(trim($car['year'] . ' ' . $car['make'] . ' ' . $car['model'] . ' - ' . $car['status'])) ?></option>
+                    <option value="<?= (int) $car['id'] ?>" <?= (int) $selectedCarId === (int) $car['id'] ? 'selected' : '' ?>><?= htmlspecialchars(trim($car['year'] . ' ' . $car['make'] . ' ' . $car['model'] . ' - ' . car_status_label((string) $car['status']))) ?></option>
                 <?php endforeach; ?>
             </select>
             <button class="btn" type="submit">Draft Listing</button>
@@ -56,7 +57,7 @@ require '../header.php';
             <label>Car</label>
             <select name="car_id" required>
                 <?php foreach ($cars as $car): ?>
-                    <option value="<?= (int) $car['id'] ?>" <?= (int) $selectedCarId === (int) $car['id'] ? 'selected' : '' ?>><?= htmlspecialchars(trim($car['year'] . ' ' . $car['make'] . ' ' . $car['model'] . ' - ' . $car['status'])) ?></option>
+                    <option value="<?= (int) $car['id'] ?>" <?= (int) $selectedCarId === (int) $car['id'] ? 'selected' : '' ?>><?= htmlspecialchars(trim($car['year'] . ' ' . $car['make'] . ' ' . $car['model'] . ' - ' . car_status_label((string) $car['status']))) ?></option>
                 <?php endforeach; ?>
             </select>
             <button class="btn" type="submit">Suggest Work</button>

@@ -25,7 +25,10 @@ $listingStmt = $pdo->prepare('SELECT * FROM sale_listings WHERE car_id = ?');
 $listingStmt->execute([$carId]);
 $listings = $listingStmt->fetchAll(PDO::FETCH_ASSOC);
 
-$status = infer_car_status($car, $parts, $tasks, $listings);
+$postedStatus = normalise_car_status(post_string('status'));
+$status = $postedStatus !== ''
+    ? require_allowed_value($postedStatus, allowed_car_statuses(), 'status')
+    : infer_car_status($car, $parts, $tasks, $listings);
 $stmt = $pdo->prepare('UPDATE cars SET status = ? WHERE id = ?');
 $stmt->execute([$status, $carId]);
 

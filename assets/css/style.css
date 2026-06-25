@@ -262,6 +262,13 @@ table,
     margin: 12px 0 0;
 }
 
+.status-form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
 table {
     width: 100%;
     border-collapse: separate;

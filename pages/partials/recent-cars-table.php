@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__DIR__, 2) . '/config/status.php';
 $cars = $recentCars ?? $pdo->query("SELECT * FROM cars ORDER BY created_at DESC LIMIT 8")->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <table>
@@ -6,7 +7,7 @@ $cars = $recentCars ?? $pdo->query("SELECT * FROM cars ORDER BY created_at DESC 
     <?php foreach ($cars as $car): ?>
     <tr>
         <td><?= htmlspecialchars($car['year'].' '.$car['make'].' '.$car['model']) ?></td>
-        <td><span class="badge"><?= htmlspecialchars($car['status']) ?></span></td>
+        <td><span class="badge"><?= htmlspecialchars(car_status_label((string) $car['status'])) ?></span></td>
         <td>$<?= number_format($car['purchase_price'], 2) ?></td>
         <td>$<?= number_format($car['estimated_sale_price'], 2) ?></td>
         <td><?= (float) $car['actual_sale_price'] > 0 ? '$'.number_format($car['actual_sale_price'], 2) : '-' ?></td>

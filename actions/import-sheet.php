@@ -2,6 +2,7 @@
 require '../config/db.php';
 require '../config/auth.php';
 require '../config/helpers.php';
+require_once '../config/status.php';
 require_login();
 
 if (empty($_FILES['sheet_file']) || $_FILES['sheet_file']['error'] !== UPLOAD_ERR_OK) {
@@ -189,9 +190,8 @@ while (($values = fgetcsv($handle)) !== false) {
     $carKey = row_value($row, 'car_key');
 
     if ($type === '' || $type === 'car') {
-        $status = row_value($row, 'status', 'Bought') ?: 'Bought';
-        $allowedStatuses = ['Bought','Waiting for Parts','Under Repair','RWC Pending','Ready for Sale','Listed','Sold'];
-        if (!in_array($status, $allowedStatuses, true)) { $status = 'Bought'; }
+        $status = normalise_car_status(row_value($row, 'status', 'Bought') ?: 'Bought');
+        if (!in_array($status, allowed_car_statuses(), true)) { $status = 'Bought'; }
         $stmt = $pdo->prepare('INSERT INTO cars (make, model, year, color, body_type, vin, rego, odometer, source, purchase_price, purchase_date, status, estimated_sale_price, actual_sale_price, sold_date, damage_notes, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
         $stmt->execute([row_value($row, 'make', 'Unknown'), row_value($row, 'model', 'Vehicle'), int_or_null_value($row, 'year'), row_value($row, 'color'), row_value($row, 'body_type'), row_value($row, 'vin'), row_value($row, 'rego'), int_or_null_value($row, 'odometer'), row_value($row, 'source'), money_value($row, 'purchase_price'), date_or_null_value($row, 'purchase_date'), $status, money_value($row, 'estimated_sale_price'), money_value($row, 'actual_sale_price'), date_or_null_value($row, 'sold_date'), row_value($row, 'damage_notes'), row_value($row, 'notes')]);
         $lastCarId = (int) $pdo->lastInsertId();

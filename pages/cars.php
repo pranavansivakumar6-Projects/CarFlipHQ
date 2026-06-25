@@ -1,5 +1,6 @@
 <?php
 require '../config/db.php';
+require_once '../config/status.php';
 $pageTitle = 'Cars | CarFlip HQ';
 require '../header.php';
 $cars = $pdo->query("
@@ -52,7 +53,7 @@ function car_status_class(?string $status): string
             <div class="car-card-body">
                 <div class="card-title-row">
                     <h2><?= htmlspecialchars(trim($car['year'] . ' ' . $car['make'] . ' ' . $car['model'])) ?></h2>
-                    <span class="badge <?= car_status_class($car['status'] ?? '') ?>"><?= htmlspecialchars((string) $car['status']) ?></span>
+                    <span class="badge <?= car_status_class($car['status'] ?? '') ?>"><?= htmlspecialchars(car_status_label((string) $car['status'])) ?></span>
                 </div>
                 <div class="car-metrics">
                     <div><span>Purchase</span><b>$<?= number_format((float) $car['purchase_price'], 2) ?></b></div>
@@ -76,7 +77,7 @@ function car_status_class(?string $status): string
             <td><?= htmlspecialchars($car['year'].' '.$car['make'].' '.$car['model']) ?></td>
             <td><?= htmlspecialchars((string) ($car['rego'] ?: 'N/A')) ?></td>
             <td><?= number_format((int)$car['odometer']) ?> km</td>
-            <td><span class="badge"><?= htmlspecialchars((string) $car['status']) ?></span></td>
+            <td><span class="badge"><?= htmlspecialchars(car_status_label((string) $car['status'])) ?></span></td>
             <td>$<?= number_format($car['purchase_price'], 2) ?></td>
             <td>
                 <div class="row-actions">

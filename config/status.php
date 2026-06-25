@@ -4,6 +4,22 @@ function car_status_steps(): array
     return ['Bought','Waiting for Parts','Under Repair','RWC Pending','Ready for Sale','Listed','Sold'];
 }
 
+function car_status_label(string $status): string
+{
+    return $status === 'RWC Pending' ? 'RWC' : $status;
+}
+
+function normalise_car_status(string $status): string
+{
+    $status = trim($status);
+    return $status === 'RWC' ? 'RWC Pending' : $status;
+}
+
+function allowed_car_statuses(): array
+{
+    return car_status_steps();
+}
+
 function infer_car_status(array $car, array $parts, array $tasks, array $listings): string
 {
     if (($car['status'] ?? '') === 'Sold' || (float) ($car['actual_sale_price'] ?? 0) > 0 || !empty($car['sold_date'])) {
@@ -51,10 +67,6 @@ function infer_car_status(array $car, array $parts, array $tasks, array $listing
         }
     }
 
-    if ($hasRwcDone) {
-        return 'Ready for Sale';
-    }
-
     if ($waitingParts) {
         return 'Waiting for Parts';
     }
@@ -67,7 +79,7 @@ function infer_car_status(array $car, array $parts, array $tasks, array $listing
         return 'RWC Pending';
     }
 
-    if (count($tasks) > 0 || count($parts) > 0) {
+    if ($hasRwcDone || count($tasks) > 0 || count($parts) > 0) {
         return 'Ready for Sale';
     }
 

@@ -103,7 +103,7 @@ foreach ($partnerNames as $name) {
 }
 $statusSteps = car_status_steps();
 $workflowStatus = infer_car_status($car, $parts, $tasks, $listings);
-$currentStatusIndex = array_search($workflowStatus, $statusSteps, true);
+$currentStatusIndex = array_search($car['status'], $statusSteps, true);
 $currentStatusIndex = $currentStatusIndex === false ? 0 : $currentStatusIndex;
 $tasksByStatus = [
     'To Do' => [],
@@ -127,14 +127,18 @@ require '../header.php';
 
     <div class="grid section-title">
         <div class="card">
-            <b>Workflow Status</b>
-            <div class="stat"><?= detail_text($workflowStatus) ?></div>
-            <div class="small">Saved status: <?= detail_text($car['status']) ?></div>
-            <?php if ($workflowStatus !== $car['status']): ?>
-            <form action="../actions/sync-car-status.php" method="POST" class="mini-form">
+            <b>Status</b>
+            <form action="../actions/sync-car-status.php" method="POST" class="mini-form status-form">
                 <input type="hidden" name="id" value="<?= (int) $id ?>">
-                <button class="btn secondary small-btn" type="submit">Sync Status</button>
+                <select name="status" class="inline-select">
+                    <?php foreach ($statusSteps as $statusOption): ?>
+                        <option value="<?= detail_text($statusOption) ?>" <?= $car['status'] === $statusOption ? 'selected' : '' ?>><?= detail_text(car_status_label($statusOption)) ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <button class="btn secondary small-btn" type="submit">Save</button>
             </form>
+            <?php if ($workflowStatus !== $car['status']): ?>
+                <div class="small">Suggested by workflow: <?= detail_text(car_status_label($workflowStatus)) ?></div>
             <?php endif; ?>
         </div>
         <div class="card"><b>Total Cost</b><div class="stat">$<?= number_format($totalCost, 2) ?></div></div>
@@ -144,14 +148,14 @@ require '../header.php';
         <div class="card"><b>Actual Profit</b><div class="profit <?= ($actualProfit ?? 0) >= 0 ? 'positive' : 'negative' ?>"><?= $actualProfit === null ? 'Not sold' : '$'.number_format($actualProfit, 2) ?></div></div>
     </div>
     <?php if (isset($_GET['status_synced'])): ?>
-        <div class="alert success">Car status updated from workflow progress.</div>
+        <div class="alert success">Car status updated.</div>
     <?php endif; ?>
 
     <div class="timeline-card section-title">
         <?php foreach ($statusSteps as $stepIndex => $step): ?>
         <div class="timeline-step <?= $stepIndex < $currentStatusIndex ? 'complete' : ($stepIndex === $currentStatusIndex ? 'current' : '') ?>">
             <span></span>
-            <b><?= detail_text($step) ?></b>
+            <b><?= detail_text(car_status_label($step)) ?></b>
         </div>
         <?php endforeach; ?>
     </div>
