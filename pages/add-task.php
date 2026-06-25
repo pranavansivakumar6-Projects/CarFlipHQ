@@ -1,5 +1,7 @@
 <?php
 require '../config/db.php';
+require_once '../config/auth.php';
+require_permission('can_manage_tasks');
 $carId = filter_input(INPUT_GET, 'car_id', FILTER_VALIDATE_INT);
 if (!$carId) { http_response_code(400); die('Car ID missing.'); }
 $stmt = $pdo->prepare("SELECT id, year, make, model FROM cars WHERE id = ?");

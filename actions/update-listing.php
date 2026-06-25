@@ -2,7 +2,7 @@
 require '../config/db.php';
 require '../config/auth.php';
 require '../config/helpers.php';
-require_login();
+require_permission('can_manage_sales');
 $id = post_int('id', true);
 $stmt = $pdo->prepare('SELECT car_id FROM sale_listings WHERE id = ?');
 $stmt->execute([$id]);

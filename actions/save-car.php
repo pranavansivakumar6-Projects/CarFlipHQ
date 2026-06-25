@@ -3,7 +3,7 @@ require '../config/db.php';
 require '../config/auth.php';
 require '../config/helpers.php';
 
-require_login();
+require_permission('can_manage_cars');
 
 $stmt = $pdo->prepare("INSERT INTO cars (make, model, year, color, body_type, vin, rego, odometer, source, purchase_price, purchase_date, estimated_sale_price, damage_notes, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 $stmt->execute([

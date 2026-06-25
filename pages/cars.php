@@ -1,5 +1,7 @@
 <?php
 require '../config/db.php';
+require_once '../config/auth.php';
+require_permission('can_view_data');
 require_once '../config/status.php';
 $pageTitle = 'Cars | CarFlip HQ';
 require '../header.php';
@@ -10,6 +12,8 @@ $cars = $pdo->query("
     FROM cars c
     ORDER BY c.created_at DESC
 ")->fetchAll(PDO::FETCH_ASSOC);
+$canManageCars = user_can('can_manage_cars');
+$canImportExport = user_can('can_import_export');
 $isAdmin = (($user['role'] ?? '') === 'admin');
 
 function car_status_class(?string $status): string
@@ -33,8 +37,12 @@ function car_status_class(?string $status): string
         <div class="alert success">Removed <?= (int) $_GET['deduped'] ?> duplicate cars.</div>
     <?php endif; ?>
     <div class="actions">
+        <?php if ($canManageCars): ?>
         <a class="btn" href="add-car.php">+ Add Car</a>
+        <?php endif; ?>
+        <?php if ($canImportExport): ?>
         <a class="btn secondary" href="import-sheet.php">Import Sheet</a>
+        <?php endif; ?>
         <?php if ($isAdmin): ?>
         <form method="post" action="<?= app_url('actions/delete-duplicate-cars.php') ?>" onsubmit="return confirm('Remove exact duplicate car rows and keep the first copy?');">
             <button class="btn danger" type="submit">Clean Duplicates</button>

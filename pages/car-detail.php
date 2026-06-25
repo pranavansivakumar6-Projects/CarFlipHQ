@@ -1,5 +1,7 @@
 <?php
 require '../config/db.php';
+require_once '../config/auth.php';
+require_permission('can_view_data');
 require_once '../config/status.php';
 
 function detail_text($value, string $fallback = ''): string
@@ -48,6 +50,12 @@ $taskStmt = $pdo->prepare("SELECT * FROM tasks WHERE car_id = ? ORDER BY due_dat
 $taskStmt->execute([$id]);
 $tasks = $taskStmt->fetchAll(PDO::FETCH_ASSOC);
 $users = $pdo->query("SELECT name FROM users ORDER BY name")->fetchAll(PDO::FETCH_COLUMN);
+$canManageCars = user_can('can_manage_cars');
+$canManageFinance = user_can('can_manage_finance');
+$canManageTasks = user_can('can_manage_tasks');
+$canManageSales = user_can('can_manage_sales');
+$canImportExport = user_can('can_import_export');
+$canUseAi = user_can('can_use_ai');
 
 $totalTaskHours = array_sum(array_map(fn($task) => (float) ($task['hours_spent'] ?? 0), $tasks));
 $partsCost = array_sum(array_column($parts, 'cost'));
@@ -120,14 +128,21 @@ require '../header.php';
 <div class="container">
     <h1><?= detail_text($car['year'].' '.$car['make'].' '.$car['model']) ?></h1>
     <div class="actions">
+        <?php if ($canManageCars): ?>
         <a class="btn secondary" href="edit-car.php?id=<?= $id ?>">Edit Car</a>
+        <?php endif; ?>
+        <?php if ($canImportExport): ?>
         <a class="btn secondary" href="../actions/export-car-sheet.php?id=<?= $id ?>">Download Sheet</a>
+        <?php endif; ?>
+        <?php if ($canUseAi): ?>
         <a class="btn secondary" href="ai.php?car_id=<?= $id ?>">AI Tools</a>
+        <?php endif; ?>
     </div>
 
     <div class="grid section-title">
         <div class="card">
             <b>Status</b>
+            <?php if ($canManageCars): ?>
             <form action="../actions/sync-car-status.php" method="POST" class="mini-form status-form">
                 <input type="hidden" name="id" value="<?= (int) $id ?>">
                 <select name="status" class="inline-select">
@@ -137,6 +152,9 @@ require '../header.php';
                 </select>
                 <button class="btn secondary small-btn" type="submit">Save</button>
             </form>
+            <?php else: ?>
+                <div class="stat"><?= detail_text(car_status_label((string) $car['status'])) ?></div>
+            <?php endif; ?>
             <?php if ($workflowStatus !== $car['status']): ?>
                 <div class="small">Suggested by workflow: <?= detail_text(car_status_label($workflowStatus)) ?></div>
             <?php endif; ?>
@@ -193,7 +211,7 @@ require '../header.php';
         <tr><td>Unassigned purchase amount</td><td colspan="6">$<?= number_format($unassignedPurchase, 2) ?> needs purchase payment records</td></tr>
         <?php endif; ?>
     </table>
-    <?php if ($partnerNames): ?>
+    <?php if ($partnerNames && $canManageFinance): ?>
     <details class="dropdown-card section-title" <?= $hasSavedShares ? '' : 'open' ?>>
         <summary><?= $hasSavedShares ? 'Edit Custom Split' : 'Set Custom Split' ?></summary>
         <form action="../actions/save-profit-shares.php" method="POST">
@@ -218,6 +236,7 @@ require '../header.php';
             <td>$<?= number_format($payment['amount'], 2) ?></td>
             <td><?= detail_text($payment['notes']) ?></td>
             <td>
+                <?php if ($canManageFinance): ?>
                 <div class="row-actions">
                     <a class="btn secondary small-btn" href="edit-purchase-payment.php?id=<?= (int) $payment['id'] ?>">Edit</a>
                     <form action="../actions/delete-purchase-payment.php" method="POST" onsubmit="return confirm('Delete this purchase payment?');">
@@ -225,11 +244,16 @@ require '../header.php';
                         <button class="btn danger small-btn" type="submit">Delete</button>
                     </form>
                 </div>
+                <?php else: ?>
+                    <span class="small">View only</span>
+                <?php endif; ?>
             </td>
         </tr>
         <?php endforeach; ?>
     </table>
+    <?php if ($canManageFinance): ?>
     <p><a class="btn" href="add-purchase-payment.php?car_id=<?= $id ?>">+ Add Purchase Payment</a></p>
+    <?php endif; ?>
 
     <h2 class="section-title">Car Details</h2>
     <div class="card">
@@ -255,14 +279,18 @@ require '../header.php';
             <p><a class="btn secondary small-btn" href="../<?= htmlspecialchars($file['file_path']) ?>" target="_blank">Open Document</a></p>
             <?php endif; ?>
             <p class="small"><?= detail_text($file['notes']) ?></p>
+            <?php if ($canManageCars): ?>
             <form action="../actions/delete-car-file.php" method="POST" onsubmit="return confirm('Delete this file?');">
                 <input type="hidden" name="id" value="<?= (int) $file['id'] ?>">
                 <button class="btn danger small-btn" type="submit">Delete</button>
             </form>
+            <?php endif; ?>
         </div>
         <?php endforeach; ?>
     </div>
+    <?php if ($canManageCars): ?>
     <p><a class="btn" href="add-car-file.php?car_id=<?= $id ?>">+ Add Photo / Document</a></p>
+    <?php endif; ?>
 
     <h2 class="section-title">Parts</h2>
     <table>
@@ -274,11 +302,19 @@ require '../header.php';
             <td>$<?= number_format($part['cost'], 2) ?></td>
             <td><span class="badge"><?= detail_text($part['status']) ?></span></td>
             <td class="small">Ordered <?= detail_text($part['ordered_date'], 'N/A') ?><br>Arrived <?= detail_text($part['arrived_date'], 'N/A') ?><br>Installed <?= detail_text($part['installed_date'], 'N/A') ?></td>
-            <td><div class="row-actions"><a class="btn secondary small-btn" href="edit-part.php?id=<?= (int) $part['id'] ?>">Edit</a><form action="../actions/delete-part.php" method="POST" onsubmit="return confirm('Delete this part?');"><input type="hidden" name="id" value="<?= (int) $part['id'] ?>"><button class="btn danger small-btn" type="submit">Delete</button></form></div></td>
+            <td>
+                <?php if ($canManageTasks): ?>
+                <div class="row-actions"><a class="btn secondary small-btn" href="edit-part.php?id=<?= (int) $part['id'] ?>">Edit</a><form action="../actions/delete-part.php" method="POST" onsubmit="return confirm('Delete this part?');"><input type="hidden" name="id" value="<?= (int) $part['id'] ?>"><button class="btn danger small-btn" type="submit">Delete</button></form></div>
+                <?php else: ?>
+                    <span class="small">View only</span>
+                <?php endif; ?>
+            </td>
         </tr>
         <?php endforeach; ?>
     </table>
+    <?php if ($canManageTasks): ?>
     <p><a class="btn" href="add-part.php?car_id=<?= $id ?>">+ Add Part</a></p>
+    <?php endif; ?>
 
     <h2 class="section-title">Sale Listings & Offers</h2>
     <table>
@@ -290,11 +326,19 @@ require '../header.php';
             <td><span class="badge"><?= detail_text($listing['status']) ?></span></td>
             <td><?= detail_text($listing['buyer_name']) ?><div class="small"><?= detail_text($listing['buyer_contact']) ?><br>Offer $<?= number_format($listing['offer_amount'], 2) ?> / Deposit $<?= number_format($listing['deposit_amount'], 2) ?></div></td>
             <td><?= detail_text($listing['notes']) ?></td>
-            <td><div class="row-actions"><a class="btn secondary small-btn" href="edit-listing.php?id=<?= (int) $listing['id'] ?>">Edit</a><form action="../actions/delete-listing.php" method="POST" onsubmit="return confirm('Delete this listing?');"><input type="hidden" name="id" value="<?= (int) $listing['id'] ?>"><button class="btn danger small-btn" type="submit">Delete</button></form></div></td>
+            <td>
+                <?php if ($canManageSales): ?>
+                <div class="row-actions"><a class="btn secondary small-btn" href="edit-listing.php?id=<?= (int) $listing['id'] ?>">Edit</a><form action="../actions/delete-listing.php" method="POST" onsubmit="return confirm('Delete this listing?');"><input type="hidden" name="id" value="<?= (int) $listing['id'] ?>"><button class="btn danger small-btn" type="submit">Delete</button></form></div>
+                <?php else: ?>
+                    <span class="small">View only</span>
+                <?php endif; ?>
+            </td>
         </tr>
         <?php endforeach; ?>
     </table>
+    <?php if ($canManageSales): ?>
     <p><a class="btn" href="add-listing.php?car_id=<?= $id ?>">+ Add Listing / Offer</a></p>
+    <?php endif; ?>
 
     <h2 class="section-title">Expenses</h2>
     <table>
@@ -313,6 +357,7 @@ require '../header.php';
             </td>
             <td><?= detail_text($e['notes']) ?></td>
             <td>
+                <?php if ($canManageFinance): ?>
                 <div class="row-actions">
                     <a class="btn secondary small-btn" href="edit-expense.php?id=<?= (int) $e['id'] ?>">Edit</a>
                     <form action="../actions/delete-expense.php" method="POST" onsubmit="return confirm('Delete this expense?');">
@@ -320,11 +365,16 @@ require '../header.php';
                         <button class="btn danger small-btn" type="submit">Delete</button>
                     </form>
                 </div>
+                <?php else: ?>
+                    <span class="small">View only</span>
+                <?php endif; ?>
             </td>
         </tr>
         <?php endforeach; ?>
     </table>
+    <?php if ($canManageFinance): ?>
     <p><a class="btn" href="add-expense.php?car_id=<?= $id ?>">+ Add Expense</a></p>
+    <?php endif; ?>
 
     <h2 class="section-title">Tasks</h2>
     <div class="task-board">
@@ -335,11 +385,19 @@ require '../header.php';
                 <span><?= count($statusTasks) ?></span>
             </div>
             <?php foreach ($statusTasks as $boardTask): ?>
+            <?php if ($canManageTasks): ?>
             <a class="task-mini-card" href="edit-task.php?id=<?= (int) $boardTask['id'] ?>">
                 <b><?= detail_text($boardTask['task_title']) ?></b>
                 <span><?= detail_text($boardTask['assigned_to'], 'Unassigned') ?></span>
                 <small><?= number_format((float) ($boardTask['hours_spent'] ?? 0), 2) ?> hrs / <?= detail_text($boardTask['priority']) ?></small>
             </a>
+            <?php else: ?>
+            <div class="task-mini-card">
+                <b><?= detail_text($boardTask['task_title']) ?></b>
+                <span><?= detail_text($boardTask['assigned_to'], 'Unassigned') ?></span>
+                <small><?= number_format((float) ($boardTask['hours_spent'] ?? 0), 2) ?> hrs / <?= detail_text($boardTask['priority']) ?></small>
+            </div>
+            <?php endif; ?>
             <?php endforeach; ?>
             <?php if (!$statusTasks): ?>
             <p class="small">No tasks here.</p>
@@ -355,6 +413,7 @@ require '../header.php';
             <td><?= detail_text($t['due_date'], 'N/A') ?></td>
             <td><?= detail_text($t['task_title']) ?><div class="small"><?= detail_text($t['description']) ?></div></td>
             <td>
+                <?php if ($canManageTasks): ?>
                 <form action="../actions/update-task-assignee.php" method="POST">
                     <input type="hidden" name="id" value="<?= (int) $t['id'] ?>">
                     <details class="assign-menu">
@@ -367,10 +426,14 @@ require '../header.php';
                         </div>
                     </details>
                 </form>
+                <?php else: ?>
+                    <?= $assignedNames && implode('', $assignedNames) !== '' ? detail_text(implode(', ', array_filter($assignedNames))) : 'Unassigned' ?>
+                <?php endif; ?>
             </td>
             <td><?= number_format((float) ($t['hours_spent'] ?? 0), 2) ?></td>
             <td><?= detail_text($t['priority']) ?></td>
             <td>
+                <?php if ($canManageTasks): ?>
                 <form action="../actions/update-task-status.php" method="POST">
                     <input type="hidden" name="id" value="<?= (int) $t['id'] ?>">
                     <select class="inline-select" name="status" onchange="this.form.submit()">
@@ -379,11 +442,15 @@ require '../header.php';
                         <?php endforeach; ?>
                     </select>
                 </form>
+                <?php else: ?>
+                    <?= detail_text($t['status']) ?>
+                <?php endif; ?>
             </td>
             <td>
                 <?php if (!empty($t['task_photo'])): ?>
                 <a href="../<?= htmlspecialchars($t['task_photo']) ?>" target="_blank"><img class="thumb" src="../<?= htmlspecialchars($t['task_photo']) ?>" alt="Task photo"></a>
                 <?php endif; ?>
+                <?php if ($canManageTasks): ?>
                 <div class="row-actions">
                     <a class="btn secondary small-btn" href="edit-task.php?id=<?= (int) $t['id'] ?>">Edit</a>
                     <form action="../actions/delete-task.php" method="POST" onsubmit="return confirm('Delete this task?');">
@@ -391,10 +458,13 @@ require '../header.php';
                         <button class="btn danger small-btn" type="submit">Delete</button>
                     </form>
                 </div>
+                <?php endif; ?>
             </td>
         </tr>
         <?php endforeach; ?>
     </table>
+    <?php if ($canManageTasks): ?>
     <p><a class="btn" href="add-task.php?car_id=<?= $id ?>">+ Add Task</a></p>
+    <?php endif; ?>
 </div>
 <?php require '../footer.php'; ?>

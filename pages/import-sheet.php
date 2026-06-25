@@ -1,4 +1,6 @@
 <?php
+require_once '../config/auth.php';
+require_permission('can_import_export');
 $pageTitle = 'Import Sheet | CarFlip HQ';
 require '../header.php';
 ?>

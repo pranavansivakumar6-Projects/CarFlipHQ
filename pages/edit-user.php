@@ -7,7 +7,8 @@ require_admin();
 $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 if (!$id) { http_response_code(400); die('User ID missing.'); }
 
-$stmt = $pdo->prepare("SELECT id, name, email, role FROM users WHERE id = ?");
+$permissionColumns = implode(', ', array_keys(permission_fields()));
+$stmt = $pdo->prepare("SELECT id, name, email, role, $permissionColumns FROM users WHERE id = ?");
 $stmt->execute([$id]);
 $account = $stmt->fetch(PDO::FETCH_ASSOC);
 if (!$account) { http_response_code(404); die('User not found.'); }
@@ -32,6 +33,13 @@ require '../header.php';
             <option value="<?= $role ?>" <?= $account['role'] === $role ? 'selected' : '' ?>><?= $label ?></option>
             <?php endforeach; ?>
         </select>
+        <h2>Permissions</h2>
+        <p class="small">Admins always get full access. For partners, tick only what this person should be able to do.</p>
+        <div class="permission-grid">
+            <?php foreach (permission_fields() as $key => $label): ?>
+            <label class="check-pill"><input type="checkbox" name="permissions[]" value="<?= htmlspecialchars($key) ?>" <?= !empty($account[$key]) ? 'checked' : '' ?>> <?= htmlspecialchars($label) ?></label>
+            <?php endforeach; ?>
+        </div>
         <br><br><button class="btn" type="submit">Update User</button>
         <a class="btn secondary" href="users.php">Cancel</a>
     </form>

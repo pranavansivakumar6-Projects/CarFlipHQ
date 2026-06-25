@@ -17,6 +17,13 @@ function ensure_database_schema(PDO $pdo): void
           password_hash VARCHAR(255) NOT NULL,
           role ENUM('admin','partner') DEFAULT 'partner',
           session_version INT NOT NULL DEFAULT 0,
+          can_view_data TINYINT(1) NOT NULL DEFAULT 0,
+          can_manage_cars TINYINT(1) NOT NULL DEFAULT 0,
+          can_manage_finance TINYINT(1) NOT NULL DEFAULT 0,
+          can_manage_tasks TINYINT(1) NOT NULL DEFAULT 0,
+          can_manage_sales TINYINT(1) NOT NULL DEFAULT 0,
+          can_import_export TINYINT(1) NOT NULL DEFAULT 0,
+          can_use_ai TINYINT(1) NOT NULL DEFAULT 0,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )",
         "CREATE TABLE IF NOT EXISTS password_resets (
@@ -155,6 +162,13 @@ function ensure_database_schema(PDO $pdo): void
     }
 
     ensure_column($pdo, 'users', 'session_version', 'INT NOT NULL DEFAULT 0');
+    ensure_column($pdo, 'users', 'can_view_data', 'TINYINT(1) NOT NULL DEFAULT 0');
+    ensure_column($pdo, 'users', 'can_manage_cars', 'TINYINT(1) NOT NULL DEFAULT 0');
+    ensure_column($pdo, 'users', 'can_manage_finance', 'TINYINT(1) NOT NULL DEFAULT 0');
+    ensure_column($pdo, 'users', 'can_manage_tasks', 'TINYINT(1) NOT NULL DEFAULT 0');
+    ensure_column($pdo, 'users', 'can_manage_sales', 'TINYINT(1) NOT NULL DEFAULT 0');
+    ensure_column($pdo, 'users', 'can_import_export', 'TINYINT(1) NOT NULL DEFAULT 0');
+    ensure_column($pdo, 'users', 'can_use_ai', 'TINYINT(1) NOT NULL DEFAULT 0');
 }
 
 function ensure_column(PDO $pdo, string $table, string $column, string $definition): void

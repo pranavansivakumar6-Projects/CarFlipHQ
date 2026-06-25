@@ -1,5 +1,7 @@
 <?php
 require '../config/db.php';
+require_once '../config/auth.php';
+require_permission('can_manage_sales');
 $carId = filter_input(INPUT_GET, 'car_id', FILTER_VALIDATE_INT);
 if (!$carId) { http_response_code(400); die('Car ID missing.'); }
 require '../config/helpers.php';

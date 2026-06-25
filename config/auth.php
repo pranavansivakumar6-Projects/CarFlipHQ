@@ -44,6 +44,43 @@ function is_logged_in(): bool
     return current_user() !== null;
 }
 
+function permission_fields(): array
+{
+    return [
+        'can_view_data' => 'View dashboard and car data',
+        'can_manage_cars' => 'Add and edit cars',
+        'can_manage_finance' => 'Expenses, purchase payments, and profit splits',
+        'can_manage_tasks' => 'Tasks, repairs, files, and parts',
+        'can_manage_sales' => 'Listings and sale details',
+        'can_import_export' => 'Import and export sheets',
+        'can_use_ai' => 'AI tools',
+    ];
+}
+
+function user_can(string $permission): bool
+{
+    $user = current_user();
+    if (!$user) {
+        return false;
+    }
+
+    if (($user['role'] ?? '') === 'admin') {
+        return true;
+    }
+
+    return !empty($user[$permission]);
+}
+
+function require_permission(string $permission): void
+{
+    require_login();
+
+    if (!user_can($permission)) {
+        http_response_code(403);
+        die('You do not have permission to access this area.');
+    }
+}
+
 function require_login(): void
 {
     if (!is_logged_in()) {
@@ -53,7 +90,7 @@ function require_login(): void
     $pdo = $GLOBALS['pdo'] ?? null;
     $user = current_user();
     if ($pdo instanceof PDO && $user) {
-        $stmt = $pdo->prepare('SELECT name, email, role, session_version FROM users WHERE id = ?');
+        $stmt = $pdo->prepare('SELECT name, email, role, session_version, can_view_data, can_manage_cars, can_manage_finance, can_manage_tasks, can_manage_sales, can_import_export, can_use_ai FROM users WHERE id = ?');
         $stmt->execute([(int) $user['id']]);
         $freshUser = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -73,6 +110,9 @@ function require_login(): void
         $_SESSION['user']['email'] = $freshUser['email'];
         $_SESSION['user']['role'] = $freshUser['role'];
         $_SESSION['user']['session_version'] = $freshVersion;
+        foreach (array_keys(permission_fields()) as $permission) {
+            $_SESSION['user'][$permission] = (int) ($freshUser[$permission] ?? 0);
+        }
     }
 }
 
@@ -89,7 +129,7 @@ function require_admin(): void
 function redirect_if_logged_in(): void
 {
     if (is_logged_in()) {
-        redirect_to('index.php');
+        redirect_to(user_can('can_view_data') ? 'index.php' : 'pages/account.php');
     }
 }
 

@@ -3,7 +3,7 @@ require '../config/db.php';
 require '../config/auth.php';
 require '../config/helpers.php';
 require_once '../config/status.php';
-require_login();
+require_permission('can_import_export');
 
 if (empty($_FILES['sheet_file']) || $_FILES['sheet_file']['error'] !== UPLOAD_ERR_OK) {
     http_response_code(400);

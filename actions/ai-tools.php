@@ -4,7 +4,7 @@ require_once '../config/auth.php';
 require_once '../config/helpers.php';
 require_once '../config/ai.php';
 
-require_login();
+require_permission('can_use_ai');
 
 function car_options(PDO $pdo): array
 {

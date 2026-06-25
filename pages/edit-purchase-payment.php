@@ -1,6 +1,8 @@
 <?php
 require '../config/db.php';
+require_once '../config/auth.php';
 
+require_permission('can_manage_finance');
 $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 if (!$id) { http_response_code(400); die('Purchase payment ID missing.'); }
 

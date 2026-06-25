@@ -2,7 +2,7 @@
 require '../config/db.php';
 require '../config/auth.php';
 require '../config/helpers.php';
-require_login();
+require_permission('can_manage_tasks');
 $carId = post_int('car_id', true);
 require_car($pdo, $carId);
 $status = require_allowed_value(post_string('status', true), ['Needed','Ordered','Arrived','Installed','Cancelled'], 'status');

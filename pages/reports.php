@@ -1,5 +1,7 @@
 <?php
 require '../config/db.php';
+require_once '../config/auth.php';
+require_permission('can_view_data');
 $pageTitle = 'Reports | CarFlip HQ';
 require '../header.php';
 $totalCars = (int) $pdo->query("SELECT COUNT(*) FROM cars")->fetchColumn();

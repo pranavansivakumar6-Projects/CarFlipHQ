@@ -3,7 +3,7 @@ require '../config/db.php';
 require '../config/auth.php';
 require '../config/helpers.php';
 
-require_login();
+require_permission('can_manage_cars');
 
 $id = post_int('id', true);
 $stmt = $pdo->prepare('SELECT car_id, file_path FROM car_files WHERE id = ?');

@@ -4,7 +4,7 @@ require '../config/auth.php';
 require_once '../config/status.php';
 require_once '../config/helpers.php';
 
-require_login();
+require_permission('can_manage_cars');
 
 $carId = post_int('id', true);
 require_car($pdo, $carId);

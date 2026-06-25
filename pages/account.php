@@ -21,12 +21,31 @@ require '../header.php';
     <?php if (isset($_GET['error'])): ?>
         <div class="alert">Current password is wrong, or the new password is less than 8 characters.</div>
     <?php endif; ?>
+    <?php if (!user_can('can_view_data')): ?>
+        <div class="alert">Your account is active, but business access has not been approved yet. Ask an admin to enable permissions from Users.</div>
+    <?php endif; ?>
 
     <div class="grid">
         <div class="card">
             <b>Signed in as</b>
             <div class="stat"><?= htmlspecialchars($account['name'] ?? '') ?></div>
             <div class="small"><?= htmlspecialchars($account['email'] ?? '') ?> / <?= htmlspecialchars($account['role'] ?? '') ?></div>
+            <div class="permission-tags account-permissions">
+                <?php if (($account['role'] ?? '') === 'admin'): ?>
+                    <span>Full access</span>
+                <?php else: ?>
+                    <?php $hasPermission = false; ?>
+                    <?php foreach (permission_fields() as $key => $label): ?>
+                        <?php if (user_can($key)): ?>
+                        <?php $hasPermission = true; ?>
+                        <span><?= htmlspecialchars($label) ?></span>
+                        <?php endif; ?>
+                    <?php endforeach; ?>
+                    <?php if (!$hasPermission): ?>
+                        <span>No business access yet</span>
+                    <?php endif; ?>
+                <?php endif; ?>
+            </div>
         </div>
         <form class="form-card" action="../actions/change-password.php" method="POST">
             <h2>Change Password</h2>

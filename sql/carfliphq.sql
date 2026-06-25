@@ -7,7 +7,26 @@ CREATE TABLE users (
   email VARCHAR(150) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
   role ENUM('admin','partner') DEFAULT 'partner',
+  session_version INT NOT NULL DEFAULT 0,
+  can_view_data TINYINT(1) NOT NULL DEFAULT 0,
+  can_manage_cars TINYINT(1) NOT NULL DEFAULT 0,
+  can_manage_finance TINYINT(1) NOT NULL DEFAULT 0,
+  can_manage_tasks TINYINT(1) NOT NULL DEFAULT 0,
+  can_manage_sales TINYINT(1) NOT NULL DEFAULT 0,
+  can_import_export TINYINT(1) NOT NULL DEFAULT 0,
+  can_use_ai TINYINT(1) NOT NULL DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE password_resets (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  token_hash VARCHAR(255) NOT NULL,
+  expires_at DATETIME NOT NULL,
+  used_at DATETIME,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_password_resets_token (token_hash),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE cars (

@@ -1,4 +1,6 @@
 <?php
+require_once '../config/auth.php';
+require_permission('can_manage_cars');
 $pageTitle = 'Add Car | CarFlip HQ';
 require '../header.php';
 ?>

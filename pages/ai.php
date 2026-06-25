@@ -1,6 +1,7 @@
 <?php
 require '../config/db.php';
 require_once '../config/auth.php';
+require_permission('can_use_ai');
 require_once '../config/ai.php';
 require_once '../config/status.php';
 

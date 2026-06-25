@@ -3,7 +3,7 @@ require '../config/db.php';
 require '../config/auth.php';
 require '../config/helpers.php';
 
-require_login();
+require_permission('can_manage_finance');
 
 $carId = post_int('car_id', true);
 require_car($pdo, $carId);

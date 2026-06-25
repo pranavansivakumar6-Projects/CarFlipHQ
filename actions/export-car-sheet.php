@@ -1,7 +1,7 @@
 <?php
 require '../config/db.php';
 require '../config/auth.php';
-require_login();
+require_permission('can_import_export');
 
 $carId = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 if (!$carId) { http_response_code(400); die('Car ID missing.'); }

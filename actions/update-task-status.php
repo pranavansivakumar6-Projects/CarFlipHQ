@@ -3,7 +3,7 @@ require '../config/db.php';
 require '../config/auth.php';
 require '../config/helpers.php';
 
-require_login();
+require_permission('can_manage_tasks');
 
 $id = post_int('id', true);
 $status = require_allowed_value(post_string('status', true), ['To Do','In Progress','Done'], 'status');

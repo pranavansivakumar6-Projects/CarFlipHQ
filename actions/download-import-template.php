@@ -1,6 +1,6 @@
 <?php
 require '../config/auth.php';
-require_login();
+require_permission('can_import_export');
 
 header('Content-Type: text/csv');
 header('Content-Disposition: attachment; filename="carfliphq-import-template.csv"');

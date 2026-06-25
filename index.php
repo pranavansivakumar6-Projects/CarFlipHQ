@@ -1,5 +1,7 @@
 <?php
 require 'config/db.php';
+require_once 'config/auth.php';
+require_permission('can_view_data');
 $pageTitle = 'Dashboard | CarFlip HQ';
 require 'header.php';
 
@@ -76,7 +78,9 @@ $recentCars = $pdo->query("SELECT * FROM cars WHERE $scopeWhere ORDER BY created
             <h2>Recent Cars</h2>
             <p class="small">Open a car to review tasks, purchase payments, expenses, files, and split details.</p>
         </div>
+        <?php if (user_can('can_manage_cars')): ?>
         <a class="btn" href="pages/add-car.php">+ Add New Car</a>
+        <?php endif; ?>
     </div>
     <?php include 'pages/partials/recent-cars-table.php'; ?>
 </div>
