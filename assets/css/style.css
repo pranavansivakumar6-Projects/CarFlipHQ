@@ -258,6 +258,10 @@ table,
     margin: 0;
 }
 
+.mini-form {
+    margin: 12px 0 0;
+}
+
 table {
     width: 100%;
     border-collapse: separate;

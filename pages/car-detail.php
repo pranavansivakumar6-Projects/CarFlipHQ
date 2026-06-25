@@ -1,5 +1,6 @@
 <?php
 require '../config/db.php';
+require_once '../config/status.php';
 
 function detail_text($value, string $fallback = ''): string
 {
@@ -100,8 +101,9 @@ foreach ($partnerNames as $name) {
     $settlements[$name] = $sharePercent === null ? null : $paidAmount - $costShares[$name];
     $salePayouts[$name] = $sharePercent === null ? null : $paidAmount + $profitShares[$name];
 }
-$statusSteps = ['Bought','Waiting for Parts','Under Repair','RWC Pending','Ready for Sale','Listed','Sold'];
-$currentStatusIndex = array_search($car['status'], $statusSteps, true);
+$statusSteps = car_status_steps();
+$workflowStatus = infer_car_status($car, $parts, $tasks, $listings);
+$currentStatusIndex = array_search($workflowStatus, $statusSteps, true);
 $currentStatusIndex = $currentStatusIndex === false ? 0 : $currentStatusIndex;
 $tasksByStatus = [
     'To Do' => [],
@@ -124,13 +126,26 @@ require '../header.php';
     </div>
 
     <div class="grid section-title">
-        <div class="card"><b>Status</b><div class="stat"><?= detail_text($car['status']) ?></div></div>
+        <div class="card">
+            <b>Workflow Status</b>
+            <div class="stat"><?= detail_text($workflowStatus) ?></div>
+            <div class="small">Saved status: <?= detail_text($car['status']) ?></div>
+            <?php if ($workflowStatus !== $car['status']): ?>
+            <form action="../actions/sync-car-status.php" method="POST" class="mini-form">
+                <input type="hidden" name="id" value="<?= (int) $id ?>">
+                <button class="btn secondary small-btn" type="submit">Sync Status</button>
+            </form>
+            <?php endif; ?>
+        </div>
         <div class="card"><b>Total Cost</b><div class="stat">$<?= number_format($totalCost, 2) ?></div></div>
         <div class="card"><b>Task Hours</b><div class="stat"><?= number_format($totalTaskHours, 2) ?></div></div>
         <div class="card"><b>Open Parts</b><div class="stat"><?= $openParts ?></div><div class="small">$<?= number_format($partsCost, 2) ?> tracked</div></div>
         <div class="card"><b>Estimated Profit</b><div class="profit <?= $estimatedProfit >= 0 ? 'positive' : 'negative' ?>">$<?= number_format($estimatedProfit, 2) ?></div></div>
         <div class="card"><b>Actual Profit</b><div class="profit <?= ($actualProfit ?? 0) >= 0 ? 'positive' : 'negative' ?>"><?= $actualProfit === null ? 'Not sold' : '$'.number_format($actualProfit, 2) ?></div></div>
     </div>
+    <?php if (isset($_GET['status_synced'])): ?>
+        <div class="alert success">Car status updated from workflow progress.</div>
+    <?php endif; ?>
 
     <div class="timeline-card section-title">
         <?php foreach ($statusSteps as $stepIndex => $step): ?>
