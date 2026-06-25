@@ -637,6 +637,19 @@ label {
     max-width: 430px;
 }
 
+.auth-links {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    margin-top: 18px;
+}
+
+.auth-links a {
+    color: var(--blue-dark);
+    font-weight: 800;
+    text-decoration: none;
+}
+
 .inventory-hero {
     min-height: 260px;
     display: flex;

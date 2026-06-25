@@ -19,6 +19,16 @@ function ensure_database_schema(PDO $pdo): void
           session_version INT NOT NULL DEFAULT 0,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )",
+        "CREATE TABLE IF NOT EXISTS password_resets (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          user_id INT NOT NULL,
+          token_hash VARCHAR(255) NOT NULL,
+          expires_at DATETIME NOT NULL,
+          used_at DATETIME,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          INDEX idx_password_resets_token (token_hash),
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )",
         "CREATE TABLE IF NOT EXISTS investors (
           id INT AUTO_INCREMENT PRIMARY KEY,
           name VARCHAR(150) NOT NULL,

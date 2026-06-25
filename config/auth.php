@@ -14,6 +14,20 @@ function app_url(string $path): string
     return BASE_PATH . '/' . ltrim($path, '/');
 }
 
+function app_absolute_url(string $path): string
+{
+    $configuredUrl = trim((string) (getenv('APP_URL') ?: ''));
+    if ($configuredUrl !== '') {
+        return rtrim($configuredUrl, '/') . app_url($path);
+    }
+
+    $host = $_SERVER['HTTP_HOST'] ?? (getenv('RAILWAY_PUBLIC_DOMAIN') ?: 'localhost');
+    $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || getenv('RAILWAY_ENVIRONMENT');
+    $scheme = $https ? 'https' : 'http';
+
+    return $scheme . '://' . $host . app_url($path);
+}
+
 function redirect_to(string $path): void
 {
     header('Location: ' . app_url($path));
@@ -82,5 +96,21 @@ function redirect_if_logged_in(): void
 function user_count(PDO $pdo): int
 {
     return (int) $pdo->query('SELECT COUNT(*) FROM users')->fetchColumn();
+}
+
+function send_app_email(string $to, string $subject, string $message): bool
+{
+    $from = trim((string) (getenv('APP_FROM_EMAIL') ?: ''));
+    if ($from === '') {
+        return false;
+    }
+
+    $headers = [
+        'From: CarFlip HQ <' . $from . '>',
+        'Reply-To: ' . $from,
+        'Content-Type: text/plain; charset=UTF-8',
+    ];
+
+    return mail($to, $subject, $message, implode("\r\n", $headers));
 }
 ?>
