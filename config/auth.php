@@ -35,6 +35,31 @@ function require_login(): void
     if (!is_logged_in()) {
         redirect_to('pages/login.php');
     }
+
+    $pdo = $GLOBALS['pdo'] ?? null;
+    $user = current_user();
+    if ($pdo instanceof PDO && $user) {
+        $stmt = $pdo->prepare('SELECT name, email, role, session_version FROM users WHERE id = ?');
+        $stmt->execute([(int) $user['id']]);
+        $freshUser = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$freshUser) {
+            unset($_SESSION['user']);
+            redirect_to('pages/login.php');
+        }
+
+        $sessionVersion = $_SESSION['user']['session_version'] ?? null;
+        $freshVersion = (int) ($freshUser['session_version'] ?? 0);
+        if ($sessionVersion !== null && (int) $sessionVersion !== $freshVersion) {
+            unset($_SESSION['user']);
+            redirect_to('pages/login.php?changed=1');
+        }
+
+        $_SESSION['user']['name'] = $freshUser['name'];
+        $_SESSION['user']['email'] = $freshUser['email'];
+        $_SESSION['user']['role'] = $freshUser['role'];
+        $_SESSION['user']['session_version'] = $freshVersion;
+    }
 }
 
 function require_admin(): void

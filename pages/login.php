@@ -20,6 +20,9 @@ require '../header.php';
         <?php if (isset($_GET['created'])): ?>
             <div class="alert success">Admin account created. Sign in to continue.</div>
         <?php endif; ?>
+        <?php if (isset($_GET['changed'])): ?>
+            <div class="alert">Your password changed. Sign in again with the new password.</div>
+        <?php endif; ?>
         <label>Email</label><input name="email" type="email" autocomplete="email" required>
         <label>Password</label><input name="password" type="password" autocomplete="current-password" required>
         <br><br><button class="btn" type="submit">Sign in</button>

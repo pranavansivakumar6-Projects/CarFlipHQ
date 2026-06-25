@@ -16,6 +16,7 @@ function ensure_database_schema(PDO $pdo): void
           email VARCHAR(150) NOT NULL UNIQUE,
           password_hash VARCHAR(255) NOT NULL,
           role ENUM('admin','partner') DEFAULT 'partner',
+          session_version INT NOT NULL DEFAULT 0,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )",
         "CREATE TABLE IF NOT EXISTS investors (
@@ -141,6 +142,24 @@ function ensure_database_schema(PDO $pdo): void
 
     foreach ($statements as $statement) {
         $pdo->exec($statement);
+    }
+
+    ensure_column($pdo, 'users', 'session_version', 'INT NOT NULL DEFAULT 0');
+}
+
+function ensure_column(PDO $pdo, string $table, string $column, string $definition): void
+{
+    $stmt = $pdo->prepare("
+        SELECT COUNT(*)
+        FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = ?
+          AND COLUMN_NAME = ?
+    ");
+    $stmt->execute([$table, $column]);
+
+    if ((int) $stmt->fetchColumn() === 0) {
+        $pdo->exec("ALTER TABLE `$table` ADD COLUMN `$column` $definition");
     }
 }
 ?>

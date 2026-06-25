@@ -24,6 +24,7 @@ $user = current_user();
         <a href="<?= app_url('pages/import-sheet.php') ?>">Import Sheet</a>
         <a href="<?= app_url('pages/reports.php') ?>">Reports</a>
         <a href="<?= app_url('pages/ai.php') ?>">AI Tools</a>
+        <a href="<?= app_url('pages/account.php') ?>">My Account</a>
         <?php if (($user['role'] ?? '') === 'admin'): ?>
         <a href="<?= app_url('pages/users.php') ?>">Users</a>
         <a href="<?= app_url('pages/restore-backup.php') ?>">Restore</a>

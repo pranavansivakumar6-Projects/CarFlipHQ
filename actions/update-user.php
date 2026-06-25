@@ -17,7 +17,7 @@ if (!$email || ($password !== '' && strlen($password) < 8)) {
 
 try {
     if ($password !== '') {
-        $stmt = $pdo->prepare('UPDATE users SET name = ?, email = ?, password_hash = ?, role = ? WHERE id = ?');
+        $stmt = $pdo->prepare('UPDATE users SET name = ?, email = ?, password_hash = ?, role = ?, session_version = session_version + 1 WHERE id = ?');
         $stmt->execute([$name, $email, password_hash($password, PASSWORD_DEFAULT), $role, $id]);
     } else {
         $stmt = $pdo->prepare('UPDATE users SET name = ?, email = ?, role = ? WHERE id = ?');
@@ -32,6 +32,9 @@ if ($current && (int) $current['id'] === $id) {
     $_SESSION['user']['name'] = $name;
     $_SESSION['user']['email'] = $email;
     $_SESSION['user']['role'] = $role;
+    if ($password !== '') {
+        $_SESSION['user']['session_version'] = (int) ($_SESSION['user']['session_version'] ?? 0) + 1;
+    }
 }
 
 redirect_to('pages/users.php');
