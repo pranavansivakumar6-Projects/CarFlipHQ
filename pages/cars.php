@@ -18,7 +18,14 @@ function car_status_class(?string $status): string
 }
 ?>
 <div class="container">
-    <h1>Cars</h1>
+    <div class="inventory-hero">
+        <div>
+            <div class="eyebrow">Inventory</div>
+            <h1>Cars</h1>
+            <p>Browse each flip like a mini showroom: purchase, expenses, sale value, status, and profit at a glance.</p>
+        </div>
+        <div class="inventory-count"><?= count($cars) ?><span>cars tracked</span></div>
+    </div>
     <?php if (isset($_GET['deleted'])): ?>
         <div class="alert success">Car deleted.</div>
     <?php endif; ?>

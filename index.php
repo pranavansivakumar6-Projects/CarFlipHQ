@@ -42,9 +42,14 @@ $recentCars = $pdo->query("SELECT * FROM cars WHERE $scopeWhere ORDER BY created
 <div class="container">
     <div class="dashboard-hero">
         <div>
+            <div class="eyebrow">CarFlip HQ Operations</div>
             <h1>Dashboard</h1>
             <p>Track cars, repair work, expenses, sale progress, and partner payouts from one place.</p>
-            <div class="small"><?= htmlspecialchars($scopeLabel) ?> summary currently selected</div>
+            <div class="hero-stats">
+                <div><span><?= htmlspecialchars($scopeLabel) ?></span><b><?= $totalCars ?></b></div>
+                <div><span><?= htmlspecialchars($profitLabel) ?></span><b>$<?= number_format($expectedProfit, 2) ?></b></div>
+                <div><span>Ready/Listable</span><b><?= $readyCars ?></b></div>
+            </div>
         </div>
         <form class="filter-bar" method="GET">
             <label for="scope">Summary</label>
@@ -55,7 +60,7 @@ $recentCars = $pdo->query("SELECT * FROM cars WHERE $scopeWhere ORDER BY created
             </select>
         </form>
     </div>
-    <div class="grid">
+    <div class="grid stat-grid">
         <div class="card"><div><?= htmlspecialchars($scopeLabel) ?></div><div class="stat"><?= $totalCars ?></div></div>
         <div class="card"><div>Active Cars</div><div class="stat"><?= $activeCars ?></div></div>
         <div class="card"><div>Sold Cars</div><div class="stat"><?= $soldCars ?></div></div>
