@@ -51,6 +51,10 @@ function infer_car_status(array $car, array $parts, array $tasks, array $listing
         }
     }
 
+    if ($hasRwcDone) {
+        return 'Ready for Sale';
+    }
+
     if ($waitingParts) {
         return 'Waiting for Parts';
     }
@@ -63,7 +67,7 @@ function infer_car_status(array $car, array $parts, array $tasks, array $listing
         return 'RWC Pending';
     }
 
-    if ($hasRwcDone || count($tasks) > 0 || count($parts) > 0) {
+    if (count($tasks) > 0 || count($parts) > 0) {
         return 'Ready for Sale';
     }
 
