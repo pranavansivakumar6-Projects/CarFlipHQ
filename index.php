@@ -40,15 +40,21 @@ $expectedProfit = $salesValue - $totalPurchase - $totalExpenses;
 $recentCars = $pdo->query("SELECT * FROM cars WHERE $scopeWhere ORDER BY created_at DESC LIMIT 8")->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <div class="container">
-    <h1>Dashboard</h1>
-    <form class="filter-bar" method="GET">
-        <label for="scope">Summary</label>
-        <select id="scope" name="scope" onchange="this.form.submit()">
-            <option value="active" <?= $scope === 'active' ? 'selected' : '' ?>>Active cars only</option>
-            <option value="sold" <?= $scope === 'sold' ? 'selected' : '' ?>>Sold cars only</option>
-            <option value="all" <?= $scope === 'all' ? 'selected' : '' ?>>All cars</option>
-        </select>
-    </form>
+    <div class="dashboard-hero">
+        <div>
+            <h1>Dashboard</h1>
+            <p>Track cars, repair work, expenses, sale progress, and partner payouts from one place.</p>
+            <div class="small"><?= htmlspecialchars($scopeLabel) ?> summary currently selected</div>
+        </div>
+        <form class="filter-bar" method="GET">
+            <label for="scope">Summary</label>
+            <select id="scope" name="scope" onchange="this.form.submit()">
+                <option value="active" <?= $scope === 'active' ? 'selected' : '' ?>>Active cars only</option>
+                <option value="sold" <?= $scope === 'sold' ? 'selected' : '' ?>>Sold cars only</option>
+                <option value="all" <?= $scope === 'all' ? 'selected' : '' ?>>All cars</option>
+            </select>
+        </form>
+    </div>
     <div class="grid">
         <div class="card"><div><?= htmlspecialchars($scopeLabel) ?></div><div class="stat"><?= $totalCars ?></div></div>
         <div class="card"><div>Active Cars</div><div class="stat"><?= $activeCars ?></div></div>
@@ -60,8 +66,13 @@ $recentCars = $pdo->query("SELECT * FROM cars WHERE $scopeWhere ORDER BY created
         <div class="card"><div>Extra Expenses</div><div class="stat">$<?= number_format($totalExpenses, 2) ?></div><div class="small"><?= htmlspecialchars($scopeLabel) ?></div></div>
         <div class="card"><div><?= htmlspecialchars($profitLabel) ?></div><div class="profit <?= $expectedProfit >= 0 ? 'positive' : 'negative' ?>">$<?= number_format($expectedProfit, 2) ?></div></div>
     </div>
-    <h2 class="section-title">Recent Cars</h2>
-    <p><a class="btn" href="pages/add-car.php">+ Add New Car</a></p>
+    <div class="page-heading section-title">
+        <div>
+            <h2>Recent Cars</h2>
+            <p class="small">Open a car to review tasks, purchase payments, expenses, files, and split details.</p>
+        </div>
+        <a class="btn" href="pages/add-car.php">+ Add New Car</a>
+    </div>
     <?php include 'pages/partials/recent-cars-table.php'; ?>
 </div>
 <?php require 'footer.php'; ?>

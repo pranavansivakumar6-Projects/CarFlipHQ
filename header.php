@@ -34,3 +34,4 @@ $user = current_user();
         <?php endif; ?>
     </nav>
 </div>
+<main class="app-main">
