@@ -13,13 +13,22 @@ $selectedCarId = filter_input(INPUT_GET, 'car_id', FILTER_VALIDATE_INT) ?: ($car
 $result = $_SESSION['ai_result'] ?? null;
 unset($_SESSION['ai_result']);
 
+function ai_car_options(array $cars, ?int $selectedCarId): void
+{
+    foreach ($cars as $car) {
+        $label = trim($car['year'] . ' ' . $car['make'] . ' ' . $car['model'] . ' - ' . car_status_label((string) $car['status']));
+        $selected = (int) $selectedCarId === (int) $car['id'] ? 'selected' : '';
+        echo '<option value="' . (int) $car['id'] . '" ' . $selected . '>' . htmlspecialchars($label) . '</option>';
+    }
+}
+
 require '../header.php';
 ?>
 <div class="container">
     <div class="page-heading">
         <div>
             <h1>AI Tools</h1>
-            <p class="small">Use your CarFlip HQ data to draft listings, plan repairs, read receipts, and ask business questions.</p>
+            <p class="small">Use your CarFlip HQ data to draft listings, plan repairs, prepare job documents, read receipts, and ask business questions.</p>
         </div>
     </div>
 
@@ -47,9 +56,7 @@ require '../header.php';
             <h2>Generate Listing</h2>
             <label>Car</label>
             <select name="car_id" required>
-                <?php foreach ($cars as $car): ?>
-                    <option value="<?= (int) $car['id'] ?>" <?= (int) $selectedCarId === (int) $car['id'] ? 'selected' : '' ?>><?= htmlspecialchars(trim($car['year'] . ' ' . $car['make'] . ' ' . $car['model'] . ' - ' . car_status_label((string) $car['status']))) ?></option>
-                <?php endforeach; ?>
+                <?php ai_car_options($cars, $selectedCarId); ?>
             </select>
             <button class="btn" type="submit">Draft Listing</button>
         </form>
@@ -59,11 +66,109 @@ require '../header.php';
             <h2>Suggest Tasks</h2>
             <label>Car</label>
             <select name="car_id" required>
-                <?php foreach ($cars as $car): ?>
-                    <option value="<?= (int) $car['id'] ?>" <?= (int) $selectedCarId === (int) $car['id'] ? 'selected' : '' ?>><?= htmlspecialchars(trim($car['year'] . ' ' . $car['make'] . ' ' . $car['model'] . ' - ' . car_status_label((string) $car['status']))) ?></option>
-                <?php endforeach; ?>
+                <?php ai_car_options($cars, $selectedCarId); ?>
             </select>
             <button class="btn" type="submit">Suggest Work</button>
+        </form>
+
+        <form class="tool-card tool-card-wide" action="../actions/ai-tools.php" method="POST">
+            <input type="hidden" name="tool" value="quotation">
+            <h2>Generate Quotation</h2>
+            <label>Car</label>
+            <select name="car_id" required>
+                <?php ai_car_options($cars, $selectedCarId); ?>
+            </select>
+            <div class="tool-form-grid">
+                <div>
+                    <label>Customer Name</label>
+                    <input type="text" name="customer_name" required>
+                </div>
+                <div>
+                    <label>Customer Contact</label>
+                    <input type="text" name="customer_contact" placeholder="Phone, email, or address">
+                </div>
+            </div>
+            <label>Job Title</label>
+            <input type="text" name="job_title" placeholder="Front end repair and RWC preparation" required>
+            <label>Job Details</label>
+            <textarea name="job_details" rows="4" placeholder="Describe what needs to be quoted, parts required, labour, inclusions, exclusions, and anything the customer asked for." required></textarea>
+            <div class="tool-form-grid tool-form-grid-three">
+                <div>
+                    <label>Labour</label>
+                    <input type="number" name="labour_amount" min="0" step="0.01" placeholder="0.00">
+                </div>
+                <div>
+                    <label>Parts</label>
+                    <input type="number" name="parts_amount" min="0" step="0.01" placeholder="0.00">
+                </div>
+                <div>
+                    <label>Other</label>
+                    <input type="number" name="other_amount" min="0" step="0.01" placeholder="0.00">
+                </div>
+            </div>
+            <div class="tool-form-grid">
+                <div>
+                    <label>Quote Date</label>
+                    <input type="date" name="document_date" value="<?= htmlspecialchars(date('Y-m-d')) ?>">
+                </div>
+                <div>
+                    <label>Valid Until</label>
+                    <input type="date" name="valid_until">
+                </div>
+            </div>
+            <label>Terms or Notes</label>
+            <textarea name="notes" rows="3" placeholder="Example: Subject to parts availability. No GST unless stated."></textarea>
+            <button class="btn" type="submit">Draft Quotation</button>
+        </form>
+
+        <form class="tool-card tool-card-wide" action="../actions/ai-tools.php" method="POST">
+            <input type="hidden" name="tool" value="invoice">
+            <h2>Generate Invoice</h2>
+            <label>Car</label>
+            <select name="car_id" required>
+                <?php ai_car_options($cars, $selectedCarId); ?>
+            </select>
+            <div class="tool-form-grid">
+                <div>
+                    <label>Customer Name</label>
+                    <input type="text" name="customer_name" required>
+                </div>
+                <div>
+                    <label>Customer Contact</label>
+                    <input type="text" name="customer_contact" placeholder="Phone, email, or address">
+                </div>
+            </div>
+            <label>Job Title</label>
+            <input type="text" name="job_title" placeholder="Repair work completed" required>
+            <label>Job Details</label>
+            <textarea name="job_details" rows="4" placeholder="Describe the completed job, work performed, parts supplied, labour, and payment notes." required></textarea>
+            <div class="tool-form-grid tool-form-grid-three">
+                <div>
+                    <label>Labour</label>
+                    <input type="number" name="labour_amount" min="0" step="0.01" placeholder="0.00">
+                </div>
+                <div>
+                    <label>Parts</label>
+                    <input type="number" name="parts_amount" min="0" step="0.01" placeholder="0.00">
+                </div>
+                <div>
+                    <label>Other</label>
+                    <input type="number" name="other_amount" min="0" step="0.01" placeholder="0.00">
+                </div>
+            </div>
+            <div class="tool-form-grid">
+                <div>
+                    <label>Invoice Date</label>
+                    <input type="date" name="document_date" value="<?= htmlspecialchars(date('Y-m-d')) ?>">
+                </div>
+                <div>
+                    <label>Payment Terms</label>
+                    <input type="text" name="payment_terms" placeholder="Due on receipt, 7 days, deposit paid...">
+                </div>
+            </div>
+            <label>Notes</label>
+            <textarea name="notes" rows="3" placeholder="Payment instructions, warranty notes, or extra customer information."></textarea>
+            <button class="btn" type="submit">Draft Invoice</button>
         </form>
 
         <form class="tool-card" action="../actions/ai-tools.php" method="POST" enctype="multipart/form-data">
