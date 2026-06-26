@@ -24,7 +24,7 @@ function car_status_class(?string $status): string
     return 'status-' . trim(preg_replace('/[^a-z0-9]+/', '-', strtolower((string) $status)), '-');
 }
 ?>
-<div class="container">
+<div class="container inventory-view">
     <div class="inventory-hero">
         <div>
             <div class="eyebrow">Inventory</div>

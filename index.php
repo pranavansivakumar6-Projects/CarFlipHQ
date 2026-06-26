@@ -45,7 +45,7 @@ $salesValue = (float) $pdo->query("SELECT $salesSql FROM cars WHERE $scopeWhere 
 $expectedProfit = $salesValue - $totalPurchase - $totalExpenses;
 $recentCars = $pdo->query("SELECT * FROM cars WHERE $scopeWhere AND $carAccessWhere ORDER BY created_at DESC LIMIT 8")->fetchAll(PDO::FETCH_ASSOC);
 ?>
-<div class="container">
+<div class="container dashboard-view">
     <div class="dashboard-hero">
         <div>
             <div class="eyebrow">CarFlip HQ Operations</div>

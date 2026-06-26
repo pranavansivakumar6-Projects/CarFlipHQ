@@ -135,6 +135,26 @@ a {
     padding: 32px 24px 72px;
 }
 
+.dashboard-view,
+.inventory-view {
+    position: relative;
+    isolation: isolate;
+}
+
+.dashboard-view::before,
+.inventory-view::before {
+    content: "";
+    position: absolute;
+    inset: 14px 0 auto;
+    height: 520px;
+    z-index: -1;
+    background:
+        radial-gradient(circle at 72% 8%, rgba(70, 210, 199, .28), transparent 24%),
+        radial-gradient(circle at 20% 20%, rgba(109, 93, 252, .16), transparent 24%),
+        linear-gradient(180deg, rgba(9, 16, 30, .98), rgba(11, 18, 32, .86) 56%, transparent);
+    clip-path: inset(0 round 18px);
+}
+
 h1 {
     margin: 0 0 10px;
     font-size: 42px;
@@ -291,6 +311,67 @@ p {
     margin-top: -48px;
     position: relative;
     z-index: 2;
+}
+
+.dashboard-view .stat-grid .card {
+    background:
+        linear-gradient(180deg, rgba(25, 33, 48, .96), rgba(12, 19, 31, .98)),
+        radial-gradient(circle at 82% 0, rgba(70, 210, 199, .28), transparent 32%);
+    border-color: rgba(255, 255, 255, .08);
+    color: #eef7f8;
+    box-shadow: 0 20px 48px rgba(4, 8, 16, .28);
+}
+
+.dashboard-view .stat-grid .card::before {
+    content: "";
+    position: absolute;
+    inset: 12px 12px auto auto;
+    width: 38px;
+    height: 38px;
+    border: 1px solid rgba(70, 210, 199, .24);
+    background:
+        linear-gradient(90deg, transparent 48%, rgba(70, 210, 199, .32) 49% 51%, transparent 52%),
+        linear-gradient(0deg, transparent 48%, rgba(70, 210, 199, .32) 49% 51%, transparent 52%);
+    opacity: .75;
+}
+
+.dashboard-view .stat-grid .card .small,
+.dashboard-view .stat-grid .card > div:first-child {
+    color: #b7c5d1;
+}
+
+.dashboard-view .stat-grid .stat,
+.dashboard-view .stat-grid .profit {
+    color: #fff;
+}
+
+.dashboard-view .page-heading {
+    color: #fff;
+    margin-top: 34px;
+}
+
+.dashboard-view .page-heading .small {
+    color: #b7c5d1;
+}
+
+.dashboard-view table {
+    background: rgba(14, 22, 36, .96);
+    border-color: rgba(255, 255, 255, .08);
+    color: #eef7f8;
+    box-shadow: 0 20px 48px rgba(4, 8, 16, .22);
+}
+
+.dashboard-view th {
+    background: rgba(255, 255, 255, .06);
+    color: #bdeee9;
+}
+
+.dashboard-view td {
+    border-bottom-color: rgba(255, 255, 255, .08);
+}
+
+.dashboard-view tr:hover td {
+    background: rgba(70, 210, 199, .08);
 }
 
 .card,
@@ -759,6 +840,18 @@ label {
     }
 }
 
+@keyframes card-light-sweep {
+    0%, 35% {
+        transform: translate3d(-35%, 0, 0);
+        opacity: .35;
+    }
+
+    70%, 100% {
+        transform: translate3d(34%, 0, 0);
+        opacity: .75;
+    }
+}
+
 .inventory-hero h1,
 .inventory-hero p {
     color: #fff;
@@ -797,11 +890,12 @@ label {
 }
 
 .car-card {
-    background: #fff;
-    border: 1px solid #dce4eb;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, .98), rgba(247, 250, 252, .98));
+    border: 1px solid rgba(15, 23, 42, .08);
     border-radius: 0;
     overflow: hidden;
-    box-shadow: var(--shadow-soft);
+    box-shadow: 0 20px 45px rgba(15, 23, 42, .1);
     display: flex;
     flex-direction: column;
     min-height: 460px;
@@ -815,7 +909,8 @@ label {
 
 .car-card-media {
     background:
-        linear-gradient(135deg, #101828, #263548),
+        radial-gradient(circle at 74% 35%, rgba(70, 210, 199, .38), transparent 22%),
+        linear-gradient(135deg, #080d18, #1a2638 58%, #0b1220),
         repeating-linear-gradient(45deg, rgba(255, 255, 255, .04) 0 1px, transparent 1px 12px);
     color: #fff;
     display: flex;
@@ -824,6 +919,19 @@ label {
     text-decoration: none;
     min-height: 190px;
     position: relative;
+    overflow: hidden;
+}
+
+.car-card-media::before {
+    content: "";
+    position: absolute;
+    inset: -45% -28%;
+    background:
+        linear-gradient(112deg, transparent 0 44%, rgba(255, 255, 255, .24) 48%, transparent 52%),
+        linear-gradient(112deg, transparent 0 61%, rgba(70, 210, 199, .32) 64%, transparent 68%);
+    transform: translate3d(-28%, 0, 0);
+    animation: card-light-sweep 7s ease-in-out infinite;
+    pointer-events: none;
 }
 
 .car-card-media::after {
@@ -838,12 +946,16 @@ label {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    position: relative;
+    z-index: 0;
 }
 
 .car-card-media span {
     font-size: 56px;
     font-weight: 900;
     letter-spacing: .08em;
+    position: relative;
+    z-index: 1;
 }
 
 .car-card-body {
@@ -1179,6 +1291,7 @@ label {
 @media (prefers-reduced-motion: reduce) {
     .dashboard-hero::before,
     .inventory-hero::before,
+    .car-card-media::before,
     .dashboard-hero::after,
     .inventory-hero::after {
         animation: none;
