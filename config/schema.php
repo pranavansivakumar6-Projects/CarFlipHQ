@@ -66,9 +66,18 @@ function ensure_database_schema(PDO $pdo): void
           estimated_sale_price DECIMAL(10,2) DEFAULT 0,
           actual_sale_price DECIMAL(10,2) DEFAULT 0,
           sold_date DATE,
+          profile_photo VARCHAR(255),
           damage_notes TEXT,
           notes TEXT,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )",
+        "CREATE TABLE IF NOT EXISTS car_user_access (
+          car_id INT NOT NULL,
+          user_id INT NOT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          PRIMARY KEY (car_id, user_id),
+          FOREIGN KEY (car_id) REFERENCES cars(id) ON DELETE CASCADE,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )",
         "CREATE TABLE IF NOT EXISTS expenses (
           id INT AUTO_INCREMENT PRIMARY KEY,
@@ -169,6 +178,7 @@ function ensure_database_schema(PDO $pdo): void
     ensure_column($pdo, 'users', 'can_manage_sales', 'TINYINT(1) NOT NULL DEFAULT 0');
     ensure_column($pdo, 'users', 'can_import_export', 'TINYINT(1) NOT NULL DEFAULT 0');
     ensure_column($pdo, 'users', 'can_use_ai', 'TINYINT(1) NOT NULL DEFAULT 0');
+    ensure_column($pdo, 'cars', 'profile_photo', 'VARCHAR(255)');
 }
 
 function ensure_column(PDO $pdo, string $table, string $column, string $definition): void

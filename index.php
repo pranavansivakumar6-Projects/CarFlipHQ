@@ -2,6 +2,7 @@
 require 'config/db.php';
 require_once 'config/auth.php';
 require_permission('can_view_data');
+require_once 'config/helpers.php';
 $pageTitle = 'Dashboard | CarFlip HQ';
 require 'header.php';
 
@@ -28,18 +29,21 @@ $salesSql = $scope === 'active'
     : 'COALESCE(SUM(CASE WHEN actual_sale_price > 0 THEN actual_sale_price ELSE estimated_sale_price END),0)';
 $scopeLabel = ['active' => 'Active Cars', 'sold' => 'Sold Cars', 'all' => 'All Cars'][$scope];
 $profitLabel = $scope === 'sold' ? 'Realized Profit' : ($scope === 'active' ? 'Expected Active Profit' : 'Projected/Realized Profit');
+$carAccessWhere = car_access_filter_sql('cars');
+$expenseAccessWhere = car_access_filter_sql('c');
+$taskAccessWhere = car_access_filter_sql('cars');
 
-$totalCars = $pdo->query("SELECT COUNT(*) FROM cars WHERE $scopeWhere")->fetchColumn();
-$activeCars = $pdo->query("SELECT COUNT(*) FROM cars WHERE status != 'Sold'")->fetchColumn();
-$soldCars = $pdo->query("SELECT COUNT(*) FROM cars WHERE status = 'Sold'")->fetchColumn();
-$openTasks = $pdo->query("SELECT COUNT(*) FROM tasks JOIN cars ON cars.id = tasks.car_id WHERE tasks.status != 'Done' AND $taskScopeWhere")->fetchColumn();
-$overdueTasks = $pdo->query("SELECT COUNT(*) FROM tasks JOIN cars ON cars.id = tasks.car_id WHERE tasks.status != 'Done' AND tasks.due_date IS NOT NULL AND tasks.due_date < CURDATE() AND $taskScopeWhere")->fetchColumn();
-$readyCars = $pdo->query("SELECT COUNT(*) FROM cars WHERE status IN ('Ready for Sale','Listed') AND $scopeWhere")->fetchColumn();
-$totalPurchase = (float) $pdo->query("SELECT COALESCE(SUM(purchase_price),0) FROM cars WHERE $scopeWhere")->fetchColumn();
-$totalExpenses = (float) $pdo->query("SELECT COALESCE(SUM(e.amount),0) FROM expenses e JOIN cars c ON c.id = e.car_id WHERE $expenseScopeWhere")->fetchColumn();
-$salesValue = (float) $pdo->query("SELECT $salesSql FROM cars WHERE $scopeWhere")->fetchColumn();
+$totalCars = $pdo->query("SELECT COUNT(*) FROM cars WHERE $scopeWhere AND $carAccessWhere")->fetchColumn();
+$activeCars = $pdo->query("SELECT COUNT(*) FROM cars WHERE status != 'Sold' AND $carAccessWhere")->fetchColumn();
+$soldCars = $pdo->query("SELECT COUNT(*) FROM cars WHERE status = 'Sold' AND $carAccessWhere")->fetchColumn();
+$openTasks = $pdo->query("SELECT COUNT(*) FROM tasks JOIN cars ON cars.id = tasks.car_id WHERE tasks.status != 'Done' AND $taskScopeWhere AND $taskAccessWhere")->fetchColumn();
+$overdueTasks = $pdo->query("SELECT COUNT(*) FROM tasks JOIN cars ON cars.id = tasks.car_id WHERE tasks.status != 'Done' AND tasks.due_date IS NOT NULL AND tasks.due_date < CURDATE() AND $taskScopeWhere AND $taskAccessWhere")->fetchColumn();
+$readyCars = $pdo->query("SELECT COUNT(*) FROM cars WHERE status IN ('Ready for Sale','Listed') AND $scopeWhere AND $carAccessWhere")->fetchColumn();
+$totalPurchase = (float) $pdo->query("SELECT COALESCE(SUM(purchase_price),0) FROM cars WHERE $scopeWhere AND $carAccessWhere")->fetchColumn();
+$totalExpenses = (float) $pdo->query("SELECT COALESCE(SUM(e.amount),0) FROM expenses e JOIN cars c ON c.id = e.car_id WHERE $expenseScopeWhere AND $expenseAccessWhere")->fetchColumn();
+$salesValue = (float) $pdo->query("SELECT $salesSql FROM cars WHERE $scopeWhere AND $carAccessWhere")->fetchColumn();
 $expectedProfit = $salesValue - $totalPurchase - $totalExpenses;
-$recentCars = $pdo->query("SELECT * FROM cars WHERE $scopeWhere ORDER BY created_at DESC LIMIT 8")->fetchAll(PDO::FETCH_ASSOC);
+$recentCars = $pdo->query("SELECT * FROM cars WHERE $scopeWhere AND $carAccessWhere ORDER BY created_at DESC LIMIT 8")->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <div class="container">
     <div class="dashboard-hero">

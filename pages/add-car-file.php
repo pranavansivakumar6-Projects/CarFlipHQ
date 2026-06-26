@@ -2,8 +2,10 @@
 require '../config/db.php';
 require_once '../config/auth.php';
 require_permission('can_manage_cars');
+require_once '../config/helpers.php';
 $carId = filter_input(INPUT_GET, 'car_id', FILTER_VALIDATE_INT);
 if (!$carId) { http_response_code(400); die('Car ID missing.'); }
+require_car($pdo, $carId);
 $stmt = $pdo->prepare("SELECT id, year, make, model FROM cars WHERE id = ?");
 $stmt->execute([$carId]);
 $car = $stmt->fetch(PDO::FETCH_ASSOC);

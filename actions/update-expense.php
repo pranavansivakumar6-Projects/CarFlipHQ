@@ -10,6 +10,7 @@ $stmt = $pdo->prepare('SELECT car_id FROM expenses WHERE id = ?');
 $stmt->execute([$id]);
 $carId = $stmt->fetchColumn();
 if (!$carId) { http_response_code(404); die('Expense not found.'); }
+require_car($pdo, (int) $carId);
 
 $category = require_allowed_value(post_string('category', true), ['Parts','Labour','Towing','RWC','Registration','Detailing','Paint','Other'], 'category');
 $paidBy = post_string('paid_by', true);

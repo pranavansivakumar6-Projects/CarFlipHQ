@@ -85,6 +85,84 @@ function require_car(PDO $pdo, int $carId): void
         http_response_code(404);
         die('Car not found.');
     }
+
+    if (function_exists('user_can_access_car') && !user_can_access_car($pdo, $carId)) {
+        http_response_code(403);
+        die('You do not have access to this car.');
+    }
+}
+
+function car_access_filter_sql(string $carAlias = 'cars'): string
+{
+    if (!function_exists('current_user')) {
+        return '1=0';
+    }
+
+    $user = current_user();
+    if (!$user) {
+        return '1=0';
+    }
+
+    if (($user['role'] ?? '') === 'admin') {
+        return '1=1';
+    }
+
+    $safeAlias = preg_replace('/[^a-zA-Z0-9_]/', '', $carAlias);
+    if ($safeAlias === '') {
+        $safeAlias = 'cars';
+    }
+
+    return 'EXISTS (SELECT 1 FROM car_user_access cua WHERE cua.car_id = ' . $safeAlias . '.id AND cua.user_id = ' . (int) $user['id'] . ')';
+}
+
+function user_can_access_car(PDO $pdo, int $carId): bool
+{
+    if (!function_exists('current_user')) {
+        return false;
+    }
+
+    $user = current_user();
+    if (!$user) {
+        return false;
+    }
+
+    if (($user['role'] ?? '') === 'admin') {
+        return true;
+    }
+
+    $stmt = $pdo->prepare('SELECT COUNT(*) FROM car_user_access WHERE car_id = ? AND user_id = ?');
+    $stmt->execute([$carId, (int) $user['id']]);
+
+    return (int) $stmt->fetchColumn() > 0;
+}
+
+function post_user_ids(string $key): array
+{
+    $values = $_POST[$key] ?? [];
+    if (!is_array($values)) {
+        $values = [$values];
+    }
+
+    return array_values(array_unique(array_filter(array_map('intval', $values), fn ($id) => $id > 0)));
+}
+
+function sync_car_user_access(PDO $pdo, int $carId, array $userIds): void
+{
+    $pdo->prepare('DELETE FROM car_user_access WHERE car_id = ?')->execute([$carId]);
+
+    if (!$userIds) {
+        return;
+    }
+
+    $placeholders = implode(',', array_fill(0, count($userIds), '?'));
+    $stmt = $pdo->prepare("SELECT id FROM users WHERE id IN ($placeholders)");
+    $stmt->execute($userIds);
+    $validIds = array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
+
+    $insert = $pdo->prepare('INSERT IGNORE INTO car_user_access (car_id, user_id) VALUES (?, ?)');
+    foreach ($validIds as $userId) {
+        $insert->execute([$carId, $userId]);
+    }
 }
 
 function post_user_names(PDO $pdo, string $key): string

@@ -10,6 +10,7 @@ $stmt = $pdo->prepare('SELECT car_id FROM car_purchase_payments WHERE id = ?');
 $stmt->execute([$id]);
 $carId = $stmt->fetchColumn();
 if (!$carId) { http_response_code(404); die('Purchase payment not found.'); }
+require_car($pdo, (int) $carId);
 
 $paidBy = post_string('paid_by', true);
 $payerStmt = $pdo->prepare('SELECT COUNT(*) FROM users WHERE name = ?');

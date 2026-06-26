@@ -10,6 +10,7 @@ $stmt = $pdo->prepare('SELECT car_id, receipt_file FROM expenses WHERE id = ?');
 $stmt->execute([$id]);
 $expense = $stmt->fetch();
 if (!$expense) { http_response_code(404); die('Expense not found.'); }
+require_car($pdo, (int) $expense['car_id']);
 
 $stmt = $pdo->prepare('DELETE FROM expenses WHERE id = ?');
 $stmt->execute([$id]);

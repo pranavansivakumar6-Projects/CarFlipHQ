@@ -10,6 +10,7 @@ $stmt = $pdo->prepare('SELECT car_id, task_photo FROM tasks WHERE id = ?');
 $stmt->execute([$id]);
 $task = $stmt->fetch();
 if (!$task) { http_response_code(404); die('Task not found.'); }
+require_car($pdo, (int) $task['car_id']);
 
 $stmt = $pdo->prepare('DELETE FROM tasks WHERE id = ?');
 $stmt->execute([$id]);

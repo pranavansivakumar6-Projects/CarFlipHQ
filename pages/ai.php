@@ -2,11 +2,13 @@
 require '../config/db.php';
 require_once '../config/auth.php';
 require_permission('can_use_ai');
+require_once '../config/helpers.php';
 require_once '../config/ai.php';
 require_once '../config/status.php';
 
 $pageTitle = 'AI Tools | CarFlip HQ';
-$cars = $pdo->query("SELECT id, year, make, model, status FROM cars ORDER BY created_at DESC")->fetchAll(PDO::FETCH_ASSOC);
+$accessWhere = car_access_filter_sql('cars');
+$cars = $pdo->query("SELECT id, year, make, model, status FROM cars WHERE $accessWhere ORDER BY created_at DESC")->fetchAll(PDO::FETCH_ASSOC);
 $selectedCarId = filter_input(INPUT_GET, 'car_id', FILTER_VALIDATE_INT) ?: ($cars[0]['id'] ?? null);
 $result = $_SESSION['ai_result'] ?? null;
 unset($_SESSION['ai_result']);

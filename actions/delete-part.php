@@ -8,6 +8,7 @@ $stmt = $pdo->prepare('SELECT car_id FROM parts WHERE id = ?');
 $stmt->execute([$id]);
 $carId = $stmt->fetchColumn();
 if (!$carId) { http_response_code(404); die('Part not found.'); }
+require_car($pdo, (int) $carId);
 $stmt = $pdo->prepare('DELETE FROM parts WHERE id = ?');
 $stmt->execute([$id]);
 header('Location: ../pages/car-detail.php?id=' . (int) $carId);

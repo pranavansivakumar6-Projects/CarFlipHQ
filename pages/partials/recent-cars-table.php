@@ -1,6 +1,12 @@
 <?php
 require_once dirname(__DIR__, 2) . '/config/status.php';
-$cars = $recentCars ?? $pdo->query("SELECT * FROM cars ORDER BY created_at DESC LIMIT 8")->fetchAll(PDO::FETCH_ASSOC);
+if (!isset($recentCars)) {
+    require_once dirname(__DIR__, 2) . '/config/helpers.php';
+    $accessWhere = car_access_filter_sql('cars');
+    $cars = $pdo->query("SELECT * FROM cars WHERE $accessWhere ORDER BY created_at DESC LIMIT 8")->fetchAll(PDO::FETCH_ASSOC);
+} else {
+    $cars = $recentCars;
+}
 ?>
 <table>
     <tr><th>Car</th><th>Status</th><th>Purchase</th><th>Estimated Sale</th><th>Sold Price</th><th>Action</th></tr>

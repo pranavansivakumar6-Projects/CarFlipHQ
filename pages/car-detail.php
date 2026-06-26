@@ -2,6 +2,7 @@
 require '../config/db.php';
 require_once '../config/auth.php';
 require_permission('can_view_data');
+require_once '../config/helpers.php';
 require_once '../config/status.php';
 
 function detail_text($value, string $fallback = ''): string
@@ -17,6 +18,7 @@ function detail_lines($value): string
 
 $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 if (!$id) { http_response_code(400); die('Car ID missing'); }
+require_car($pdo, $id);
 $stmt = $pdo->prepare("SELECT * FROM cars WHERE id = ?");
 $stmt->execute([$id]);
 $car = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -126,7 +128,20 @@ $pageTitle = $car['make'].' '.$car['model'].' | CarFlip HQ';
 require '../header.php';
 ?>
 <div class="container">
-    <h1><?= detail_text($car['year'].' '.$car['make'].' '.$car['model']) ?></h1>
+    <div class="detail-hero">
+        <div class="detail-hero-photo">
+            <?php if (!empty($car['profile_photo'])): ?>
+                <img src="../<?= htmlspecialchars($car['profile_photo']) ?>" alt="<?= detail_text($car['year'].' '.$car['make'].' '.$car['model']) ?>">
+            <?php else: ?>
+                <span><?= detail_text(substr((string) ($car['make'] ?: 'Car'), 0, 1)) ?></span>
+            <?php endif; ?>
+        </div>
+        <div>
+            <div class="eyebrow">Car Profile</div>
+            <h1><?= detail_text($car['year'].' '.$car['make'].' '.$car['model']) ?></h1>
+            <p class="small"><?= detail_text($car['color'], 'No color set') ?><?= $car['body_type'] ? ' / ' . detail_text($car['body_type']) : '' ?></p>
+        </div>
+    </div>
     <div class="actions">
         <?php if ($canManageCars): ?>
         <a class="btn secondary" href="edit-car.php?id=<?= $id ?>">Edit Car</a>

@@ -2,14 +2,17 @@
 require '../config/db.php';
 require_once '../config/auth.php';
 require_permission('can_view_data');
+require_once '../config/helpers.php';
 require_once '../config/status.php';
 $pageTitle = 'Cars | CarFlip HQ';
 require '../header.php';
+$accessWhere = car_access_filter_sql('c');
 $cars = $pdo->query("
     SELECT c.*,
-        (SELECT file_path FROM car_files cf WHERE cf.car_id = c.id ORDER BY cf.created_at DESC LIMIT 1) AS photo_path,
+        COALESCE(c.profile_photo, (SELECT file_path FROM car_files cf WHERE cf.car_id = c.id ORDER BY cf.created_at DESC LIMIT 1)) AS photo_path,
         (SELECT COALESCE(SUM(amount), 0) FROM expenses e WHERE e.car_id = c.id) AS expense_total
     FROM cars c
+    WHERE $accessWhere
     ORDER BY c.created_at DESC
 ")->fetchAll(PDO::FETCH_ASSOC);
 $canManageCars = user_can('can_manage_cars');

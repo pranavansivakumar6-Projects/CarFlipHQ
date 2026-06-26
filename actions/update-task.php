@@ -10,6 +10,7 @@ $stmt = $pdo->prepare('SELECT car_id FROM tasks WHERE id = ?');
 $stmt->execute([$id]);
 $carId = $stmt->fetchColumn();
 if (!$carId) { http_response_code(404); die('Task not found.'); }
+require_car($pdo, (int) $carId);
 
 $priority = require_allowed_value(post_string('priority', true), ['Low','Medium','High'], 'priority');
 $status = require_allowed_value(post_string('status', true), ['To Do','In Progress','Done'], 'status');

@@ -7,8 +7,8 @@ require '../header.php';
 <div class="container">
     <h1>Import Sheet</h1>
     <div class="card">
-        <p>Upload a CSV exported from Excel or Google Sheets. You can use the CarFlip HQ template with <b>record_type</b> values like car, expense, task, purchase_payment, part, and listing, or upload an expense sheet with columns like <b>Paid by Prana</b> and <b>Paid by Ragu</b>.</p>
-        <p>Paid-by sheets import as one car, create purchase payment splits from the paid price row, and create expenses under the right payer.</p>
+        <p>Upload a CSV exported from Excel or Google Sheets. You can use the CarFlip HQ template with <b>record_type</b> values like car, expense, task, purchase_payment, part, and listing.</p>
+        <p>Expense sheets can also include paid-by columns for each contributor. CarFlip HQ will create the car, purchase payment splits, and expenses under the right payer.</p>
         <p><a class="btn secondary" href="../actions/download-import-template.php">Download Template</a></p>
     </div>
     <?php if (isset($_GET['imported'])): ?>

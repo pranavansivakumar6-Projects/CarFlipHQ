@@ -46,9 +46,19 @@ CREATE TABLE cars (
   estimated_sale_price DECIMAL(10,2) DEFAULT 0,
   actual_sale_price DECIMAL(10,2) DEFAULT 0,
   sold_date DATE,
+  profile_photo VARCHAR(255),
   damage_notes TEXT,
   notes TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE car_user_access (
+  car_id INT NOT NULL,
+  user_id INT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (car_id, user_id),
+  FOREIGN KEY (car_id) REFERENCES cars(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE expenses (

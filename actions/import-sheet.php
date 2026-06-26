@@ -106,6 +106,9 @@ function import_paid_by_sheet(PDO $pdo, $handle, array $headerRow, string $filen
     $stmt = $pdo->prepare('INSERT INTO cars (make, model, year, color, body_type, source, purchase_price, status, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
     $stmt->execute([$make, $model, $year, '', '', 'Spreadsheet import', 0, 'Sold', 'Imported from ' . $filename]);
     $carId = (int) $pdo->lastInsertId();
+    if ((current_user()['role'] ?? '') !== 'admin') {
+        sync_car_user_access($pdo, $carId, [(int) current_user()['id']]);
+    }
 
     $imported = 1;
     $purchaseSet = false;
@@ -195,6 +198,9 @@ while (($values = fgetcsv($handle)) !== false) {
         $stmt = $pdo->prepare('INSERT INTO cars (make, model, year, color, body_type, vin, rego, odometer, source, purchase_price, purchase_date, status, estimated_sale_price, actual_sale_price, sold_date, damage_notes, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
         $stmt->execute([row_value($row, 'make', 'Unknown'), row_value($row, 'model', 'Vehicle'), int_or_null_value($row, 'year'), row_value($row, 'color'), row_value($row, 'body_type'), row_value($row, 'vin'), row_value($row, 'rego'), int_or_null_value($row, 'odometer'), row_value($row, 'source'), money_value($row, 'purchase_price'), date_or_null_value($row, 'purchase_date'), $status, money_value($row, 'estimated_sale_price'), money_value($row, 'actual_sale_price'), date_or_null_value($row, 'sold_date'), row_value($row, 'damage_notes'), row_value($row, 'notes')]);
         $lastCarId = (int) $pdo->lastInsertId();
+        if ((current_user()['role'] ?? '') !== 'admin') {
+            sync_car_user_access($pdo, $lastCarId, [(int) current_user()['id']]);
+        }
         if ($carKey !== '') { $carsByKey[$carKey] = $lastCarId; }
         $imported++;
         continue;
