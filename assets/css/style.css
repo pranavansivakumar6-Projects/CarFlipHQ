@@ -174,12 +174,31 @@ p {
     position: relative;
 }
 
+.dashboard-hero::before,
+.inventory-hero::before {
+    content: "";
+    position: absolute;
+    inset: -35% -18%;
+    background:
+        linear-gradient(115deg, transparent 0 42%, rgba(70, 210, 199, .34) 45%, transparent 49%),
+        linear-gradient(115deg, transparent 0 58%, rgba(255, 255, 255, .18) 60%, transparent 64%),
+        radial-gradient(circle at 76% 42%, rgba(70, 210, 199, .28), transparent 18%),
+        repeating-linear-gradient(115deg, transparent 0 42px, rgba(255, 255, 255, .06) 42px 44px, transparent 44px 96px);
+    transform: translate3d(-10%, 0, 0);
+    animation: hero-drive 11s linear infinite;
+    opacity: .82;
+    pointer-events: none;
+}
+
 .dashboard-hero::after {
     content: "";
     position: absolute;
     inset: auto 0 0 0;
     height: 5px;
-    background: var(--teal);
+    background: linear-gradient(90deg, var(--teal), #fff, var(--teal));
+    background-size: 220% 100%;
+    animation: hero-scan 4.5s ease-in-out infinite;
+    z-index: 1;
 }
 
 .dashboard-hero > div {
@@ -704,7 +723,40 @@ label {
     right: 0;
     bottom: 0;
     height: 5px;
-    background: var(--teal);
+    background: linear-gradient(90deg, var(--teal), #fff, var(--teal));
+    background-size: 220% 100%;
+    animation: hero-scan 4.5s ease-in-out infinite;
+    z-index: 1;
+}
+
+.inventory-hero > div,
+.inventory-count {
+    position: relative;
+    z-index: 2;
+}
+
+@keyframes hero-drive {
+    0% {
+        transform: translate3d(-12%, 4%, 0) scale(1);
+    }
+
+    50% {
+        transform: translate3d(5%, -3%, 0) scale(1.04);
+    }
+
+    100% {
+        transform: translate3d(18%, -8%, 0) scale(1.08);
+    }
+}
+
+@keyframes hero-scan {
+    0%, 100% {
+        background-position: 0 0;
+    }
+
+    50% {
+        background-position: 100% 0;
+    }
 }
 
 .inventory-hero h1,
@@ -1121,6 +1173,15 @@ label {
 
     .task-board {
         grid-template-columns: 1fr;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .dashboard-hero::before,
+    .inventory-hero::before,
+    .dashboard-hero::after,
+    .inventory-hero::after {
+        animation: none;
     }
 }
 
