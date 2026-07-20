@@ -28,6 +28,10 @@ function import_status_class(?string $status): string
 require '../header.php';
 ?>
 <div class="container imports-view">
+    <?php if (isset($_GET['deleted'])): ?>
+        <div class="alert success">Import assessment deleted.</div>
+    <?php endif; ?>
+
     <div class="inventory-hero import-hero">
         <div>
             <div class="eyebrow">Japan Import Hub</div>
@@ -68,7 +72,15 @@ require '../header.php';
                 </div>
                 <div class="card-title-row">
                     <span class="small"><?= htmlspecialchars((string) ($assessment['auction_house'] ?: 'Auction TBC')) ?><?= $assessment['shared_count'] ? ' / shared with ' . (int) $assessment['shared_count'] : '' ?></span>
-                    <a class="btn secondary small-btn" href="import-calculator.php?id=<?= (int) $assessment['id'] ?>">Open</a>
+                    <div class="row-actions">
+                        <a class="btn secondary small-btn" href="import-calculator.php?id=<?= (int) $assessment['id'] ?>">Open</a>
+                        <?php if ($canManageImports): ?>
+                        <form action="../actions/delete-import-assessment.php" method="POST" onsubmit="return confirm('Delete this import assessment? This cannot be undone.');">
+                            <input type="hidden" name="id" value="<?= (int) $assessment['id'] ?>">
+                            <button class="btn danger small-btn" type="submit">Delete</button>
+                        </form>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </div>
         </article>
