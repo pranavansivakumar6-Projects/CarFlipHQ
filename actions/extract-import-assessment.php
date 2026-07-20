@@ -97,6 +97,42 @@ function fetch_public_url_text(string $url): string
     return substr($text, 0, 12000);
 }
 
+function contains_japanese(string $value): bool
+{
+    return preg_match('/[\x{3040}-\x{30ff}\x{3400}-\x{9fff}]/u', $value) === 1;
+}
+
+function fields_need_english_cleanup(array $fields): bool
+{
+    foreach (['make', 'model', 'variant', 'damage_notes', 'notes'] as $key) {
+        if (contains_japanese((string) ($fields[$key] ?? ''))) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function translate_fields_to_english(array $fields): array
+{
+    if (!fields_need_english_cleanup($fields)) {
+        return $fields;
+    }
+
+    $payload = json_encode($fields, JSON_UNESCAPED_UNICODE);
+    $result = ai_text_request(
+        'Translate Japanese vehicle auction data to English. Return only valid JSON.',
+        "Translate human-readable Japanese values in this JSON into clear English or common English vehicle names. Do not change chassis_vin, mileage, auction_house, auction_date, auction_grade, interior_grade, lot_number, japan_agent, or confidence. Return the same JSON keys only.\n\n$payload"
+    );
+
+    if (!$result['ok']) {
+        return $fields;
+    }
+
+    $translated = extract_json_object($result['message']);
+    return is_array($translated) ? array_merge($fields, $translated) : $fields;
+}
+
 if (!ai_is_available()) {
     json_response(['ok' => false, 'message' => 'AI is not connected yet. Add OPENAI_API_KEY in Railway Variables, then redeploy.'], 400);
 }
@@ -111,7 +147,7 @@ if ($image && ($image['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE && 
 }
 
 $urlText = fetch_public_url_text($sourceUrl);
-$system = 'You extract Japanese vehicle auction sheet and listing data for CarFlip HQ. Return only valid JSON. Do not guess unavailable values.';
+$system = 'You extract Japanese vehicle auction sheet and listing data for CarFlip HQ. Return only valid JSON. Do not guess unavailable values. Human-readable fields must be English.';
 $prompt = "Extract fields from the supplied auction sheet image or listing text. Return ONLY this JSON object with string values unless noted:\n"
     . "{\n"
     . "  \"make\": \"\",\n"
@@ -130,7 +166,7 @@ $prompt = "Extract fields from the supplied auction sheet image or listing text.
     . "  \"notes\": \"\",\n"
     . "  \"confidence\": \"high, medium, or low\"\n"
     . "}\n\n"
-    . "Rules: translate make, model, variant, notes, and damage_notes to clear English when the source is Japanese. Keep chassis/VIN, auction house, grades, and lot numbers exactly as written. Convert mileage to numbers only when clear, convert dates to YYYY-MM-DD when clear, put uncertain notes in notes, and leave unknown fields empty.\n\n"
+    . "Rules: make, model, variant, notes, and damage_notes MUST be in English with no Japanese characters. Use common English vehicle names, for example トヨタ = Toyota and クラウン = Crown. Keep chassis/VIN, auction house, grades, and lot numbers exactly as written. Convert mileage to numbers only when clear, convert dates to YYYY-MM-DD when clear, put uncertain notes in notes, and leave unknown fields empty.\n\n"
     . ($sourceUrl ? "Source URL: $sourceUrl\nFetched page text:\n$urlText" : 'Use the uploaded image.');
 
 $result = ai_text_request($system, $prompt, $image);
@@ -144,6 +180,7 @@ if (!$fields) {
 }
 
 $allowed = ['make','model','variant','year','chassis_vin','mileage','auction_house','auction_date','auction_grade','interior_grade','lot_number','japan_agent','damage_notes','notes','confidence'];
+$fields = translate_fields_to_english($fields);
 $clean = [];
 foreach ($allowed as $key) {
     $clean[$key] = trim((string) ($fields[$key] ?? ''));
