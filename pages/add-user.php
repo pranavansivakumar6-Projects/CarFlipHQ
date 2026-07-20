@@ -18,11 +18,11 @@ require '../header.php';
         <label>Password</label><input name="password" type="password" autocomplete="new-password" minlength="8" required>
         <label>Role</label>
         <select name="role">
-            <option value="partner">Partner</option>
+            <option value="partner">User</option>
             <option value="admin">Admin</option>
         </select>
         <h2>Permissions</h2>
-        <p class="small">Admins always get full access. For partners, tick only what this person should be able to do.</p>
+        <p class="small">Admins always get full access. For users, tick only what this person should be able to do.</p>
         <div class="permission-grid">
             <?php foreach (permission_fields() as $key => $label): ?>
             <label class="check-pill"><input type="checkbox" name="permissions[]" value="<?= htmlspecialchars($key) ?>"> <?= htmlspecialchars($label) ?></label>

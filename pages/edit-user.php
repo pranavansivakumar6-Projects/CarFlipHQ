@@ -29,12 +29,12 @@ require '../header.php';
         <p class="small">Leave password blank to keep the current password.</p>
         <label>Role</label>
         <select name="role">
-            <?php foreach(['partner' => 'Partner', 'admin' => 'Admin'] as $role => $label): ?>
+            <?php foreach(['partner' => 'User', 'admin' => 'Admin'] as $role => $label): ?>
             <option value="<?= $role ?>" <?= $account['role'] === $role ? 'selected' : '' ?>><?= $label ?></option>
             <?php endforeach; ?>
         </select>
         <h2>Permissions</h2>
-        <p class="small">Admins always get full access. For partners, tick only what this person should be able to do.</p>
+        <p class="small">Admins always get full access. For users, tick only what this person should be able to do.</p>
         <div class="permission-grid">
             <?php foreach (permission_fields() as $key => $label): ?>
             <label class="check-pill"><input type="checkbox" name="permissions[]" value="<?= htmlspecialchars($key) ?>" <?= !empty($account[$key]) ? 'checked' : '' ?>> <?= htmlspecialchars($label) ?></label>

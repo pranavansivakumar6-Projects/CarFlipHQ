@@ -63,7 +63,24 @@ function resolve_payer_name(PDO $pdo, string $name): string {
     $stmt = $pdo->prepare('SELECT name FROM users WHERE LOWER(name) LIKE LOWER(?) ORDER BY LENGTH(name) ASC LIMIT 1');
     $stmt->execute([$name . '%']);
     $prefix = $stmt->fetchColumn();
-    return $prefix ?: $name;
+    if ($prefix) { return $prefix; }
+
+    http_response_code(400);
+    die('Import failed: "' . htmlspecialchars($name) . '" is not a user in CarFlip HQ. Add the user first, then import again.');
+}
+function resolve_optional_user_name(PDO $pdo, string $name): string {
+    $name = trim($name);
+    return $name === '' ? '' : resolve_payer_name($pdo, $name);
+}
+function resolve_assigned_user_names(PDO $pdo, string $names): string {
+    $parts = preg_split('/[,;]+/', $names) ?: [];
+    $resolved = [];
+    foreach ($parts as $part) {
+        $name = trim($part);
+        if ($name === '') { continue; }
+        $resolved[] = resolve_payer_name($pdo, $name);
+    }
+    return implode(', ', array_unique($resolved));
 }
 function infer_car_from_filename(string $filename): array {
     $base = pathinfo($filename, PATHINFO_FILENAME);
@@ -211,17 +228,17 @@ while (($values = fgetcsv($handle)) !== false) {
 
     if ($type === 'expense') {
         $stmt = $pdo->prepare('INSERT INTO expenses (car_id, category, expense_name, amount, paid_by, expense_date, notes) VALUES (?, ?, ?, ?, ?, ?, ?)');
-        $stmt->execute([$carId, row_value($row, 'category', 'Other') ?: 'Other', row_value($row, 'expense_name', 'Imported expense') ?: 'Imported expense', money_value($row, 'amount'), row_value($row, 'paid_by'), date_or_null_value($row, 'expense_date'), row_value($row, 'notes')]);
+        $stmt->execute([$carId, row_value($row, 'category', 'Other') ?: 'Other', row_value($row, 'expense_name', 'Imported expense') ?: 'Imported expense', money_value($row, 'amount'), resolve_optional_user_name($pdo, row_value($row, 'paid_by')), date_or_null_value($row, 'expense_date'), row_value($row, 'notes')]);
     } elseif ($type === 'task') {
         $status = row_value($row, 'task_status', row_value($row, 'status', 'To Do')) ?: 'To Do';
         if (!in_array($status, ['To Do','In Progress','Done'], true)) { $status = 'To Do'; }
         $priority = row_value($row, 'priority', 'Medium') ?: 'Medium';
         if (!in_array($priority, ['Low','Medium','High'], true)) { $priority = 'Medium'; }
         $stmt = $pdo->prepare('INSERT INTO tasks (car_id, task_title, description, assigned_to, priority, status, hours_spent, due_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
-        $stmt->execute([$carId, row_value($row, 'task_title', 'Imported task') ?: 'Imported task', row_value($row, 'description'), row_value($row, 'assigned_to'), $priority, $status, money_value($row, 'hours_spent'), date_or_null_value($row, 'due_date')]);
+        $stmt->execute([$carId, row_value($row, 'task_title', 'Imported task') ?: 'Imported task', row_value($row, 'description'), resolve_assigned_user_names($pdo, row_value($row, 'assigned_to')), $priority, $status, money_value($row, 'hours_spent'), date_or_null_value($row, 'due_date')]);
     } elseif ($type === 'purchase_payment') {
         $stmt = $pdo->prepare('INSERT INTO car_purchase_payments (car_id, paid_by, amount, paid_date, notes) VALUES (?, ?, ?, ?, ?)');
-        $stmt->execute([$carId, row_value($row, 'paid_by', 'Imported'), money_value($row, 'amount'), date_or_null_value($row, 'paid_date'), row_value($row, 'notes')]);
+        $stmt->execute([$carId, resolve_optional_user_name($pdo, row_value($row, 'paid_by')), money_value($row, 'amount'), date_or_null_value($row, 'paid_date'), row_value($row, 'notes')]);
     } elseif ($type === 'part') {
         $status = row_value($row, 'part_status', 'Needed') ?: 'Needed';
         if (!in_array($status, ['Needed','Ordered','Arrived','Installed','Cancelled'], true)) { $status = 'Needed'; }
