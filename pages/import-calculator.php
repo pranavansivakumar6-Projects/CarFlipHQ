@@ -83,6 +83,29 @@ require '../header.php';
         <div class="import-warnings" data-output="warnings"></div>
         <?php endif; ?>
 
+        <?php if (user_can('can_use_ai')): ?>
+        <section class="form-card import-section-card ai-import-card">
+            <div class="section-kicker">AI Extract</div>
+            <h2>Fill From Auction Sheet</h2>
+            <p class="small">Upload a Japanese auction sheet image or paste a public auction/listing link. Review the extracted fields before saving.</p>
+            <div class="ai-extract-grid">
+                <div>
+                    <label>Auction sheet image</label>
+                    <input data-ai-image type="file" accept="image/*" capture="environment">
+                </div>
+                <div>
+                    <label>Auction / listing link</label>
+                    <input data-ai-url type="url" placeholder="https://...">
+                </div>
+                <div class="ai-extract-action">
+                    <button class="btn" type="button" data-ai-extract>Extract Fields</button>
+                </div>
+            </div>
+            <div class="ai-extract-status small" data-ai-status></div>
+            <div class="ai-extract-preview" data-ai-preview hidden></div>
+        </section>
+        <?php endif; ?>
+
         <div class="import-layout">
             <section class="form-card import-section-card">
                 <div class="section-kicker">Step 1</div>
@@ -302,6 +325,110 @@ require '../header.php';
 
     loadLiveRate(false);
     calculate();
+})();
+</script>
+<?php endif; ?>
+<?php if (user_can('can_use_ai')): ?>
+<script>
+(() => {
+    const form = document.querySelector('.import-calculator');
+    const button = document.querySelector('[data-ai-extract]');
+    if (!form || !button) return;
+
+    const imageInput = document.querySelector('[data-ai-image]');
+    const urlInput = document.querySelector('[data-ai-url]');
+    const status = document.querySelector('[data-ai-status]');
+    const preview = document.querySelector('[data-ai-preview]');
+    const labels = {
+        make: 'Make',
+        model: 'Model',
+        variant: 'Variant',
+        year: 'Year',
+        chassis_vin: 'Chassis / VIN',
+        mileage: 'Mileage',
+        auction_house: 'Auction House',
+        auction_date: 'Auction Date',
+        auction_grade: 'Auction Grade',
+        interior_grade: 'Interior Grade',
+        lot_number: 'Lot Number',
+        japan_agent: 'Japan Agent',
+        notes: 'Notes'
+    };
+
+    function setStatus(message, type = '') {
+        if (!status) return;
+        status.textContent = message;
+        status.className = `ai-extract-status small ${type}`;
+    }
+
+    function setField(name, value) {
+        if (!value || !form.elements[name]) return false;
+        form.elements[name].value = value;
+        form.elements[name].dispatchEvent(new Event('input', { bubbles: true }));
+        return true;
+    }
+
+    function renderPreview(fields, appliedCount) {
+        if (!preview) return;
+        const rows = Object.entries(labels)
+            .filter(([key]) => fields[key])
+            .map(([key, label]) => `<div><span>${label}</span><strong>${String(fields[key]).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}</strong></div>`)
+            .join('');
+        preview.hidden = false;
+        preview.innerHTML = `
+            <div class="ai-preview-header">
+                <b>Applied ${appliedCount} fields</b>
+                <span>Confidence: ${fields.confidence || 'unknown'}</span>
+            </div>
+            <div class="ai-preview-grid">${rows || '<p class="small">No fields were found.</p>'}</div>
+        `;
+    }
+
+    button.addEventListener('click', async () => {
+        const file = imageInput?.files?.[0] || null;
+        const sourceUrl = (urlInput?.value || '').trim();
+        if (!file && !sourceUrl) {
+            setStatus('Upload an auction sheet image or paste a link first.', 'error');
+            return;
+        }
+
+        const payload = new FormData();
+        if (file) payload.append('auction_sheet_image', file);
+        if (sourceUrl) payload.append('source_url', sourceUrl);
+
+        button.disabled = true;
+        setStatus('Reading auction details with AI...');
+        if (preview) preview.hidden = true;
+
+        try {
+            const response = await fetch('<?= app_url('actions/extract-import-assessment.php') ?>', {
+                method: 'POST',
+                body: payload
+            });
+            const data = await response.json();
+            if (!response.ok || !data.ok) {
+                throw new Error(data.message || 'AI extraction failed.');
+            }
+
+            const fields = data.fields || {};
+            if (fields.damage_notes && !fields.notes) {
+                fields.notes = `Damage notes: ${fields.damage_notes}`;
+            } else if (fields.damage_notes && fields.notes && !fields.notes.includes(fields.damage_notes)) {
+                fields.notes = `${fields.notes}\nDamage notes: ${fields.damage_notes}`;
+            }
+
+            let appliedCount = 0;
+            Object.entries(fields).forEach(([name, value]) => {
+                if (setField(name, value)) appliedCount++;
+            });
+            renderPreview(fields, appliedCount);
+            setStatus('Fields extracted. Review them before saving.', 'success');
+        } catch (error) {
+            setStatus(error.message || 'AI extraction failed.', 'error');
+        } finally {
+            button.disabled = false;
+        }
+    });
 })();
 </script>
 <?php endif; ?>
