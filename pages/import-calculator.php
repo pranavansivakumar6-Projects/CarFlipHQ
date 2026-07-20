@@ -84,8 +84,10 @@ require '../header.php';
         <?php endif; ?>
 
         <div class="import-layout">
-            <section class="form-card">
+            <section class="form-card import-section-card">
+                <div class="section-kicker">Step 1</div>
                 <h2>Vehicle & Auction</h2>
+                <p class="small">Start with the car identity and auction reference. These fields are safe for Japan-only users.</p>
                 <div class="form-grid two">
                     <div><label>Make</label><input name="make" value="<?= htmlspecialchars(import_value($assessment, $settings, 'make')) ?>" required></div>
                     <div><label>Model</label><input name="model" value="<?= htmlspecialchars(import_value($assessment, $settings, 'model')) ?>" required></div>
@@ -108,10 +110,19 @@ require '../header.php';
                 </select>
             </section>
 
-            <section class="form-card">
+            <section class="form-card import-section-card">
+                <div class="section-kicker">Step 2</div>
                 <h2>Hammer to FOB</h2>
+                <p class="small">Enter the auction bid and Japan-side costs. The live AUD/JPY rate is a suggestion and can be changed.</p>
                 <div class="form-grid two">
-                    <div><label>Exchange Rate</label><input data-calc type="number" step="0.0001" min="0" name="exchange_rate" value="<?= htmlspecialchars(import_value($assessment, $settings, 'exchange_rate')) ?>" placeholder="JPY per AUD"></div>
+                    <div class="exchange-rate-field">
+                        <div class="field-label-row">
+                            <label>Exchange Rate</label>
+                            <button class="text-button" type="button" data-live-rate>Use live rate</button>
+                        </div>
+                        <input data-calc data-exchange-rate type="number" step="0.0001" min="0" name="exchange_rate" value="<?= htmlspecialchars(import_value($assessment, $settings, 'exchange_rate')) ?>" placeholder="JPY per AUD">
+                        <small data-live-rate-status>Live AUD/JPY rate will load here.</small>
+                    </div>
                     <div><label>Hammer Price JPY</label><input data-calc type="number" step="1" min="0" name="hammer_price_jpy" value="<?= htmlspecialchars(import_value($assessment, $settings, 'hammer_price_jpy')) ?>"></div>
                     <div><label>Auction Fee JPY</label><input data-calc type="number" step="1" min="0" name="auction_fee_jpy" value="<?= htmlspecialchars(import_value($assessment, $settings, 'auction_fee_jpy')) ?>"></div>
                     <div><label>Japan Agent Fee JPY</label><input data-calc type="number" step="1" min="0" name="japan_agent_fee_jpy" value="<?= htmlspecialchars(import_value($assessment, $settings, 'japan_agent_fee_jpy')) ?>"></div>
@@ -124,8 +135,10 @@ require '../header.php';
             </section>
 
             <?php if ($canViewFinance): ?>
-            <section class="form-card">
+            <section class="form-card import-section-card finance-card">
+                <div class="section-kicker">Step 3</div>
                 <h2>Australia Landed Costs</h2>
+                <p class="small">Adjust default freight, compliance, GST, duty, and selling assumptions to see the real landed position.</p>
                 <div class="form-grid two">
                     <div><label>Expected Sale AUD</label><input data-calc type="number" step="0.01" min="0" name="expected_sale_price_aud" value="<?= htmlspecialchars(import_value($assessment, $settings, 'expected_sale_price_aud')) ?>"></div>
                     <div><label>Target Profit AUD</label><input data-calc type="number" step="0.01" min="0" name="target_profit_aud" value="<?= htmlspecialchars(import_value($assessment, $settings, 'target_profit_aud')) ?>"></div>
@@ -148,7 +161,8 @@ require '../header.php';
         </div>
 
         <?php if ($canManageImports): ?>
-        <section class="form-card section-title">
+        <section class="form-card section-title import-section-card">
+            <div class="section-kicker">Access</div>
             <h2>Sharing</h2>
             <p class="small">Choose Japan-only users or managers who can see this assessment. Admin accounts can always see every import.</p>
             <div class="permission-grid">
@@ -162,7 +176,8 @@ require '../header.php';
         </section>
         <?php endif; ?>
 
-        <section class="form-card section-title">
+        <section class="form-card section-title import-section-card">
+            <div class="section-kicker">Review</div>
             <h2>Notes & Calculation</h2>
             <label>Notes</label>
             <textarea name="notes" rows="4"><?= htmlspecialchars(import_value($assessment, $settings, 'notes')) ?></textarea>
@@ -191,6 +206,9 @@ require '../header.php';
     const yen = new Intl.NumberFormat('ja-JP', { style: 'currency', currency: 'JPY', maximumFractionDigits: 0 });
     const minimumProfit = <?= json_encode((float) ($settings['minimum_profit_aud'] ?? 2000)) ?>;
     const fields = [...form.querySelectorAll('[data-calc]')];
+    const rateInput = form.querySelector('[data-exchange-rate]');
+    const liveRateButton = form.querySelector('[data-live-rate]');
+    const liveRateStatus = form.querySelector('[data-live-rate-status]');
     const get = name => Number(form.elements[name]?.value || 0);
     const set = (key, value) => {
         const el = form.querySelector(`[data-output="${key}"]`);
@@ -247,6 +265,34 @@ require '../header.php';
     }
 
     fields.forEach(field => field.addEventListener('input', calculate));
+
+    async function loadLiveRate(shouldApply = false) {
+        if (!rateInput || !liveRateStatus) return;
+
+        liveRateStatus.textContent = 'Checking live AUD/JPY...';
+        try {
+            const response = await fetch('https://api.frankfurter.app/latest?from=AUD&to=JPY', { cache: 'no-store' });
+            if (!response.ok) throw new Error('Rate service unavailable');
+            const data = await response.json();
+            const rate = Number(data?.rate || data?.rates?.JPY || 0);
+            if (!rate) throw new Error('No AUD/JPY rate returned');
+
+            const formattedRate = rate.toFixed(4);
+            liveRateStatus.textContent = `Live AUD/JPY: ${formattedRate}${data?.date ? ` (${data.date})` : ''}`;
+            if (shouldApply || !rateInput.value) {
+                rateInput.value = formattedRate;
+                rateInput.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        } catch (error) {
+            liveRateStatus.textContent = 'Live rate unavailable. Enter the auction rate manually.';
+        }
+    }
+
+    if (liveRateButton) {
+        liveRateButton.addEventListener('click', () => loadLiveRate(true));
+    }
+
+    loadLiveRate(false);
     calculate();
 })();
 </script>
