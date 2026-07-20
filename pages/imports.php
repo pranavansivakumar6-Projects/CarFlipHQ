@@ -36,7 +36,7 @@ require '../header.php';
         <div>
             <div class="eyebrow">Japan Import Hub</div>
             <h1>Japanese Auction Pipeline</h1>
-            <p>Assess auction sheets, calculate landed and on-road costs, and share import records without exposing private CarFlip HQ cars.</p>
+            <p>Assess auction sheets, calculate landed and on-road costs, and manage Japan import opportunities from one place.</p>
         </div>
         <div class="inventory-count"><?= count($assessments) ?><span>assessments</span></div>
     </div>
