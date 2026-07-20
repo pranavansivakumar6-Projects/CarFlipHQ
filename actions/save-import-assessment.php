@@ -178,8 +178,12 @@ try {
     $audit = $pdo->prepare('INSERT INTO import_audit_log (assessment_id, user_id, action, details) VALUES (?, ?, ?, ?)');
     $audit->execute([$assessmentId, (int) $user['id'], $action, 'Import assessment ' . $action . '.']);
 } catch (PDOException $e) {
-    http_response_code(500);
-    die('Could not save import assessment.');
+    error_log('Could not save import assessment: ' . $e->getMessage());
+    $target = 'pages/import-calculator.php?save_error=' . urlencode('Could not create the import assessment. The database has been refreshed, so please try Create Assessment again.');
+    if ($id) {
+        $target = 'pages/import-calculator.php?id=' . $id . '&save_error=' . urlencode('Could not save the import assessment. Please try again.');
+    }
+    redirect_to($target);
 }
 
 redirect_to('pages/import-calculator.php?id=' . $assessmentId . '&saved=1');

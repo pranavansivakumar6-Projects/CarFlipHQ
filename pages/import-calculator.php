@@ -9,6 +9,8 @@ $canManageImports = user_can('can_manage_imports');
 $canViewFinance = user_can('can_view_import_finance');
 $user = current_user();
 $assessment = null;
+$saveError = trim((string) ($_GET['save_error'] ?? ''));
+$saved = isset($_GET['saved']);
 
 if ($id) {
     require_import_assessment($pdo, $id);
@@ -66,6 +68,11 @@ require '../header.php';
 
     <?php if (!$canViewFinance): ?>
         <div class="alert">Your account can use Japan import records, but landed-cost and profit fields are restricted.</div>
+    <?php endif; ?>
+    <?php if ($saveError !== ''): ?>
+        <div class="alert error"><?= htmlspecialchars($saveError) ?></div>
+    <?php elseif ($saved): ?>
+        <div class="alert success">Import assessment saved.</div>
     <?php endif; ?>
 
     <form class="import-calculator" method="post" enctype="multipart/form-data" action="<?= app_url('actions/save-import-assessment.php') ?>">
@@ -222,11 +229,24 @@ require '../header.php';
 
         <?php if ($canManageImports): ?>
         <div class="actions">
-            <button class="btn" type="submit"><?= $assessment ? 'Save Assessment' : 'Create Assessment' ?></button>
+            <button class="btn" type="submit" data-save-assessment><?= $assessment ? 'Save Assessment' : 'Create Assessment' ?></button>
         </div>
         <?php endif; ?>
     </form>
 </div>
+
+<script>
+(() => {
+    const form = document.querySelector('.import-calculator');
+    const saveButton = document.querySelector('[data-save-assessment]');
+    if (!form || !saveButton) return;
+
+    form.addEventListener('submit', () => {
+        saveButton.disabled = true;
+        saveButton.textContent = saveButton.textContent.includes('Save') ? 'Saving...' : 'Creating...';
+    });
+})();
+</script>
 
 <?php if ($canViewFinance): ?>
 <script>
