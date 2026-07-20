@@ -130,7 +130,7 @@ $prompt = "Extract fields from the supplied auction sheet image or listing text.
     . "  \"notes\": \"\",\n"
     . "  \"confidence\": \"high, medium, or low\"\n"
     . "}\n\n"
-    . "Rules: convert mileage to numbers only when clear, convert dates to YYYY-MM-DD when clear, put uncertain notes in notes, and leave unknown fields empty.\n\n"
+    . "Rules: translate make, model, variant, notes, and damage_notes to clear English when the source is Japanese. Keep chassis/VIN, auction house, grades, and lot numbers exactly as written. Convert mileage to numbers only when clear, convert dates to YYYY-MM-DD when clear, put uncertain notes in notes, and leave unknown fields empty.\n\n"
     . ($sourceUrl ? "Source URL: $sourceUrl\nFetched page text:\n$urlText" : 'Use the uploaded image.');
 
 $result = ai_text_request($system, $prompt, $image);
