@@ -271,7 +271,7 @@ require '../header.php';
 
         liveRateStatus.textContent = 'Checking live AUD/JPY...';
         try {
-            const response = await fetch('https://api.frankfurter.app/latest?from=AUD&to=JPY', { cache: 'no-store' });
+            const response = await fetch('<?= app_url('actions/live-exchange-rate.php') ?>', { cache: 'no-store' });
             if (!response.ok) throw new Error('Rate service unavailable');
             const data = await response.json();
             const rate = Number(data?.rate || data?.rates?.JPY || 0);
