@@ -174,7 +174,6 @@ try {
         $action = 'created';
     }
 
-    sync_import_user_access($pdo, $assessmentId, post_user_ids('access_user_ids'));
     $audit = $pdo->prepare('INSERT INTO import_audit_log (assessment_id, user_id, action, details) VALUES (?, ?, ?, ?)');
     $audit->execute([$assessmentId, (int) $user['id'], $action, 'Import assessment ' . $action . '.']);
 } catch (PDOException $e) {

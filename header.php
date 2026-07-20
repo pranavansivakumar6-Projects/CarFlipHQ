@@ -35,7 +35,7 @@ $user = current_user();
         <?php if (user_can('can_import_export')): ?>
         <a href="<?= app_url('pages/import-sheet.php') ?>">Import Sheet</a>
         <?php endif; ?>
-        <?php if (user_can('can_view_data')): ?>
+        <?php if (user_can('can_view_finance')): ?>
         <a href="<?= app_url('pages/reports.php') ?>">Reports</a>
         <?php endif; ?>
         <?php if (user_can('can_use_ai')): ?>

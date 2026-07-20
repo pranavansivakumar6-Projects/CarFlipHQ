@@ -48,6 +48,7 @@ function permission_fields(): array
 {
     return [
         'can_view_data' => 'View dashboard and car data',
+        'can_view_finance' => 'View CarFlip financial numbers',
         'can_manage_cars' => 'Add and edit cars',
         'can_manage_finance' => 'Expenses, purchase payments, and profit splits',
         'can_manage_tasks' => 'Tasks, repairs, files, and parts',
@@ -94,7 +95,7 @@ function require_login(): void
     $user = current_user();
     if ($pdo instanceof PDO && $user) {
         $permissionColumns = implode(', ', array_keys(permission_fields()));
-        $stmt = $pdo->prepare("SELECT name, email, role, session_version, $permissionColumns FROM users WHERE id = ?");
+        $stmt = $pdo->prepare("SELECT name, email, role, session_version, access_requested_at, $permissionColumns FROM users WHERE id = ?");
         $stmt->execute([(int) $user['id']]);
         $freshUser = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -114,6 +115,7 @@ function require_login(): void
         $_SESSION['user']['email'] = $freshUser['email'];
         $_SESSION['user']['role'] = $freshUser['role'];
         $_SESSION['user']['session_version'] = $freshVersion;
+        $_SESSION['user']['access_requested_at'] = $freshUser['access_requested_at'] ?? null;
         foreach (array_keys(permission_fields()) as $permission) {
             $_SESSION['user'][$permission] = (int) ($freshUser[$permission] ?? 0);
         }

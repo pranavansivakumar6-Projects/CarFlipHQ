@@ -25,15 +25,6 @@ if (!$assessment && !$canManageImports) {
 }
 
 $settings = $pdo->query('SELECT setting_key, setting_value FROM import_settings')->fetchAll(PDO::FETCH_KEY_PAIR);
-$users = (($user['role'] ?? '') === 'admin' || $canManageImports)
-    ? $pdo->query("SELECT id, name FROM users WHERE role <> 'admin' ORDER BY name")->fetchAll(PDO::FETCH_ASSOC)
-    : [];
-$allowedUserIds = [];
-if ($assessment) {
-    $allowedStmt = $pdo->prepare('SELECT user_id FROM import_user_access WHERE assessment_id = ?');
-    $allowedStmt->execute([(int) $assessment['id']]);
-    $allowedUserIds = array_map('intval', $allowedStmt->fetchAll(PDO::FETCH_COLUMN));
-}
 
 function import_value(?array $assessment, array $settings, string $field, $fallback = ''): string
 {
@@ -189,30 +180,6 @@ require '../header.php';
             </section>
             <?php endif; ?>
         </div>
-
-        <?php if ($canManageImports): ?>
-        <section class="form-card section-title import-section-card">
-            <div class="section-kicker">Access</div>
-            <h2>Sharing</h2>
-            <p class="small">Select the database users who can see this import assessment. Admin accounts can always see every import.</p>
-            <div class="sharing-toolbar">
-                <span class="small">Users are loaded from the Users database.</span>
-                <a class="btn secondary compact-btn" href="<?= app_url('pages/add-user.php') ?>">+ Add User</a>
-            </div>
-            <?php if ($users): ?>
-                <div class="user-picker-grid">
-                    <?php foreach ($users as $accessUser): ?>
-                        <label class="user-picker-option">
-                            <input type="checkbox" name="access_user_ids[]" value="<?= (int) $accessUser['id'] ?>" <?= in_array((int) $accessUser['id'], $allowedUserIds, true) ? 'checked' : '' ?>>
-                            <span><?= htmlspecialchars($accessUser['name']) ?></span>
-                        </label>
-                    <?php endforeach; ?>
-                </div>
-            <?php else: ?>
-                <div class="empty-state">No users found yet. Add a user first, then return to share this import.</div>
-            <?php endif; ?>
-        </section>
-        <?php endif; ?>
 
         <section class="form-card section-title import-section-card">
             <div class="section-kicker">Review</div>

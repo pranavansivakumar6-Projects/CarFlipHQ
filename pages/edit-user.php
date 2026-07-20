@@ -34,7 +34,16 @@ require '../header.php';
             <?php endforeach; ?>
         </select>
         <h2>Permissions</h2>
-        <p class="small">Admins always get full access. For users, tick only what this person should be able to do.</p>
+        <p class="small">Admins always get full access. Choose a preset, then adjust individual permissions if needed.</p>
+        <label>Access preset</label>
+        <select data-permission-preset>
+            <option value="custom">Custom permissions</option>
+            <option value="no_access">No access until approved</option>
+            <option value="japan">Japan Hub only</option>
+            <option value="japan_finance">Japan Hub with import numbers</option>
+            <option value="full_no_numbers">Full CarFlip without financial numbers</option>
+            <option value="full">Full CarFlip access</option>
+        </select>
         <div class="permission-grid">
             <?php foreach (permission_fields() as $key => $label): ?>
             <label class="check-pill"><input type="checkbox" name="permissions[]" value="<?= htmlspecialchars($key) ?>" <?= !empty($account[$key]) ? 'checked' : '' ?>> <?= htmlspecialchars($label) ?></label>
@@ -44,4 +53,5 @@ require '../header.php';
         <a class="btn secondary" href="users.php">Cancel</a>
     </form>
 </div>
+<script src="../assets/js/permissions.js"></script>
 <?php require '../footer.php'; ?>

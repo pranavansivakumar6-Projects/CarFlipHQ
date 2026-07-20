@@ -29,6 +29,7 @@ $salesSql = $scope === 'active'
     : 'COALESCE(SUM(CASE WHEN actual_sale_price > 0 THEN actual_sale_price ELSE estimated_sale_price END),0)';
 $scopeLabel = ['active' => 'Active Cars', 'sold' => 'Sold Cars', 'all' => 'All Cars'][$scope];
 $profitLabel = $scope === 'sold' ? 'Realized Profit' : ($scope === 'active' ? 'Expected Active Profit' : 'Projected/Realized Profit');
+$canViewFinance = user_can('can_view_finance');
 $carAccessWhere = car_access_filter_sql('cars');
 $expenseAccessWhere = car_access_filter_sql('c');
 $taskAccessWhere = car_access_filter_sql('cars');
@@ -53,7 +54,7 @@ $recentCars = $pdo->query("SELECT * FROM cars WHERE $scopeWhere AND $carAccessWh
             <p>Track cars, repair work, expenses, sale progress, and partner payouts from one place.</p>
             <div class="hero-stats">
                 <div><span><?= htmlspecialchars($scopeLabel) ?></span><b><?= $totalCars ?></b></div>
-                <div><span><?= htmlspecialchars($profitLabel) ?></span><b>$<?= number_format($expectedProfit, 2) ?></b></div>
+                <div><span><?= htmlspecialchars($profitLabel) ?></span><b><?= $canViewFinance ? '$' . number_format($expectedProfit, 2) : 'Restricted' ?></b></div>
                 <div><span>Ready/Listable</span><b><?= $readyCars ?></b></div>
             </div>
         </div>
@@ -73,9 +74,13 @@ $recentCars = $pdo->query("SELECT * FROM cars WHERE $scopeWhere AND $carAccessWh
         <div class="card"><div>Open Tasks</div><div class="stat"><?= $openTasks ?></div></div>
         <div class="card"><div>Overdue Tasks</div><div class="stat"><?= $overdueTasks ?></div></div>
         <div class="card"><div>Ready/Listable</div><div class="stat"><?= $readyCars ?></div></div>
+        <?php if ($canViewFinance): ?>
         <div class="card"><div>Purchase Cost</div><div class="stat">$<?= number_format($totalPurchase, 2) ?></div><div class="small"><?= htmlspecialchars($scopeLabel) ?></div></div>
         <div class="card"><div>Extra Expenses</div><div class="stat">$<?= number_format($totalExpenses, 2) ?></div><div class="small"><?= htmlspecialchars($scopeLabel) ?></div></div>
         <div class="card"><div><?= htmlspecialchars($profitLabel) ?></div><div class="profit <?= $expectedProfit >= 0 ? 'positive' : 'negative' ?>">$<?= number_format($expectedProfit, 2) ?></div></div>
+        <?php else: ?>
+        <div class="card"><div>Financials</div><div class="stat restricted-stat">Restricted</div><div class="small">Ask an admin for number access.</div></div>
+        <?php endif; ?>
     </div>
     <div class="page-heading section-title">
         <div>

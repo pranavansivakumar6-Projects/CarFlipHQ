@@ -721,6 +721,11 @@ label {
     margin: 0;
 }
 
+.restricted-stat {
+    color: var(--muted);
+    font-size: 24px;
+}
+
 .permission-tags {
     display: flex;
     flex-wrap: wrap;

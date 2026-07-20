@@ -54,6 +54,7 @@ $tasks = $taskStmt->fetchAll(PDO::FETCH_ASSOC);
 $users = $pdo->query("SELECT name FROM users ORDER BY name")->fetchAll(PDO::FETCH_COLUMN);
 $canManageCars = user_can('can_manage_cars');
 $canManageFinance = user_can('can_manage_finance');
+$canViewFinance = user_can('can_view_finance');
 $canManageTasks = user_can('can_manage_tasks');
 $canManageSales = user_can('can_manage_sales');
 $canImportExport = user_can('can_import_export');
@@ -174,11 +175,17 @@ require '../header.php';
                 <div class="small">Suggested by workflow: <?= detail_text(car_status_label($workflowStatus)) ?></div>
             <?php endif; ?>
         </div>
+        <?php if ($canViewFinance): ?>
         <div class="card"><b>Total Cost</b><div class="stat">$<?= number_format($totalCost, 2) ?></div></div>
+        <?php endif; ?>
         <div class="card"><b>Task Hours</b><div class="stat"><?= number_format($totalTaskHours, 2) ?></div></div>
-        <div class="card"><b>Open Parts</b><div class="stat"><?= $openParts ?></div><div class="small">$<?= number_format($partsCost, 2) ?> tracked</div></div>
+        <div class="card"><b>Open Parts</b><div class="stat"><?= $openParts ?></div><?php if ($canViewFinance): ?><div class="small">$<?= number_format($partsCost, 2) ?> tracked</div><?php endif; ?></div>
+        <?php if ($canViewFinance): ?>
         <div class="card"><b>Estimated Profit</b><div class="profit <?= $estimatedProfit >= 0 ? 'positive' : 'negative' ?>">$<?= number_format($estimatedProfit, 2) ?></div></div>
         <div class="card"><b>Actual Profit</b><div class="profit <?= ($actualProfit ?? 0) >= 0 ? 'positive' : 'negative' ?>"><?= $actualProfit === null ? 'Not sold' : '$'.number_format($actualProfit, 2) ?></div></div>
+        <?php else: ?>
+        <div class="card"><b>Financials</b><div class="stat restricted-stat">Restricted</div><div class="small">An admin can enable number access.</div></div>
+        <?php endif; ?>
     </div>
     <?php if (isset($_GET['status_synced'])): ?>
         <div class="alert success">Car status updated.</div>
@@ -193,6 +200,7 @@ require '../header.php';
         <?php endforeach; ?>
     </div>
 
+    <?php if ($canViewFinance): ?>
     <h2 class="section-title">Finance Split</h2>
     <?php if (isset($_GET['shares'])): ?>
         <div class="alert success">Profit split updated.</div>
@@ -269,6 +277,7 @@ require '../header.php';
     <?php if ($canManageFinance): ?>
     <p><a class="btn" href="add-purchase-payment.php?car_id=<?= $id ?>">+ Add Purchase Payment</a></p>
     <?php endif; ?>
+    <?php endif; ?>
 
     <h2 class="section-title">Car Details</h2>
     <div class="card">
@@ -309,12 +318,14 @@ require '../header.php';
 
     <h2 class="section-title">Parts</h2>
     <table>
-        <tr><th>Part</th><th>Supplier</th><th>Cost</th><th>Status</th><th>Dates</th><th>Action</th></tr>
+        <tr><th>Part</th><th>Supplier</th><?php if ($canViewFinance): ?><th>Cost</th><?php endif; ?><th>Status</th><th>Dates</th><th>Action</th></tr>
         <?php foreach ($parts as $part): ?>
         <tr>
             <td><?= detail_text($part['part_name']) ?><div class="small"><?= detail_text($part['notes']) ?></div></td>
             <td><?= detail_text($part['supplier']) ?></td>
+            <?php if ($canViewFinance): ?>
             <td>$<?= number_format($part['cost'], 2) ?></td>
+            <?php endif; ?>
             <td><span class="badge"><?= detail_text($part['status']) ?></span></td>
             <td class="small">Ordered <?= detail_text($part['ordered_date'], 'N/A') ?><br>Arrived <?= detail_text($part['arrived_date'], 'N/A') ?><br>Installed <?= detail_text($part['installed_date'], 'N/A') ?></td>
             <td>
@@ -333,13 +344,15 @@ require '../header.php';
 
     <h2 class="section-title">Sale Listings & Offers</h2>
     <table>
-        <tr><th>Platform</th><th>Price</th><th>Status</th><th>Buyer / Offer</th><th>Notes</th><th>Action</th></tr>
+        <tr><th>Platform</th><?php if ($canViewFinance): ?><th>Price</th><?php endif; ?><th>Status</th><th>Buyer</th><th>Notes</th><th>Action</th></tr>
         <?php foreach ($listings as $listing): ?>
         <tr>
             <td><?= detail_text($listing['platform']) ?><div class="small"><?= detail_text($listing['listed_date'], 'N/A') ?></div></td>
+            <?php if ($canViewFinance): ?>
             <td>$<?= number_format($listing['listing_price'], 2) ?></td>
+            <?php endif; ?>
             <td><span class="badge"><?= detail_text($listing['status']) ?></span></td>
-            <td><?= detail_text($listing['buyer_name']) ?><div class="small"><?= detail_text($listing['buyer_contact']) ?><br>Offer $<?= number_format($listing['offer_amount'], 2) ?> / Deposit $<?= number_format($listing['deposit_amount'], 2) ?></div></td>
+            <td><?= detail_text($listing['buyer_name']) ?><div class="small"><?= detail_text($listing['buyer_contact']) ?><?php if ($canViewFinance): ?><br>Offer $<?= number_format($listing['offer_amount'], 2) ?> / Deposit $<?= number_format($listing['deposit_amount'], 2) ?><?php endif; ?></div></td>
             <td><?= detail_text($listing['notes']) ?></td>
             <td>
                 <?php if ($canManageSales): ?>
@@ -357,14 +370,16 @@ require '../header.php';
 
     <h2 class="section-title">Expenses</h2>
     <table>
-        <tr><th>Date</th><th>Category</th><th>Name</th><th>Amount</th><th>Paid By</th><th>Receipt</th><th>Notes</th><th>Action</th></tr>
+        <tr><th>Date</th><th>Category</th><th>Name</th><?php if ($canViewFinance): ?><th>Amount</th><th>Paid By</th><?php endif; ?><th>Receipt</th><th>Notes</th><th>Action</th></tr>
         <?php foreach ($expenses as $e): ?>
         <tr>
             <td><?= detail_text($e['expense_date'], 'N/A') ?></td>
             <td><?= detail_text($e['category']) ?></td>
             <td><?= detail_text($e['expense_name']) ?></td>
+            <?php if ($canViewFinance): ?>
             <td>$<?= number_format($e['amount'], 2) ?></td>
             <td><?= detail_text($e['paid_by']) ?></td>
+            <?php endif; ?>
             <td>
                 <?php if (!empty($e['receipt_file'])): ?>
                 <a href="../<?= htmlspecialchars($e['receipt_file']) ?>" target="_blank"><img class="thumb" src="../<?= htmlspecialchars($e['receipt_file']) ?>" alt="Receipt"></a>

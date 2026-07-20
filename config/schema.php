@@ -18,6 +18,7 @@ function ensure_database_schema(PDO $pdo): void
           role ENUM('admin','partner') DEFAULT 'partner',
           session_version INT NOT NULL DEFAULT 0,
           can_view_data TINYINT(1) NOT NULL DEFAULT 0,
+          can_view_finance TINYINT(1) NOT NULL DEFAULT 0,
           can_manage_cars TINYINT(1) NOT NULL DEFAULT 0,
           can_manage_finance TINYINT(1) NOT NULL DEFAULT 0,
           can_manage_tasks TINYINT(1) NOT NULL DEFAULT 0,
@@ -27,6 +28,7 @@ function ensure_database_schema(PDO $pdo): void
           can_view_imports TINYINT(1) NOT NULL DEFAULT 0,
           can_manage_imports TINYINT(1) NOT NULL DEFAULT 0,
           can_view_import_finance TINYINT(1) NOT NULL DEFAULT 0,
+          access_requested_at DATETIME,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )",
         "CREATE TABLE IF NOT EXISTS password_resets (
@@ -250,6 +252,7 @@ function ensure_database_schema(PDO $pdo): void
 
     ensure_column($pdo, 'users', 'session_version', 'INT NOT NULL DEFAULT 0');
     ensure_column($pdo, 'users', 'can_view_data', 'TINYINT(1) NOT NULL DEFAULT 0');
+    ensure_column($pdo, 'users', 'can_view_finance', 'TINYINT(1) NOT NULL DEFAULT 0');
     ensure_column($pdo, 'users', 'can_manage_cars', 'TINYINT(1) NOT NULL DEFAULT 0');
     ensure_column($pdo, 'users', 'can_manage_finance', 'TINYINT(1) NOT NULL DEFAULT 0');
     ensure_column($pdo, 'users', 'can_manage_tasks', 'TINYINT(1) NOT NULL DEFAULT 0');
@@ -259,6 +262,7 @@ function ensure_database_schema(PDO $pdo): void
     ensure_column($pdo, 'users', 'can_view_imports', 'TINYINT(1) NOT NULL DEFAULT 0');
     ensure_column($pdo, 'users', 'can_manage_imports', 'TINYINT(1) NOT NULL DEFAULT 0');
     ensure_column($pdo, 'users', 'can_view_import_finance', 'TINYINT(1) NOT NULL DEFAULT 0');
+    ensure_column($pdo, 'users', 'access_requested_at', 'DATETIME');
     ensure_column($pdo, 'cars', 'profile_photo', 'VARCHAR(255)');
     ensure_column($pdo, 'import_assessments', 'import_ref', 'VARCHAR(30)');
     ensure_column($pdo, 'import_assessments', 'make', 'VARCHAR(100)');

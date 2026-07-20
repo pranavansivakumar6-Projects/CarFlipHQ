@@ -6,7 +6,7 @@ $email = trim($_POST['email'] ?? '');
 $password = $_POST['password'] ?? '';
 
 $permissionColumns = implode(', ', array_keys(permission_fields()));
-$stmt = $pdo->prepare("SELECT id, name, email, password_hash, role, session_version, $permissionColumns FROM users WHERE email = ?");
+$stmt = $pdo->prepare("SELECT id, name, email, password_hash, role, session_version, access_requested_at, $permissionColumns FROM users WHERE email = ?");
 $stmt->execute([$email]);
 $user = $stmt->fetch();
 
@@ -21,6 +21,7 @@ $_SESSION['user'] = [
     'email' => $user['email'],
     'role' => $user['role'],
     'session_version' => (int) ($user['session_version'] ?? 0),
+    'access_requested_at' => $user['access_requested_at'] ?? null,
 ];
 
 foreach (array_keys(permission_fields()) as $permission) {

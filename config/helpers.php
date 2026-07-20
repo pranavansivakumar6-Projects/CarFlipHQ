@@ -103,7 +103,7 @@ function car_access_filter_sql(string $carAlias = 'cars'): string
         return '1=0';
     }
 
-    if (($user['role'] ?? '') === 'admin') {
+    if (($user['role'] ?? '') === 'admin' || user_can('can_view_imports')) {
         return '1=1';
     }
 

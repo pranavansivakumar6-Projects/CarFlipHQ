@@ -18,11 +18,14 @@ require '../header.php';
     <?php if (isset($_GET['changed'])): ?>
         <div class="alert success">Password changed. Old sessions for this account have been signed out.</div>
     <?php endif; ?>
+    <?php if (isset($_GET['requested'])): ?>
+        <div class="alert success">Access request sent. An admin can approve it from Users.</div>
+    <?php endif; ?>
     <?php if (isset($_GET['error'])): ?>
         <div class="alert">Current password is wrong, or the new password is less than 8 characters.</div>
     <?php endif; ?>
-    <?php if (!user_can('can_view_data')): ?>
-        <div class="alert">Your account is active, but business access has not been approved yet. Ask an admin to enable permissions from Users.</div>
+    <?php if (!user_can('can_view_data') && !user_can('can_view_imports')): ?>
+        <div class="alert">Your account is active, but access has not been approved yet.</div>
     <?php endif; ?>
 
     <div class="grid">
@@ -46,6 +49,15 @@ require '../header.php';
                     <?php endif; ?>
                 <?php endif; ?>
             </div>
+            <?php if (($account['role'] ?? '') !== 'admin' && !user_can('can_view_data') && !user_can('can_view_imports')): ?>
+                <?php if (!empty($account['access_requested_at'])): ?>
+                    <p class="small">Access requested. Waiting for admin approval.</p>
+                <?php else: ?>
+                    <form action="../actions/request-access.php" method="POST">
+                        <button class="btn" type="submit">Request Access</button>
+                    </form>
+                <?php endif; ?>
+            <?php endif; ?>
         </div>
         <form class="form-card" action="../actions/change-password.php" method="POST">
             <h2>Change Password</h2>

@@ -1,7 +1,7 @@
 <?php
 require '../config/db.php';
 require_once '../config/auth.php';
-require_permission('can_view_data');
+require_permission('can_view_finance');
 require_once '../config/helpers.php';
 $pageTitle = 'Reports | CarFlip HQ';
 require '../header.php';

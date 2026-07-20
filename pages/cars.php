@@ -17,6 +17,7 @@ $cars = $pdo->query("
 ")->fetchAll(PDO::FETCH_ASSOC);
 $canManageCars = user_can('can_manage_cars');
 $canImportExport = user_can('can_import_export');
+$canViewFinance = user_can('can_view_finance');
 $isAdmin = (($user['role'] ?? '') === 'admin');
 
 function car_status_class(?string $status): string
@@ -73,12 +74,19 @@ function car_status_class(?string $status): string
                     <h2><?= htmlspecialchars(trim($car['year'] . ' ' . $car['make'] . ' ' . $car['model'])) ?></h2>
                     <span class="badge <?= car_status_class($car['status'] ?? '') ?>"><?= htmlspecialchars(car_status_label((string) $car['status'])) ?></span>
                 </div>
+                <?php if ($canViewFinance): ?>
                 <div class="car-metrics">
                     <div><span>Purchase</span><b>$<?= number_format((float) $car['purchase_price'], 2) ?></b></div>
                     <div><span>Expenses</span><b>$<?= number_format((float) $car['expense_total'], 2) ?></b></div>
                     <div><span><?= (float) $car['actual_sale_price'] > 0 ? 'Sold' : 'Est. Sale' ?></span><b>$<?= number_format($saleValue, 2) ?></b></div>
                     <div><span>Profit</span><b class="<?= $profit === null ? '' : ($profit >= 0 ? 'positive' : 'negative') ?>"><?= $profit === null ? 'N/A' : '$' . number_format($profit, 2) ?></b></div>
                 </div>
+                <?php else: ?>
+                <div class="car-metrics">
+                    <div><span>Financials</span><b>Restricted</b></div>
+                    <div><span>Access</span><b>Admin controlled</b></div>
+                </div>
+                <?php endif; ?>
                 <div class="card-title-row">
                     <span class="small"><?= number_format((int) $car['odometer']) ?> km<?= $car['rego'] ? ' / ' . htmlspecialchars((string) $car['rego']) : '' ?></span>
                     <a class="btn secondary small-btn" href="car-detail.php?id=<?= (int) $car['id'] ?>">Open</a>
@@ -89,14 +97,16 @@ function car_status_class(?string $status): string
     </div>
 
     <table>
-        <tr><th>Car</th><th>Rego</th><th>Odometer</th><th>Status</th><th>Purchase</th><th>Action</th></tr>
+        <tr><th>Car</th><th>Rego</th><th>Odometer</th><th>Status</th><?php if ($canViewFinance): ?><th>Purchase</th><?php endif; ?><th>Action</th></tr>
         <?php foreach ($cars as $car): ?>
         <tr>
             <td><?= htmlspecialchars($car['year'].' '.$car['make'].' '.$car['model']) ?></td>
             <td><?= htmlspecialchars((string) ($car['rego'] ?: 'N/A')) ?></td>
             <td><?= number_format((int)$car['odometer']) ?> km</td>
             <td><span class="badge"><?= htmlspecialchars(car_status_label((string) $car['status'])) ?></span></td>
+            <?php if ($canViewFinance): ?>
             <td>$<?= number_format($car['purchase_price'], 2) ?></td>
+            <?php endif; ?>
             <td>
                 <div class="row-actions">
                     <a class="btn secondary" href="car-detail.php?id=<?= $car['id'] ?>">Open</a>
