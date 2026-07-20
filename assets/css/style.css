@@ -1463,6 +1463,18 @@ label {
     margin-top: 12px;
 }
 
+.ai-extract-status:not(:empty) {
+    background: #f8fafc;
+    border: 1px solid #dbe3ee;
+    border-radius: 14px;
+    padding: 10px 12px;
+}
+
+.ai-extract-status.loading {
+    color: var(--muted);
+    font-weight: 800;
+}
+
 .ai-extract-status.success {
     color: var(--green);
     font-weight: 800;

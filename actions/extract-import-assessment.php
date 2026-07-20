@@ -106,6 +106,9 @@ $image = $_FILES['auction_sheet_image'] ?? null;
 if ($sourceUrl === '' && (!$image || ($image['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE)) {
     json_response(['ok' => false, 'message' => 'Upload an auction sheet image or paste an auction/listing URL.'], 400);
 }
+if ($image && ($image['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE && ($image['error'] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) {
+    json_response(['ok' => false, 'message' => 'Image upload failed. Try a smaller JPEG or PNG auction sheet.'], 400);
+}
 
 $urlText = fetch_public_url_text($sourceUrl);
 $system = 'You extract Japanese vehicle auction sheet and listing data for CarFlip HQ. Return only valid JSON. Do not guess unavailable values.';

@@ -68,7 +68,7 @@ require '../header.php';
         <div class="alert">Your account can use Japan import records, but landed-cost and profit fields are restricted.</div>
     <?php endif; ?>
 
-    <form class="import-calculator" method="post" action="<?= app_url('actions/save-import-assessment.php') ?>">
+    <form class="import-calculator" method="post" enctype="multipart/form-data" action="<?= app_url('actions/save-import-assessment.php') ?>">
         <?php if ($assessment): ?>
             <input type="hidden" name="id" value="<?= (int) $assessment['id'] ?>">
         <?php endif; ?>
@@ -384,7 +384,7 @@ require '../header.php';
         `;
     }
 
-    button.addEventListener('click', async () => {
+    async function extractAuctionFields() {
         const file = imageInput?.files?.[0] || null;
         const sourceUrl = (urlInput?.value || '').trim();
         if (!file && !sourceUrl) {
@@ -396,8 +396,10 @@ require '../header.php';
         if (file) payload.append('auction_sheet_image', file);
         if (sourceUrl) payload.append('source_url', sourceUrl);
 
+        const originalText = button.textContent;
         button.disabled = true;
-        setStatus('Reading auction details with AI...');
+        button.textContent = 'Extracting...';
+        setStatus('Reading auction details with AI. This can take up to a minute for photos.', 'loading');
         if (preview) preview.hidden = true;
 
         try {
@@ -405,7 +407,14 @@ require '../header.php';
                 method: 'POST',
                 body: payload
             });
-            const data = await response.json();
+            const raw = await response.text();
+            let data = {};
+            try {
+                data = raw ? JSON.parse(raw) : {};
+            } catch (parseError) {
+                const readableError = raw ? raw.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 300) : 'AI extraction returned an unreadable response.';
+                throw new Error(readableError);
+            }
             if (!response.ok || !data.ok) {
                 throw new Error(data.message || 'AI extraction failed.');
             }
@@ -427,6 +436,15 @@ require '../header.php';
             setStatus(error.message || 'AI extraction failed.', 'error');
         } finally {
             button.disabled = false;
+            button.textContent = originalText;
+        }
+    }
+
+    button.addEventListener('click', extractAuctionFields);
+    imageInput?.addEventListener('change', () => {
+        if (imageInput.files?.[0]) {
+            setStatus(`Selected ${imageInput.files[0].name}. Starting extraction...`);
+            extractAuctionFields();
         }
     });
 })();
