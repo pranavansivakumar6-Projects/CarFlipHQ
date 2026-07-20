@@ -10,11 +10,15 @@ $user = current_user();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($pageTitle) ?></title>
+    <link rel="icon" type="image/svg+xml" href="<?= app_url('assets/favicon.svg') ?>">
     <link rel="stylesheet" href="<?= app_url('assets/css/style.css') ?>">
 </head>
-<body>
+<body class="<?= !empty($publicPage) ? 'public-page' : 'app-page' ?>">
 <div class="topbar">
-    <div class="brand">CarFlip HQ</div>
+    <a class="brand" href="<?= app_url($user ? 'index.php' : 'pages/login.php') ?>">
+        <img src="<?= app_url('assets/brand-mark.svg') ?>" alt="">
+        <span>CarFlip HQ</span>
+    </a>
     <nav>
         <?php if ($user): ?>
         <span class="nav-user"><?= htmlspecialchars($user['name']) ?></span>
@@ -23,7 +27,7 @@ $user = current_user();
         <a href="<?= app_url('pages/cars.php') ?>">Cars</a>
         <?php endif; ?>
         <?php if (user_can('can_view_imports')): ?>
-        <a href="<?= app_url('pages/imports.php') ?>">Imports</a>
+        <a href="<?= app_url('pages/imports.php') ?>">Japan Hub</a>
         <?php endif; ?>
         <?php if (user_can('can_manage_cars')): ?>
         <a href="<?= app_url('pages/add-car.php') ?>">Add Car</a>

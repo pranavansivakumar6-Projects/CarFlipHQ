@@ -4,7 +4,7 @@ require_once '../config/auth.php';
 require_permission('can_view_imports');
 require_once '../config/helpers.php';
 
-$pageTitle = 'Imports | CarFlip HQ';
+$pageTitle = 'Japan Import Hub | CarFlip HQ';
 $user = current_user();
 $accessWhere = import_access_filter_sql('ia');
 $assessments = $pdo->query("
@@ -35,8 +35,8 @@ require '../header.php';
     <div class="inventory-hero import-hero">
         <div>
             <div class="eyebrow">Japan Import Hub</div>
-            <h1>Imports</h1>
-            <p>Assess Japanese auction vehicles, calculate landed costs, and keep import-only users away from private CarFlip HQ records.</p>
+            <h1>Japanese Auction Pipeline</h1>
+            <p>Assess auction sheets, calculate landed and on-road costs, and share import records without exposing private CarFlip HQ cars.</p>
         </div>
         <div class="inventory-count"><?= count($assessments) ?><span>assessments</span></div>
     </div>

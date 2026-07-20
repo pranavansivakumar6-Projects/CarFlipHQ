@@ -63,7 +63,7 @@ require '../header.php';
             <h1><?= $assessment ? htmlspecialchars((string) $assessment['import_ref']) : 'Auction & Landed Cost Calculator' ?></h1>
             <p class="small">Estimate FOB, Australian landed cost, expected profit, and the safest maximum hammer bid before auction.</p>
         </div>
-        <a class="btn secondary" href="imports.php">Back to Imports</a>
+        <a class="btn secondary" href="imports.php">Back to Japan Hub</a>
     </div>
 
     <?php if (!$canViewFinance): ?>

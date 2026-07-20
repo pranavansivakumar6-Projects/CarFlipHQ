@@ -13,6 +13,13 @@ require '../header.php';
 ?>
 <div class="auth-page">
     <form class="form-card auth-card" action="../actions/login.php" method="POST">
+        <div class="auth-card-brand">
+            <img src="<?= app_url('assets/brand-mark.svg') ?>" alt="">
+            <div>
+                <strong>CarFlip HQ</strong>
+                <span>Japan imports and flip management</span>
+            </div>
+        </div>
         <h1>Sign in</h1>
         <?php if (isset($_GET['error'])): ?>
             <div class="alert">Invalid email or password.</div>

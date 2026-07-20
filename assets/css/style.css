@@ -34,6 +34,14 @@ body {
     color: var(--ink);
 }
 
+body.public-page {
+    background:
+        radial-gradient(circle at 72% 22%, rgba(233, 67, 67, .22), transparent 18%),
+        radial-gradient(circle at 20% 0, rgba(70, 210, 199, .24), transparent 30%),
+        linear-gradient(135deg, #07111f 0, #0b1220 42%, #102333 100%);
+    min-height: 100vh;
+}
+
 a {
     color: inherit;
 }
@@ -66,21 +74,19 @@ a {
     white-space: nowrap;
     position: relative;
     padding-bottom: 14px;
+    color: #fff;
+    text-decoration: none;
 }
 
-.brand::before {
-    content: "";
+.brand img {
     width: 42px;
     height: 42px;
-    border-radius: 12px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background:
-        linear-gradient(135deg, rgba(255, 255, 255, .95), rgba(255, 255, 255, .76)),
-        linear-gradient(135deg, #1fbfb4, #7c3aed);
-    color: #fff;
+    border-radius: 14px;
     box-shadow: 0 10px 25px rgba(31, 191, 180, .28);
+}
+
+.brand span {
+    display: inline-block;
 }
 
 .brand::after {
@@ -757,16 +763,101 @@ label {
 }
 
 .auth-page {
-    min-height: calc(100vh - 64px);
+    min-height: calc(100vh - 76px);
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 28px;
+    padding: 64px 28px;
+    position: relative;
+    overflow: hidden;
+}
+
+.auth-page::before {
+    animation: drift-lines 16s linear infinite;
+    background:
+        linear-gradient(90deg, rgba(82, 224, 213, .08) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(255, 255, 255, .06) 1px, transparent 1px);
+    background-size: 64px 64px;
+    content: "";
+    inset: 0;
+    opacity: .52;
+    position: absolute;
+}
+
+.auth-page::after {
+    background:
+        radial-gradient(circle at center, rgba(233, 67, 67, .34) 0 18%, transparent 19%),
+        linear-gradient(120deg, transparent 0 38%, rgba(82, 224, 213, .18) 39% 41%, transparent 42% 100%),
+        linear-gradient(150deg, transparent 0 48%, rgba(255, 255, 255, .12) 49% 50%, transparent 51% 100%);
+    content: "";
+    height: 640px;
+    opacity: .9;
+    position: absolute;
+    right: -120px;
+    top: -160px;
+    transform: rotate(-8deg);
+    width: 640px;
+}
+
+@keyframes drift-lines {
+    from { transform: translate3d(0, 0, 0); }
+    to { transform: translate3d(64px, 64px, 0); }
 }
 
 .auth-card {
+    background: rgba(255, 255, 255, .92);
+    border: 1px solid rgba(255, 255, 255, .7);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, .34);
+    position: relative;
     width: 100%;
     max-width: 430px;
+    z-index: 1;
+}
+
+.auth-card::before {
+    background: linear-gradient(90deg, #52e0d5, #e94343);
+    content: "";
+    height: 4px;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+}
+
+.auth-card h1 {
+    margin-top: 10px;
+}
+
+.auth-card-brand {
+    align-items: center;
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.auth-card-brand img {
+    border-radius: 14px;
+    height: 46px;
+    width: 46px;
+}
+
+.auth-card-brand strong,
+.auth-card-brand span {
+    display: block;
+}
+
+.auth-card-brand strong {
+    font-size: 15px;
+    font-weight: 900;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+}
+
+.auth-card-brand span {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 800;
+    margin-top: 3px;
 }
 
 .auth-links {
@@ -1243,8 +1334,23 @@ label {
 
 .import-hero {
     background:
-        linear-gradient(90deg, rgba(8, 13, 24, .94) 0, rgba(8, 13, 24, .78) 45%, rgba(8, 13, 24, .28) 100%),
+        radial-gradient(circle at 76% 25%, rgba(233, 67, 67, .48) 0 9%, transparent 10%),
+        linear-gradient(120deg, transparent 0 34%, rgba(82, 224, 213, .18) 35% 37%, transparent 38% 100%),
+        linear-gradient(90deg, rgba(8, 13, 24, .96) 0, rgba(8, 13, 24, .82) 45%, rgba(8, 13, 24, .30) 100%),
         url("https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=1800&q=80") center / cover;
+    border-bottom: 4px solid var(--teal);
+}
+
+.import-hero::after {
+    background:
+        linear-gradient(90deg, rgba(255, 255, 255, .10) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(255, 255, 255, .08) 1px, transparent 1px);
+    background-size: 46px 46px;
+    content: "";
+    inset: 0;
+    opacity: .26;
+    pointer-events: none;
+    position: absolute;
 }
 
 .import-summary-grid {
@@ -1293,13 +1399,19 @@ label {
 
 .import-calculator-view .page-heading {
     background:
-        linear-gradient(135deg, rgba(255, 255, 255, .94), rgba(236, 254, 255, .72)),
-        radial-gradient(circle at top right, rgba(70, 210, 199, .18), transparent 34%);
-    border: 1px solid rgba(255, 255, 255, .76);
+        radial-gradient(circle at 88% 22%, rgba(233, 67, 67, .18) 0 10%, transparent 11%),
+        linear-gradient(120deg, transparent 0 72%, rgba(82, 224, 213, .16) 73% 75%, transparent 76%),
+        linear-gradient(135deg, rgba(10, 18, 32, .96), rgba(16, 35, 51, .88));
+    border: 1px solid rgba(82, 224, 213, .24);
     border-radius: 24px;
-    box-shadow: 0 28px 80px rgba(15, 23, 42, .10);
+    box-shadow: 0 28px 80px rgba(15, 23, 42, .18);
+    color: #fff;
     margin: 12px 0 18px;
     padding: 24px;
+}
+
+.import-calculator-view .page-heading .small {
+    color: #c6d3df;
 }
 
 .import-calculator-view .page-heading h1 {
