@@ -5,7 +5,8 @@ require '../config/auth.php';
 $email = trim($_POST['email'] ?? '');
 $password = $_POST['password'] ?? '';
 
-$stmt = $pdo->prepare('SELECT id, name, email, password_hash, role, session_version, can_view_data, can_manage_cars, can_manage_finance, can_manage_tasks, can_manage_sales, can_import_export, can_use_ai FROM users WHERE email = ?');
+$permissionColumns = implode(', ', array_keys(permission_fields()));
+$stmt = $pdo->prepare("SELECT id, name, email, password_hash, role, session_version, $permissionColumns FROM users WHERE email = ?");
 $stmt->execute([$email]);
 $user = $stmt->fetch();
 
@@ -24,6 +25,10 @@ $_SESSION['user'] = [
 
 foreach (array_keys(permission_fields()) as $permission) {
     $_SESSION['user'][$permission] = (int) ($user[$permission] ?? 0);
+}
+
+if (!user_can('can_view_data') && user_can('can_view_imports')) {
+    redirect_to('pages/imports.php');
 }
 
 if (!user_can('can_view_data')) {

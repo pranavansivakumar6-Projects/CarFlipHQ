@@ -15,6 +15,9 @@ $permissionValues = [];
 foreach (array_keys(permission_fields()) as $permission) {
     $permissionValues[$permission] = $role === 'admin' ? 1 : (isset($postedPermissions[$permission]) ? 1 : 0);
 }
+if (!empty($permissionValues['can_manage_imports']) || !empty($permissionValues['can_view_import_finance'])) {
+    $permissionValues['can_view_imports'] = 1;
+}
 
 if (!$email || strlen($password) < 8) {
     redirect_to('pages/add-user.php?error=1');

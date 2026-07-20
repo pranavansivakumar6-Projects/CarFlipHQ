@@ -22,6 +22,9 @@ $user = current_user();
         <a href="<?= app_url('index.php') ?>">Dashboard</a>
         <a href="<?= app_url('pages/cars.php') ?>">Cars</a>
         <?php endif; ?>
+        <?php if (user_can('can_view_imports')): ?>
+        <a href="<?= app_url('pages/imports.php') ?>">Imports</a>
+        <?php endif; ?>
         <?php if (user_can('can_manage_cars')): ?>
         <a href="<?= app_url('pages/add-car.php') ?>">Add Car</a>
         <?php endif; ?>

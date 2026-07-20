@@ -165,6 +165,86 @@ function sync_car_user_access(PDO $pdo, int $carId, array $userIds): void
     }
 }
 
+function import_access_filter_sql(string $assessmentAlias = 'ia'): string
+{
+    if (!function_exists('current_user')) {
+        return '1=0';
+    }
+
+    $user = current_user();
+    if (!$user) {
+        return '1=0';
+    }
+
+    if (($user['role'] ?? '') === 'admin') {
+        return '1=1';
+    }
+
+    $safeAlias = preg_replace('/[^a-zA-Z0-9_]/', '', $assessmentAlias);
+    if ($safeAlias === '') {
+        $safeAlias = 'ia';
+    }
+
+    $userId = (int) $user['id'];
+    return '(' . $safeAlias . '.created_by = ' . $userId . ' OR EXISTS (SELECT 1 FROM import_user_access iua WHERE iua.assessment_id = ' . $safeAlias . '.id AND iua.user_id = ' . $userId . '))';
+}
+
+function user_can_access_import(PDO $pdo, int $assessmentId): bool
+{
+    if (!function_exists('current_user')) {
+        return false;
+    }
+
+    $user = current_user();
+    if (!$user) {
+        return false;
+    }
+
+    if (($user['role'] ?? '') === 'admin') {
+        return true;
+    }
+
+    $stmt = $pdo->prepare('SELECT COUNT(*) FROM import_assessments ia WHERE ia.id = ? AND ' . import_access_filter_sql('ia'));
+    $stmt->execute([$assessmentId]);
+
+    return (int) $stmt->fetchColumn() > 0;
+}
+
+function require_import_assessment(PDO $pdo, int $assessmentId): void
+{
+    $stmt = $pdo->prepare('SELECT id FROM import_assessments WHERE id = ?');
+    $stmt->execute([$assessmentId]);
+
+    if (!$stmt->fetchColumn()) {
+        http_response_code(404);
+        die('Import assessment not found.');
+    }
+
+    if (!user_can_access_import($pdo, $assessmentId)) {
+        http_response_code(403);
+        die('You do not have access to this import assessment.');
+    }
+}
+
+function sync_import_user_access(PDO $pdo, int $assessmentId, array $userIds): void
+{
+    $pdo->prepare('DELETE FROM import_user_access WHERE assessment_id = ?')->execute([$assessmentId]);
+
+    if (!$userIds) {
+        return;
+    }
+
+    $placeholders = implode(',', array_fill(0, count($userIds), '?'));
+    $stmt = $pdo->prepare("SELECT id FROM users WHERE id IN ($placeholders)");
+    $stmt->execute($userIds);
+    $validIds = array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
+
+    $insert = $pdo->prepare('INSERT IGNORE INTO import_user_access (assessment_id, user_id) VALUES (?, ?)');
+    foreach ($validIds as $userId) {
+        $insert->execute([$assessmentId, $userId]);
+    }
+}
+
 function post_user_names(PDO $pdo, string $key): string
 {
     $values = $_POST[$key] ?? [];

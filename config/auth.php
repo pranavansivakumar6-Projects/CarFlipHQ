@@ -54,6 +54,9 @@ function permission_fields(): array
         'can_manage_sales' => 'Listings and sale details',
         'can_import_export' => 'Import and export sheets',
         'can_use_ai' => 'AI tools',
+        'can_view_imports' => 'Japan Import Hub access',
+        'can_manage_imports' => 'Create and edit import assessments',
+        'can_view_import_finance' => 'View import landed costs and profit',
     ];
 }
 
@@ -90,7 +93,8 @@ function require_login(): void
     $pdo = $GLOBALS['pdo'] ?? null;
     $user = current_user();
     if ($pdo instanceof PDO && $user) {
-        $stmt = $pdo->prepare('SELECT name, email, role, session_version, can_view_data, can_manage_cars, can_manage_finance, can_manage_tasks, can_manage_sales, can_import_export, can_use_ai FROM users WHERE id = ?');
+        $permissionColumns = implode(', ', array_keys(permission_fields()));
+        $stmt = $pdo->prepare("SELECT name, email, role, session_version, $permissionColumns FROM users WHERE id = ?");
         $stmt->execute([(int) $user['id']]);
         $freshUser = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -129,7 +133,15 @@ function require_admin(): void
 function redirect_if_logged_in(): void
 {
     if (is_logged_in()) {
-        redirect_to(user_can('can_view_data') ? 'index.php' : 'pages/account.php');
+        if (user_can('can_view_data')) {
+            redirect_to('index.php');
+        }
+
+        if (user_can('can_view_imports')) {
+            redirect_to('pages/imports.php');
+        }
+
+        redirect_to('pages/account.php');
     }
 }
 

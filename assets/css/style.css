@@ -1240,6 +1240,104 @@ label {
     grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.import-hero {
+    background:
+        linear-gradient(90deg, rgba(8, 13, 24, .94) 0, rgba(8, 13, 24, .78) 45%, rgba(8, 13, 24, .28) 100%),
+        url("https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=1800&q=80") center / cover;
+}
+
+.import-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    margin: 18px 0;
+}
+
+.stat-card {
+    background: #fff;
+    border: 1px solid var(--soft-line);
+    border-radius: 12px;
+    box-shadow: var(--shadow-soft);
+    padding: 18px;
+}
+
+.stat-card span,
+.stat-card small {
+    color: var(--muted);
+    display: block;
+    font-size: 13px;
+}
+
+.stat-card strong {
+    display: block;
+    font-size: 28px;
+    margin: 7px 0 4px;
+}
+
+.import-layout {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+    align-items: start;
+}
+
+.form-grid {
+    display: grid;
+    gap: 14px;
+}
+
+.form-grid.two {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.import-card-media {
+    background:
+        radial-gradient(circle at 35% 20%, rgba(70, 210, 199, .34), transparent 28%),
+        linear-gradient(135deg, #101828, #1f2937);
+}
+
+.import-card-media span {
+    color: var(--teal);
+}
+
+.import-warnings .alert {
+    margin: 8px 0;
+}
+
+.alert.warning {
+    background: #fef3c7;
+    border-color: #fde68a;
+    color: #92400e;
+}
+
+.calc-details {
+    margin-top: 18px;
+}
+
+.calc-details summary {
+    cursor: pointer;
+    font-weight: 800;
+    margin-bottom: 10px;
+}
+
+.calc-details pre {
+    white-space: pre-wrap;
+    background: #101828;
+    color: #d8fff9;
+    border-radius: 10px;
+    padding: 16px;
+    line-height: 1.5;
+}
+
+.empty-state {
+    background: #fff;
+    border: 1px dashed var(--line);
+    border-radius: 12px;
+    color: var(--muted);
+    padding: 24px;
+    text-align: center;
+}
+
 .ai-result {
     background: #fff;
     border-left: 5px solid var(--blue);
@@ -1271,6 +1369,12 @@ label {
 
     .tool-form-grid,
     .tool-form-grid-three {
+        grid-template-columns: 1fr;
+    }
+
+    .import-summary-grid,
+    .import-layout,
+    .form-grid.two {
         grid-template-columns: 1fr;
     }
 
