@@ -24,7 +24,7 @@ if (!$assessment && !$canManageImports) {
 
 $settings = $pdo->query('SELECT setting_key, setting_value FROM import_settings')->fetchAll(PDO::FETCH_KEY_PAIR);
 $users = (($user['role'] ?? '') === 'admin' || $canManageImports)
-    ? $pdo->query("SELECT id, name, role FROM users WHERE role <> 'admin' ORDER BY name")->fetchAll(PDO::FETCH_ASSOC)
+    ? $pdo->query("SELECT id, name FROM users WHERE role <> 'admin' ORDER BY name")->fetchAll(PDO::FETCH_ASSOC)
     : [];
 $allowedUserIds = [];
 if ($assessment) {
@@ -87,7 +87,7 @@ require '../header.php';
             <section class="form-card import-section-card">
                 <div class="section-kicker">Step 1</div>
                 <h2>Vehicle & Auction</h2>
-                <p class="small">Start with the car identity and auction reference. These fields are safe for Japan-only users.</p>
+                <p class="small">Start with the car identity and auction reference. Access is controlled by the users you select below.</p>
                 <div class="form-grid two">
                     <div><label>Make</label><input name="make" value="<?= htmlspecialchars(import_value($assessment, $settings, 'make')) ?>" required></div>
                     <div><label>Model</label><input name="model" value="<?= htmlspecialchars(import_value($assessment, $settings, 'model')) ?>" required></div>
@@ -164,15 +164,23 @@ require '../header.php';
         <section class="form-card section-title import-section-card">
             <div class="section-kicker">Access</div>
             <h2>Sharing</h2>
-            <p class="small">Choose Japan-only users or managers who can see this assessment. Admin accounts can always see every import.</p>
-            <div class="permission-grid">
-                <?php foreach ($users as $accessUser): ?>
-                    <label class="check-pill">
-                        <input type="checkbox" name="access_user_ids[]" value="<?= (int) $accessUser['id'] ?>" <?= in_array((int) $accessUser['id'], $allowedUserIds, true) ? 'checked' : '' ?>>
-                        <?= htmlspecialchars($accessUser['name']) ?> <span class="small">(<?= htmlspecialchars($accessUser['role']) ?>)</span>
-                    </label>
-                <?php endforeach; ?>
+            <p class="small">Select the database users who can see this import assessment. Admin accounts can always see every import.</p>
+            <div class="sharing-toolbar">
+                <span class="small">Users are loaded from the Users database.</span>
+                <a class="btn secondary compact-btn" href="<?= app_url('pages/add-user.php') ?>">+ Add User</a>
             </div>
+            <?php if ($users): ?>
+                <div class="user-picker-grid">
+                    <?php foreach ($users as $accessUser): ?>
+                        <label class="user-picker-option">
+                            <input type="checkbox" name="access_user_ids[]" value="<?= (int) $accessUser['id'] ?>" <?= in_array((int) $accessUser['id'], $allowedUserIds, true) ? 'checked' : '' ?>>
+                            <span><?= htmlspecialchars($accessUser['name']) ?></span>
+                        </label>
+                    <?php endforeach; ?>
+                </div>
+            <?php else: ?>
+                <div class="empty-state">No users found yet. Add a user first, then return to share this import.</div>
+            <?php endif; ?>
         </section>
         <?php endif; ?>
 

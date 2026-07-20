@@ -1387,6 +1387,54 @@ label {
     margin-top: 7px;
 }
 
+.sharing-toolbar {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: space-between;
+    margin: 14px 0;
+}
+
+.compact-btn {
+    min-height: 36px;
+    padding: 8px 14px;
+}
+
+.user-picker-grid {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.user-picker-option {
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #dbe3ee;
+    border-radius: 16px;
+    cursor: pointer;
+    display: flex;
+    gap: 10px;
+    min-height: 52px;
+    padding: 12px 14px;
+    transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+
+.user-picker-option:has(input:checked) {
+    background: #ecfeff;
+    border-color: var(--teal);
+    box-shadow: 0 12px 28px rgba(70, 210, 199, .16);
+}
+
+.user-picker-option:hover {
+    border-color: var(--teal);
+    transform: translateY(-1px);
+}
+
+.user-picker-option span {
+    font-weight: 800;
+}
+
 .import-card-media {
     background:
         radial-gradient(circle at 35% 20%, rgba(70, 210, 199, .34), transparent 28%),
@@ -1477,7 +1525,8 @@ label {
 
     .import-summary-grid,
     .import-layout,
-    .form-grid.two {
+    .form-grid.two,
+    .user-picker-grid {
         grid-template-columns: 1fr;
     }
 
