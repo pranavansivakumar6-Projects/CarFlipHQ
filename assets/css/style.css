@@ -2001,3 +2001,274 @@ label {
         overflow-x: auto;
     }
 }
+
+/* Premium SaaS visual pass */
+:root {
+    --premium-bg: #070b12;
+    --premium-surface: #0d1420;
+    --premium-panel: rgba(17, 24, 39, .88);
+    --premium-panel-strong: rgba(10, 15, 25, .96);
+    --premium-border: rgba(148, 163, 184, .18);
+    --premium-text: #f7fbff;
+    --premium-muted: #94a3b8;
+    --premium-purple: #8b5cf6;
+    --premium-gold: #d4a947;
+}
+
+body.app-page {
+    background:
+        radial-gradient(circle at 82% 0, rgba(139, 92, 246, .22), transparent 26%),
+        radial-gradient(circle at 9% 10%, rgba(70, 210, 199, .18), transparent 24%),
+        linear-gradient(180deg, #070b12 0, #0b111c 430px, #eef4f7 431px, #f7f9fb 100%);
+}
+
+.topbar {
+    background: rgba(7, 11, 18, .92);
+    border-bottom-color: rgba(148, 163, 184, .16);
+    box-shadow: 0 22px 70px rgba(0, 0, 0, .35);
+}
+
+.brand img {
+    background: linear-gradient(135deg, #eef7ff, #7df5ec);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, .18), 0 18px 36px rgba(70, 210, 199, .28);
+}
+
+.topbar a,
+.nav-user {
+    font-weight: 700;
+}
+
+.topbar a:hover {
+    background: rgba(139, 92, 246, .18);
+}
+
+.nav-user {
+    background: linear-gradient(135deg, var(--teal), #91fff5);
+    box-shadow: 0 12px 30px rgba(70, 210, 199, .24);
+}
+
+.dashboard-hero,
+.inventory-hero {
+    border: 1px solid rgba(255, 255, 255, .12);
+    border-radius: 8px;
+}
+
+.dashboard-hero {
+    background:
+        linear-gradient(90deg, rgba(6, 9, 15, .95) 0, rgba(8, 13, 24, .78) 44%, rgba(8, 13, 24, .25) 100%),
+        radial-gradient(circle at 68% 32%, rgba(139, 92, 246, .42), transparent 20%),
+        url("https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=1800&q=82") center / cover;
+}
+
+.dashboard-hero h1,
+.inventory-hero h1 {
+    font-size: clamp(44px, 5.6vw, 76px);
+    letter-spacing: 0;
+}
+
+.dashboard-hero p,
+.inventory-hero p {
+    color: #d9e6ef;
+}
+
+.hero-stats div,
+.inventory-count,
+.dashboard-hero .filter-bar {
+    background: rgba(10, 15, 25, .58);
+    border-color: rgba(255, 255, 255, .14);
+    border-radius: 8px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08);
+}
+
+.card,
+.form-card,
+.dropdown-card,
+.tool-card,
+table,
+.timeline-card,
+.car-card,
+.pipeline-column,
+.pipeline-card,
+.stat-card,
+.ai-extract-preview,
+.audit-item {
+    border-radius: 8px;
+}
+
+.dashboard-view .stat-grid .card {
+    background:
+        radial-gradient(circle at 86% 16%, rgba(70, 210, 199, .26), transparent 23%),
+        linear-gradient(180deg, rgba(24, 33, 50, .96), rgba(9, 14, 24, .98));
+}
+
+.stat-grid .card {
+    min-height: 142px;
+}
+
+.stat,
+.profit {
+    font-size: 36px;
+}
+
+.card::after {
+    background: linear-gradient(90deg, var(--teal), var(--premium-purple));
+}
+
+.btn {
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--teal), #1cb5e0);
+    color: #06111d;
+    font-weight: 900;
+}
+
+.btn.secondary {
+    background: #101828;
+    color: #f8fafc;
+}
+
+.btn.danger {
+    background: linear-gradient(135deg, #ef4444, #b91c1c);
+    color: #fff;
+}
+
+input,
+select,
+textarea {
+    border-radius: 8px;
+    background: rgba(255, 255, 255, .92);
+}
+
+table {
+    background: rgba(255, 255, 255, .94);
+    border: 1px solid rgba(15, 23, 42, .08);
+}
+
+th {
+    background: #090f1a;
+}
+
+.badge {
+    border-radius: 999px;
+}
+
+.inventory-hero {
+    background:
+        linear-gradient(90deg, rgba(6, 9, 15, .96), rgba(8, 13, 24, .72) 46%, rgba(8, 13, 24, .22)),
+        radial-gradient(circle at 76% 28%, rgba(70, 210, 199, .34), transparent 18%),
+        url("https://images.unsplash.com/photo-1549927681-0b673b8243ab?auto=format&fit=crop&w=1800&q=82") center / cover;
+}
+
+.import-hero {
+    background:
+        linear-gradient(90deg, rgba(6, 9, 15, .96), rgba(8, 13, 24, .78) 46%, rgba(8, 13, 24, .22)),
+        radial-gradient(circle at 75% 24%, rgba(225, 29, 72, .36), transparent 16%),
+        linear-gradient(120deg, transparent 0 31%, rgba(70, 210, 199, .22) 32% 34%, transparent 35%),
+        url("https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=1800&q=82") center / cover;
+}
+
+.imports-view .page-heading,
+.import-calculator-view .page-heading {
+    background:
+        linear-gradient(135deg, rgba(12, 18, 31, .94), rgba(20, 30, 47, .86)),
+        radial-gradient(circle at 78% 10%, rgba(139, 92, 246, .28), transparent 25%);
+    border: 1px solid rgba(255, 255, 255, .12);
+    border-radius: 8px;
+    color: #fff;
+    padding: 24px;
+    box-shadow: 0 24px 65px rgba(0, 0, 0, .18);
+}
+
+.imports-view .page-heading .small,
+.import-calculator-view .page-heading .small {
+    color: #cbd5e1;
+}
+
+.car-card {
+    background: #f8fafc;
+    border-color: rgba(15, 23, 42, .08);
+}
+
+.car-card-media {
+    min-height: 230px;
+}
+
+.car-card-body {
+    background: linear-gradient(180deg, #fff, #f8fafc);
+}
+
+.car-metrics div {
+    background: #f8fafc;
+    border: 1px solid #e4ebf5;
+    border-radius: 8px;
+}
+
+.pipeline-board {
+    background:
+        radial-gradient(circle at 12% 0, rgba(70, 210, 199, .18), transparent 24%),
+        linear-gradient(180deg, rgba(8, 13, 24, .94), rgba(13, 20, 32, .86));
+    border: 1px solid rgba(255, 255, 255, .12);
+    border-radius: 8px;
+    padding: 18px;
+}
+
+.pipeline-column {
+    background: rgba(255, 255, 255, .08);
+    border-color: rgba(255, 255, 255, .12);
+    box-shadow: none;
+}
+
+.pipeline-column-head h2 {
+    color: #fff;
+}
+
+.pipeline-card {
+    background: rgba(255, 255, 255, .95);
+}
+
+.auth-page {
+    background:
+        linear-gradient(110deg, rgba(7, 11, 18, .94) 0 43%, rgba(7, 11, 18, .45) 100%),
+        url("https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?auto=format&fit=crop&w=1800&q=82") center / cover;
+}
+
+.auth-page::after {
+    background:
+        radial-gradient(circle at center, rgba(139, 92, 246, .42) 0 18%, transparent 19%),
+        linear-gradient(120deg, transparent 0 42%, rgba(82, 224, 213, .18) 43% 45%, transparent 46% 100%);
+}
+
+.auth-card {
+    background: rgba(8, 13, 24, .86);
+    border-color: rgba(255, 255, 255, .16);
+    color: #fff;
+    backdrop-filter: blur(20px);
+}
+
+.auth-card h1,
+.auth-card label,
+.auth-card-brand strong {
+    color: #fff;
+}
+
+.auth-card-brand span {
+    color: #b6c5d4;
+}
+
+.auth-card input {
+    background: rgba(255, 255, 255, .94);
+}
+
+.auth-links a {
+    color: var(--teal);
+}
+
+@media (max-width: 900px) {
+    .dashboard-hero h1,
+    .inventory-hero h1 {
+        font-size: 42px;
+    }
+
+    .pipeline-board {
+        padding: 14px;
+    }
+}
