@@ -30,4 +30,9 @@ $canViewFinance = $canViewFinance ?? user_can('can_view_finance');
         <td><a class="btn secondary" href="<?= app_url('pages/car-detail.php?id=' . (int) $car['id']) ?>">Open</a></td>
     </tr>
     <?php endforeach; ?>
+    <?php if (!$cars): ?>
+    <tr>
+        <td colspan="<?= $canViewFinance ? 6 : 3 ?>">No cars match this dashboard filter. Change the summary filter to All cars or Sold cars to view other records.</td>
+    </tr>
+    <?php endif; ?>
 </table>

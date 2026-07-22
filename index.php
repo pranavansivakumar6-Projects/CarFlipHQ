@@ -6,8 +6,8 @@ require_once 'config/helpers.php';
 $pageTitle = 'Dashboard | CarFlip HQ';
 require 'header.php';
 
-$scope = $_GET['scope'] ?? 'active';
-if (!in_array($scope, ['active', 'sold', 'all'], true)) { $scope = 'active'; }
+$scope = $_GET['scope'] ?? 'all';
+if (!in_array($scope, ['active', 'sold', 'all'], true)) { $scope = 'all'; }
 
 $scopeWhere = [
     'active' => "status != 'Sold'",
@@ -61,9 +61,9 @@ $recentCars = $pdo->query("SELECT * FROM cars WHERE $scopeWhere AND $carAccessWh
         <form class="filter-bar" method="GET">
             <label for="scope">Summary</label>
             <select id="scope" name="scope" onchange="this.form.submit()">
+                <option value="all" <?= $scope === 'all' ? 'selected' : '' ?>>All cars</option>
                 <option value="active" <?= $scope === 'active' ? 'selected' : '' ?>>Active cars only</option>
                 <option value="sold" <?= $scope === 'sold' ? 'selected' : '' ?>>Sold cars only</option>
-                <option value="all" <?= $scope === 'all' ? 'selected' : '' ?>>All cars</option>
             </select>
         </form>
     </div>

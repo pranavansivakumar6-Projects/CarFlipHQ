@@ -361,6 +361,14 @@ p {
     color: #b7c5d1;
 }
 
+.dashboard-view .page-heading.section-title {
+    color: var(--ink);
+}
+
+.dashboard-view .page-heading.section-title .small {
+    color: var(--muted);
+}
+
 .dashboard-view table {
     background: rgba(14, 22, 36, .96);
     border-color: rgba(255, 255, 255, .08);
