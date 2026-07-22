@@ -3,6 +3,7 @@ require '../config/db.php';
 require_once '../config/auth.php';
 require_permission('can_view_imports');
 require_once '../config/helpers.php';
+require_once '../config/import-status.php';
 
 $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 $canManageImports = user_can('can_manage_imports');
@@ -11,12 +12,25 @@ $user = current_user();
 $assessment = null;
 $saveError = trim((string) ($_GET['save_error'] ?? ''));
 $saved = isset($_GET['saved']);
+$statusUpdated = isset($_GET['status_updated']);
+$auditRows = [];
 
 if ($id) {
     require_import_assessment($pdo, $id);
     $stmt = $pdo->prepare('SELECT * FROM import_assessments WHERE id = ?');
     $stmt->execute([$id]);
     $assessment = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    $auditStmt = $pdo->prepare("
+        SELECT ial.*, users.name AS user_name
+        FROM import_audit_log ial
+        LEFT JOIN users ON users.id = ial.user_id
+        WHERE ial.assessment_id = ?
+        ORDER BY ial.created_at DESC, ial.id DESC
+        LIMIT 30
+    ");
+    $auditStmt->execute([$id]);
+    $auditRows = $auditStmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
 if (!$assessment && !$canManageImports) {
@@ -64,6 +78,8 @@ require '../header.php';
         <div class="alert error"><?= htmlspecialchars($saveError) ?></div>
     <?php elseif ($saved): ?>
         <div class="alert success">Import assessment saved.</div>
+    <?php elseif ($statusUpdated): ?>
+        <div class="alert success">Import status updated.</div>
     <?php endif; ?>
 
     <form class="import-calculator" method="post" enctype="multipart/form-data" action="<?= app_url('actions/save-import-assessment.php') ?>">
@@ -125,8 +141,9 @@ require '../header.php';
                 </div>
                 <label>Status</label>
                 <select name="status" <?= $canManageImports ? '' : 'disabled' ?>>
-                    <?php foreach (['Draft','Approved to Bid','Won','Shipped','Arrived','Compliance','Ready for Sale','Closed'] as $status): ?>
-                        <option value="<?= htmlspecialchars($status) ?>" <?= import_value($assessment, $settings, 'status', 'Draft') === $status ? 'selected' : '' ?>><?= htmlspecialchars($status) ?></option>
+                    <?php $currentStatus = normalise_import_status(import_value($assessment, $settings, 'status', 'Under Assessment')); ?>
+                    <?php foreach (import_status_steps() as $status): ?>
+                        <option value="<?= htmlspecialchars($status) ?>" <?= $currentStatus === $status ? 'selected' : '' ?>><?= htmlspecialchars($status) ?></option>
                     <?php endforeach; ?>
                 </select>
             </section>
@@ -200,6 +217,28 @@ require '../header.php';
         </div>
         <?php endif; ?>
     </form>
+
+    <?php if ($assessment): ?>
+    <section class="form-card section-title import-section-card">
+        <div class="section-kicker">History</div>
+        <h2>Status & Activity</h2>
+        <?php if ($auditRows): ?>
+            <div class="audit-list">
+                <?php foreach ($auditRows as $row): ?>
+                    <div class="audit-item">
+                        <div>
+                            <strong><?= htmlspecialchars(str_replace('_', ' ', ucwords((string) $row['action'], '_'))) ?></strong>
+                            <p><?= htmlspecialchars((string) $row['details']) ?></p>
+                        </div>
+                        <span><?= htmlspecialchars((string) ($row['user_name'] ?: 'System')) ?><br><?= htmlspecialchars((string) $row['created_at']) ?></span>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        <?php else: ?>
+            <div class="empty-state">No activity recorded yet.</div>
+        <?php endif; ?>
+    </section>
+    <?php endif; ?>
 </div>
 
 <script>

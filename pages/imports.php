@@ -3,14 +3,14 @@ require '../config/db.php';
 require_once '../config/auth.php';
 require_permission('can_view_imports');
 require_once '../config/helpers.php';
+require_once '../config/import-status.php';
 
 $pageTitle = 'Japan Import Hub | CarFlip HQ';
 $user = current_user();
 $accessWhere = import_access_filter_sql('ia');
 $assessments = $pdo->query("
     SELECT ia.*,
-        creator.name AS creator_name,
-        COALESCE((SELECT COUNT(*) FROM import_user_access iua WHERE iua.assessment_id = ia.id), 0) AS shared_count
+        creator.name AS creator_name
     FROM import_assessments ia
     LEFT JOIN users creator ON creator.id = ia.created_by
     WHERE $accessWhere
@@ -19,11 +19,6 @@ $assessments = $pdo->query("
 
 $canManageImports = user_can('can_manage_imports');
 $canViewFinance = user_can('can_view_import_finance');
-
-function import_status_class(?string $status): string
-{
-    return 'status-' . trim(preg_replace('/[^a-z0-9]+/', '-', strtolower((string) $status)), '-');
-}
 
 require '../header.php';
 ?>
@@ -42,6 +37,7 @@ require '../header.php';
     </div>
 
     <div class="actions">
+        <a class="btn secondary" href="import-pipeline.php">Pipeline</a>
         <?php if ($canManageImports): ?>
         <a class="btn" href="import-calculator.php">+ New Assessment</a>
         <?php endif; ?>
@@ -61,7 +57,7 @@ require '../header.php';
             <div class="car-card-body">
                 <div class="card-title-row">
                     <h2><?= htmlspecialchars(trim($assessment['year'] . ' ' . $assessment['make'] . ' ' . $assessment['model'])) ?></h2>
-                    <span class="badge <?= import_status_class($assessment['status'] ?? '') ?>"><?= htmlspecialchars((string) $assessment['status']) ?></span>
+                    <span class="badge <?= import_status_class($assessment['status'] ?? '') ?>"><?= htmlspecialchars(normalise_import_status((string) $assessment['status'])) ?></span>
                 </div>
                 <div class="small"><?= htmlspecialchars($assessment['import_ref']) ?> / Lot <?= htmlspecialchars((string) ($assessment['lot_number'] ?: 'TBC')) ?></div>
                 <div class="car-metrics">
@@ -71,7 +67,7 @@ require '../header.php';
                     <div><span>Profit</span><b class="<?= $profit >= 0 ? 'positive' : 'negative' ?>"><?= $canViewFinance ? '$' . number_format($profit, 2) : 'Restricted' ?></b></div>
                 </div>
                 <div class="card-title-row">
-                    <span class="small"><?= htmlspecialchars((string) ($assessment['auction_house'] ?: 'Auction TBC')) ?><?= $assessment['shared_count'] ? ' / shared with ' . (int) $assessment['shared_count'] : '' ?></span>
+                    <span class="small"><?= htmlspecialchars((string) ($assessment['auction_house'] ?: 'Auction TBC')) ?></span>
                     <div class="row-actions">
                         <a class="btn secondary small-btn" href="import-calculator.php?id=<?= (int) $assessment['id'] ?>">Open</a>
                         <?php if ($canManageImports): ?>

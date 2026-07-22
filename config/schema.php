@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/import-status.php';
+
 function ensure_database_schema(PDO $pdo): void
 {
     static $schemaChecked = false;
@@ -191,7 +193,7 @@ function ensure_database_schema(PDO $pdo): void
           interior_grade VARCHAR(30),
           lot_number VARCHAR(80),
           japan_agent VARCHAR(120),
-          status ENUM('Draft','Approved to Bid','Won','Shipped','Arrived','Compliance','Ready for Sale','Closed') DEFAULT 'Draft',
+          status ENUM('Vehicle Found','Under Assessment','Approved to Bid','Auction Won','Import Approval Required','Import Approval Submitted','Import Approved','Shipping Booked','In Transit','Arrived at Port','Customs Clearance','Biosecurity','Transport to Workshop','Compliance','Roadworthy / Registration','Ready for Sale','Sold','Closed / Cancelled') DEFAULT 'Under Assessment',
           exchange_rate DECIMAL(12,4) DEFAULT 0,
           hammer_price_jpy DECIMAL(14,2) DEFAULT 0,
           auction_fee_jpy DECIMAL(14,2) DEFAULT 0,
@@ -277,7 +279,7 @@ function ensure_database_schema(PDO $pdo): void
     ensure_column($pdo, 'import_assessments', 'interior_grade', 'VARCHAR(30)');
     ensure_column($pdo, 'import_assessments', 'lot_number', 'VARCHAR(80)');
     ensure_column($pdo, 'import_assessments', 'japan_agent', 'VARCHAR(120)');
-    ensure_column($pdo, 'import_assessments', 'status', "ENUM('Draft','Approved to Bid','Won','Shipped','Arrived','Compliance','Ready for Sale','Closed') DEFAULT 'Draft'");
+    ensure_column($pdo, 'import_assessments', 'status', "ENUM('Vehicle Found','Under Assessment','Approved to Bid','Auction Won','Import Approval Required','Import Approval Submitted','Import Approved','Shipping Booked','In Transit','Arrived at Port','Customs Clearance','Biosecurity','Transport to Workshop','Compliance','Roadworthy / Registration','Ready for Sale','Sold','Closed / Cancelled') DEFAULT 'Under Assessment'");
     ensure_column($pdo, 'import_assessments', 'exchange_rate', 'DECIMAL(12,4) DEFAULT 0');
     ensure_column($pdo, 'import_assessments', 'hammer_price_jpy', 'DECIMAL(14,2) DEFAULT 0');
     ensure_column($pdo, 'import_assessments', 'auction_fee_jpy', 'DECIMAL(14,2) DEFAULT 0');
@@ -308,7 +310,44 @@ function ensure_database_schema(PDO $pdo): void
     ensure_column($pdo, 'import_assessments', 'created_by', 'INT');
     ensure_column($pdo, 'import_assessments', 'updated_by', 'INT');
 
+    ensure_import_status_schema($pdo);
     seed_import_settings($pdo);
+}
+
+function ensure_import_status_schema(PDO $pdo): void
+{
+    $legacyAndCurrent = import_status_options_for_schema(true);
+    $current = import_status_options_for_schema(false);
+    $legacyMap = import_legacy_status_map();
+    $targetType = strtolower(import_status_enum_sql($pdo, $current));
+
+    $stmt = $pdo->prepare("
+        SELECT COLUMN_TYPE
+        FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = 'import_assessments'
+          AND COLUMN_NAME = 'status'
+        LIMIT 1
+    ");
+    $stmt->execute();
+    if (strtolower((string) $stmt->fetchColumn()) === $targetType) {
+        return;
+    }
+
+    $pdo->exec('ALTER TABLE import_assessments MODIFY status ' . import_status_enum_sql($pdo, $legacyAndCurrent) . " DEFAULT 'Under Assessment'");
+
+    $stmt = $pdo->prepare('UPDATE import_assessments SET status = ? WHERE status = ?');
+    foreach ($legacyMap as $legacy => $replacement) {
+        $stmt->execute([$replacement, $legacy]);
+    }
+
+    $pdo->exec('ALTER TABLE import_assessments MODIFY status ' . import_status_enum_sql($pdo, $current) . " DEFAULT 'Under Assessment'");
+}
+
+function import_status_enum_sql(PDO $pdo, array $statuses): string
+{
+    $quotedStatuses = array_map(fn ($status) => $pdo->quote($status), $statuses);
+    return 'ENUM(' . implode(',', $quotedStatuses) . ')';
 }
 
 function seed_import_settings(PDO $pdo): void

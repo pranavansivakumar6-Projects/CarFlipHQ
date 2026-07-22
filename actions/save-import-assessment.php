@@ -2,6 +2,7 @@
 require '../config/db.php';
 require '../config/auth.php';
 require '../config/helpers.php';
+require '../config/import-status.php';
 
 require_permission('can_manage_imports');
 
@@ -86,7 +87,7 @@ function import_calculation_snapshot(array $data): array
     ];
 }
 
-$status = require_allowed_value(post_string('status') ?: 'Draft', ['Draft','Approved to Bid','Won','Shipped','Arrived','Compliance','Ready for Sale','Closed'], 'status');
+$status = require_allowed_value(normalise_import_status(post_string('status') ?: 'Under Assessment'), import_status_steps(), 'status');
 $baseData = [
     'make' => post_string('make', true),
     'model' => post_string('model', true),
@@ -156,7 +157,12 @@ $baseData['calculation_version'] = 'jp-import-v1';
 $baseData['updated_by'] = (int) $user['id'];
 
 try {
+    $previousStatus = null;
     if ($id) {
+        $statusStmt = $pdo->prepare('SELECT status FROM import_assessments WHERE id = ?');
+        $statusStmt->execute([$id]);
+        $previousStatus = normalise_import_status((string) $statusStmt->fetchColumn());
+
         $columns = array_keys($baseData);
         $setSql = implode(', ', array_map(fn($column) => "$column = ?", $columns));
         $stmt = $pdo->prepare("UPDATE import_assessments SET $setSql WHERE id = ?");
@@ -176,6 +182,9 @@ try {
 
     $audit = $pdo->prepare('INSERT INTO import_audit_log (assessment_id, user_id, action, details) VALUES (?, ?, ?, ?)');
     $audit->execute([$assessmentId, (int) $user['id'], $action, 'Import assessment ' . $action . '.']);
+    if ($previousStatus !== null && $previousStatus !== $status) {
+        $audit->execute([$assessmentId, (int) $user['id'], 'status_changed', 'Status changed from ' . $previousStatus . ' to ' . $status . '.']);
+    }
 } catch (PDOException $e) {
     error_log('Could not save import assessment: ' . $e->getMessage());
     $target = 'pages/import-calculator.php?save_error=' . urlencode('Could not create the import assessment. The database has been refreshed, so please try Create Assessment again.');

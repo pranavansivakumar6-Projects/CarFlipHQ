@@ -28,6 +28,7 @@ $user = current_user();
         <?php endif; ?>
         <?php if (user_can('can_view_imports')): ?>
         <a href="<?= app_url('pages/imports.php') ?>">Japan Hub</a>
+        <a href="<?= app_url('pages/import-pipeline.php') ?>">Pipeline</a>
         <?php endif; ?>
         <?php if (user_can('can_manage_cars')): ?>
         <a href="<?= app_url('pages/add-car.php') ?>">Add Car</a>
