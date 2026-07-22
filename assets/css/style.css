@@ -2009,3 +2009,163 @@ label {
         overflow-x: auto;
     }
 }
+
+/* Clean production UI pass: real data first, no stock template imagery. */
+:root {
+    --radius: 8px;
+    --app-bg: #f4f8fb;
+    --surface-dark: #111827;
+    --surface-dark-2: #1f2937;
+}
+
+body {
+    background:
+        linear-gradient(180deg, rgba(70, 210, 199, .14) 0, rgba(70, 210, 199, 0) 320px),
+        var(--app-bg);
+}
+
+.topbar {
+    min-height: 66px;
+    padding: 12px 28px;
+    background: #0d1422;
+    box-shadow: 0 14px 34px rgba(15, 23, 42, .18);
+}
+
+.brand {
+    padding-bottom: 0;
+    letter-spacing: .18em;
+    font-size: 20px;
+}
+
+.brand img {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+}
+
+.brand::after {
+    display: none;
+}
+
+.topbar a,
+.nav-user {
+    border-radius: 8px;
+}
+
+.dashboard-hero,
+.inventory-hero,
+.import-hero {
+    border-radius: 8px;
+    background:
+        linear-gradient(135deg, rgba(12, 20, 34, .98), rgba(24, 35, 54, .92)),
+        repeating-linear-gradient(90deg, rgba(70, 210, 199, .08) 0 1px, transparent 1px 96px);
+    box-shadow: 0 22px 54px rgba(15, 23, 42, .14);
+}
+
+.dashboard-hero {
+    min-height: 260px;
+    padding: 34px;
+}
+
+.inventory-hero {
+    min-height: 210px;
+}
+
+.import-hero {
+    background:
+        linear-gradient(135deg, rgba(10, 18, 31, .98), rgba(22, 35, 52, .94)),
+        repeating-linear-gradient(0deg, rgba(70, 210, 199, .07) 0 1px, transparent 1px 84px);
+}
+
+.dashboard-hero::before,
+.inventory-hero::before,
+.import-hero::before {
+    background:
+        linear-gradient(115deg, transparent 0 44%, rgba(70, 210, 199, .22) 47%, transparent 51%),
+        repeating-linear-gradient(115deg, transparent 0 56px, rgba(255, 255, 255, .045) 56px 58px, transparent 58px 118px);
+    opacity: .58;
+}
+
+.dashboard-hero h1 {
+    font-size: clamp(38px, 5vw, 54px);
+}
+
+.dashboard-hero .filter-bar,
+.inventory-count {
+    border-radius: 8px;
+    background: rgba(255, 255, 255, .10);
+}
+
+.card,
+.form-card,
+.tool-card,
+.dropdown-card,
+.detail-panel,
+.stat-card,
+.import-card,
+.pipeline-card,
+.pipeline-column,
+.activity-item,
+.timeline-card,
+.car-card,
+.auth-card,
+table {
+    border-radius: 8px;
+}
+
+.card,
+.form-card,
+.tool-card,
+.dropdown-card,
+.detail-panel,
+.import-card,
+.auth-card {
+    border: 1px solid rgba(148, 163, 184, .24);
+    box-shadow: 0 14px 34px rgba(15, 23, 42, .08);
+}
+
+.stat-card {
+    border-top: 3px solid var(--teal);
+}
+
+.btn,
+button,
+input[type="submit"] {
+    border-radius: 8px;
+}
+
+.btn.primary,
+.btn-blue,
+button[type="submit"],
+input[type="submit"] {
+    background: var(--teal);
+    color: #06131f;
+    border-color: var(--teal);
+    font-weight: 800;
+}
+
+.btn.dark,
+.btn-secondary {
+    background: var(--surface-dark);
+}
+
+table {
+    overflow: hidden;
+    border: 1px solid rgba(148, 163, 184, .28);
+}
+
+th {
+    background: #f8fafc;
+    color: #0f172a;
+}
+
+.dashboard-view table th,
+.inventory-view table th {
+    background: var(--surface-dark-2);
+    color: #e5f7f5;
+}
+
+.dashboard-view table td,
+.inventory-view table td {
+    background: #fff;
+}

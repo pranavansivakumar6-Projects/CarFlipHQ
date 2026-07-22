@@ -103,7 +103,7 @@ function car_access_filter_sql(string $carAlias = 'cars'): string
         return '1=0';
     }
 
-    if (($user['role'] ?? '') === 'admin') {
+    if (($user['role'] ?? '') === 'admin' || user_can('can_manage_cars')) {
         return '1=1';
     }
 
@@ -126,7 +126,7 @@ function user_can_access_car(PDO $pdo, int $carId): bool
         return false;
     }
 
-    if (($user['role'] ?? '') === 'admin') {
+    if (($user['role'] ?? '') === 'admin' || user_can('can_manage_cars')) {
         return true;
     }
 
