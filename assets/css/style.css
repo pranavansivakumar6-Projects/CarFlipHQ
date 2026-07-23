@@ -2169,3 +2169,140 @@ th {
 .inventory-view table td {
     background: #fff;
 }
+
+/* Dashboard readability repair. */
+.dashboard-view {
+    max-width: 1280px;
+}
+
+.dashboard-view .dashboard-hero {
+    min-height: 230px;
+    margin-bottom: 18px;
+}
+
+.dashboard-view .dashboard-hero::before {
+    opacity: .28;
+}
+
+.dashboard-view .hero-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 26px;
+}
+
+.dashboard-view .hero-stats div {
+    background: rgba(255, 255, 255, .08);
+    border: 1px solid rgba(255, 255, 255, .16);
+    border-radius: 8px;
+    padding: 14px 16px;
+}
+
+.dashboard-view .hero-stats span {
+    color: #cbd5e1;
+    display: block;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+.dashboard-view .hero-stats b {
+    color: #fff;
+    display: block;
+    font-size: 28px;
+    line-height: 1;
+}
+
+.dashboard-view .stat-grid {
+    gap: 14px;
+    margin-top: 0;
+}
+
+.dashboard-view .stat-grid .card {
+    background: #fff;
+    border: 1px solid #d9e4ec;
+    border-top: 3px solid var(--teal);
+    box-shadow: 0 12px 28px rgba(15, 23, 42, .08);
+    color: #0f172a;
+    min-height: 108px;
+    padding: 18px 20px;
+}
+
+.dashboard-view .stat-grid .card::before {
+    display: none;
+}
+
+.dashboard-view .stat-grid .card .small,
+.dashboard-view .stat-grid .card > div:first-child {
+    color: #526275;
+    font-weight: 700;
+}
+
+.dashboard-view .stat-grid .stat,
+.dashboard-view .stat-grid .profit {
+    color: #0f172a;
+    font-size: 30px;
+}
+
+.dashboard-view .stat-grid .profit.positive {
+    color: #07884f;
+}
+
+.dashboard-view .stat-grid .profit.negative {
+    color: #c81e1e;
+}
+
+.dashboard-view .section-title {
+    align-items: center;
+    margin: 34px 0 14px;
+}
+
+.dashboard-view .section-title h2,
+.dashboard-view .section-title p {
+    color: #0f172a;
+}
+
+.dashboard-view .section-title p {
+    color: #526275;
+}
+
+.dashboard-view table {
+    background: #fff;
+    border: 1px solid #d7e2ea;
+    box-shadow: 0 16px 34px rgba(15, 23, 42, .08);
+    color: #0f172a;
+}
+
+.dashboard-view table th {
+    background: #101827;
+    border-bottom: 0;
+    color: #eafdfb;
+    font-size: 13px;
+    letter-spacing: .08em;
+    padding: 16px 18px;
+}
+
+.dashboard-view table td {
+    background: #fff;
+    border-bottom: 1px solid #e5edf3;
+    color: #132033;
+    font-weight: 600;
+    padding: 18px;
+}
+
+.dashboard-view table tr:hover td {
+    background: #f6fbfc;
+}
+
+.dashboard-view .badge,
+.dashboard-view .status-badge {
+    color: #102033;
+}
+
+@media (max-width: 900px) {
+    .dashboard-view .hero-stats {
+        grid-template-columns: 1fr;
+    }
+}
