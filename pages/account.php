@@ -26,6 +26,8 @@ require '../header.php';
     <?php endif; ?>
     <?php if (!user_can('can_view_data') && !user_can('can_view_imports')): ?>
         <div class="alert">Your account is active, but access has not been approved yet.</div>
+    <?php elseif (!user_can('can_view_data') && user_can('can_view_imports')): ?>
+        <div class="alert success">Your account has Japan Hub access. Request approval below if you need CarFlip HQ access.</div>
     <?php endif; ?>
 
     <div class="grid">
@@ -49,12 +51,12 @@ require '../header.php';
                     <?php endif; ?>
                 <?php endif; ?>
             </div>
-            <?php if (($account['role'] ?? '') !== 'admin' && !user_can('can_view_data') && !user_can('can_view_imports')): ?>
+            <?php if (($account['role'] ?? '') !== 'admin' && !user_can('can_view_data')): ?>
                 <?php if (!empty($account['access_requested_at'])): ?>
                     <p class="small">Access requested. Waiting for admin approval.</p>
                 <?php else: ?>
                     <form action="../actions/request-access.php" method="POST">
-                        <button class="btn" type="submit">Request Access</button>
+                        <button class="btn" type="submit">Request CarFlip HQ Access</button>
                     </form>
                 <?php endif; ?>
             <?php endif; ?>

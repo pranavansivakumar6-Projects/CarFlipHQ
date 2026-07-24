@@ -19,8 +19,8 @@ if (!$email || strlen($password) < 8 || $password !== $confirmPassword) {
 }
 
 try {
-    $stmt = $pdo->prepare('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)');
-    $stmt->execute([$name, $email, password_hash($password, PASSWORD_DEFAULT), 'partner']);
+    $stmt = $pdo->prepare('INSERT INTO users (name, email, password_hash, role, can_view_imports) VALUES (?, ?, ?, ?, ?)');
+    $stmt->execute([$name, $email, password_hash($password, PASSWORD_DEFAULT), 'partner', 1]);
 } catch (PDOException $e) {
     redirect_to('pages/register.php?error=1');
 }
