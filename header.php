@@ -3,7 +3,7 @@ require_once __DIR__ . '/config/auth.php';
 if (!isset($pageTitle)) { $pageTitle = 'CarFlip HQ'; }
 if (empty($publicPage)) { require_login(); }
 $user = current_user();
-$assetVersion = '20260727-2';
+$assetVersion = '20260727-3';
 ?>
 <!DOCTYPE html>
 <html lang="en">
