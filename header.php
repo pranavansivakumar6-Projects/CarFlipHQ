@@ -3,6 +3,7 @@ require_once __DIR__ . '/config/auth.php';
 if (!isset($pageTitle)) { $pageTitle = 'CarFlip HQ'; }
 if (empty($publicPage)) { require_login(); }
 $user = current_user();
+$assetVersion = '20260727-2';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -10,13 +11,13 @@ $user = current_user();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($pageTitle) ?></title>
-    <link rel="icon" type="image/svg+xml" href="<?= app_url('assets/favicon.svg') ?>">
+    <link rel="icon" type="image/svg+xml" href="<?= app_url('assets/favicon.svg?v=' . $assetVersion) ?>">
     <link rel="stylesheet" href="<?= app_url('assets/css/style.css') ?>">
 </head>
 <body class="<?= !empty($publicPage) ? 'public-page' : 'app-page' ?>">
 <div class="topbar">
     <a class="brand" href="<?= app_url($user ? 'index.php' : 'pages/login.php') ?>">
-        <img src="<?= app_url('assets/brand-mark.svg') ?>" alt="">
+        <img src="<?= app_url('assets/brand-mark.svg?v=' . $assetVersion) ?>" alt="">
         <span>CarFlip HQ</span>
     </a>
     <nav>
