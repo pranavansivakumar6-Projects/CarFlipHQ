@@ -20,6 +20,8 @@ require '../header.php';
 <label>Buyer Contact</label><input name="buyer_contact">
 <label>Offer Amount</label><input name="offer_amount" type="number" step="0.01">
 <label>Deposit Amount</label><input name="deposit_amount" type="number" step="0.01">
+<label>Sold Price</label><input name="sold_price" type="number" step="0.01">
+<label>Sold Date</label><input name="sold_date" type="date">
 <label>Notes</label><textarea name="notes"></textarea><br><br>
 <button class="btn" type="submit">Save Listing</button>
 <a class="btn secondary" href="car-detail.php?id=<?= (int) $carId ?>">Cancel</a>

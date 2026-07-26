@@ -2,12 +2,17 @@
 require '../config/db.php';
 require_once '../config/auth.php';
 require_permission('can_manage_sales');
+require '../config/helpers.php';
 $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 if (!$id) { http_response_code(400); die('Listing ID missing.'); }
 $stmt = $pdo->prepare('SELECT * FROM sale_listings WHERE id = ?');
 $stmt->execute([$id]);
 $listing = $stmt->fetch(PDO::FETCH_ASSOC);
 if (!$listing) { http_response_code(404); die('Listing not found.'); }
+require_car($pdo, (int) $listing['car_id']);
+$carStmt = $pdo->prepare('SELECT actual_sale_price, sold_date FROM cars WHERE id = ?');
+$carStmt->execute([(int) $listing['car_id']]);
+$carSale = $carStmt->fetch(PDO::FETCH_ASSOC) ?: ['actual_sale_price' => 0, 'sold_date' => null];
 $pageTitle = 'Edit Listing | CarFlip HQ';
 require '../header.php';
 ?>
@@ -22,6 +27,8 @@ require '../header.php';
 <label>Buyer Contact</label><input name="buyer_contact" value="<?= htmlspecialchars($listing['buyer_contact']) ?>">
 <label>Offer Amount</label><input name="offer_amount" type="number" step="0.01" value="<?= htmlspecialchars($listing['offer_amount']) ?>">
 <label>Deposit Amount</label><input name="deposit_amount" type="number" step="0.01" value="<?= htmlspecialchars($listing['deposit_amount']) ?>">
+<label>Sold Price</label><input name="sold_price" type="number" step="0.01" value="<?= htmlspecialchars((string) ($carSale['actual_sale_price'] ?: '')) ?>">
+<label>Sold Date</label><input name="sold_date" type="date" value="<?= htmlspecialchars((string) ($carSale['sold_date'] ?? '')) ?>">
 <label>Notes</label><textarea name="notes"><?= htmlspecialchars($listing['notes']) ?></textarea><br><br>
 <button class="btn" type="submit">Update Listing</button>
 <a class="btn secondary" href="car-detail.php?id=<?= (int) $listing['car_id'] ?>">Cancel</a>
