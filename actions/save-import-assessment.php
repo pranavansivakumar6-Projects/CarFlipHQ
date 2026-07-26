@@ -2,7 +2,7 @@
 require '../config/db.php';
 require '../config/auth.php';
 require '../config/helpers.php';
-require '../config/import-status.php';
+require_once '../config/import-status.php';
 
 require_permission('can_manage_imports');
 
