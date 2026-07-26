@@ -74,6 +74,8 @@ function ensure_database_schema(PDO $pdo): void
           actual_sale_price DECIMAL(10,2) DEFAULT 0,
           sold_date DATE,
           profile_photo VARCHAR(255),
+          archived_at DATETIME,
+          archived_by INT,
           damage_notes TEXT,
           notes TEXT,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -221,6 +223,8 @@ function ensure_database_schema(PDO $pdo): void
           calculation_snapshot LONGTEXT,
           calculation_version VARCHAR(30) DEFAULT 'jp-import-v1',
           notes TEXT,
+          archived_at DATETIME,
+          archived_by INT,
           created_by INT,
           updated_by INT,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -266,6 +270,8 @@ function ensure_database_schema(PDO $pdo): void
     ensure_column($pdo, 'users', 'can_view_import_finance', 'TINYINT(1) NOT NULL DEFAULT 0');
     ensure_column($pdo, 'users', 'access_requested_at', 'DATETIME');
     ensure_column($pdo, 'cars', 'profile_photo', 'VARCHAR(255)');
+    ensure_column($pdo, 'cars', 'archived_at', 'DATETIME');
+    ensure_column($pdo, 'cars', 'archived_by', 'INT');
     ensure_column($pdo, 'import_assessments', 'import_ref', 'VARCHAR(30)');
     ensure_column($pdo, 'import_assessments', 'make', 'VARCHAR(100)');
     ensure_column($pdo, 'import_assessments', 'model', 'VARCHAR(100)');
@@ -307,6 +313,8 @@ function ensure_database_schema(PDO $pdo): void
     ensure_column($pdo, 'import_assessments', 'calculation_snapshot', 'LONGTEXT');
     ensure_column($pdo, 'import_assessments', 'calculation_version', "VARCHAR(30) DEFAULT 'jp-import-v1'");
     ensure_column($pdo, 'import_assessments', 'notes', 'TEXT');
+    ensure_column($pdo, 'import_assessments', 'archived_at', 'DATETIME');
+    ensure_column($pdo, 'import_assessments', 'archived_by', 'INT');
     ensure_column($pdo, 'import_assessments', 'created_by', 'INT');
     ensure_column($pdo, 'import_assessments', 'updated_by', 'INT');
 

@@ -13,7 +13,7 @@ $assessments = $pdo->query("
         creator.name AS creator_name
     FROM import_assessments ia
     LEFT JOIN users creator ON creator.id = ia.created_by
-    WHERE $accessWhere
+    WHERE ia.archived_at IS NULL AND $accessWhere
     ORDER BY ia.updated_at DESC
 ")->fetchAll(PDO::FETCH_ASSOC);
 
@@ -23,8 +23,8 @@ $canViewFinance = user_can('can_view_import_finance');
 require '../header.php';
 ?>
 <div class="container imports-view">
-    <?php if (isset($_GET['deleted'])): ?>
-        <div class="alert success">Import assessment deleted.</div>
+    <?php if (isset($_GET['archived'])): ?>
+        <div class="alert success">Import assessment archived. History is preserved.</div>
     <?php endif; ?>
 
     <div class="inventory-hero import-hero">
@@ -71,9 +71,9 @@ require '../header.php';
                     <div class="row-actions">
                         <a class="btn secondary small-btn" href="import-calculator.php?id=<?= (int) $assessment['id'] ?>">Open</a>
                         <?php if ($canManageImports): ?>
-                        <form action="../actions/delete-import-assessment.php" method="POST" onsubmit="return confirm('Delete this import assessment? This cannot be undone.');">
+                        <form action="../actions/delete-import-assessment.php" method="POST" onsubmit="return confirm('Archive this import assessment? History will be preserved.');">
                             <input type="hidden" name="id" value="<?= (int) $assessment['id'] ?>">
-                            <button class="btn danger small-btn" type="submit">Delete</button>
+                            <button class="btn danger small-btn" type="submit">Archive</button>
                         </form>
                         <?php endif; ?>
                     </div>

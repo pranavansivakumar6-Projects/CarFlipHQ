@@ -15,7 +15,7 @@ $assessments = $pdo->query("
     SELECT ia.*, creator.name AS creator_name
     FROM import_assessments ia
     LEFT JOIN users creator ON creator.id = ia.created_by
-    WHERE $accessWhere
+    WHERE ia.archived_at IS NULL AND $accessWhere
     ORDER BY ia.updated_at DESC
 ")->fetchAll(PDO::FETCH_ASSOC);
 

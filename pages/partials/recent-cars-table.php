@@ -3,7 +3,7 @@ require_once dirname(__DIR__, 2) . '/config/status.php';
 if (!isset($recentCars)) {
     require_once dirname(__DIR__, 2) . '/config/helpers.php';
     $accessWhere = car_access_filter_sql('cars');
-    $cars = $pdo->query("SELECT * FROM cars WHERE $accessWhere ORDER BY created_at DESC LIMIT 8")->fetchAll(PDO::FETCH_ASSOC);
+    $cars = $pdo->query("SELECT * FROM cars WHERE archived_at IS NULL AND $accessWhere ORDER BY created_at DESC LIMIT 8")->fetchAll(PDO::FETCH_ASSOC);
 } else {
     $cars = $recentCars;
 }

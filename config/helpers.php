@@ -78,7 +78,7 @@ function require_allowed_value(string $value, array $allowed, string $field): st
 
 function require_car(PDO $pdo, int $carId): void
 {
-    $stmt = $pdo->prepare('SELECT id FROM cars WHERE id = ?');
+    $stmt = $pdo->prepare('SELECT id FROM cars WHERE id = ? AND archived_at IS NULL');
     $stmt->execute([$carId]);
 
     if (!$stmt->fetchColumn()) {
@@ -212,7 +212,7 @@ function user_can_access_import(PDO $pdo, int $assessmentId): bool
 
 function require_import_assessment(PDO $pdo, int $assessmentId): void
 {
-    $stmt = $pdo->prepare('SELECT id FROM import_assessments WHERE id = ?');
+    $stmt = $pdo->prepare('SELECT id FROM import_assessments WHERE id = ? AND archived_at IS NULL');
     $stmt->execute([$assessmentId]);
 
     if (!$stmt->fetchColumn()) {

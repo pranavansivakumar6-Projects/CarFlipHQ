@@ -8,7 +8,7 @@ require_once '../config/status.php';
 
 $pageTitle = 'AI Tools | CarFlip HQ';
 $accessWhere = car_access_filter_sql('cars');
-$cars = $pdo->query("SELECT id, year, make, model, status FROM cars WHERE $accessWhere ORDER BY created_at DESC")->fetchAll(PDO::FETCH_ASSOC);
+$cars = $pdo->query("SELECT id, year, make, model, status FROM cars WHERE archived_at IS NULL AND $accessWhere ORDER BY created_at DESC")->fetchAll(PDO::FETCH_ASSOC);
 $selectedCarId = filter_input(INPUT_GET, 'car_id', FILTER_VALIDATE_INT) ?: ($cars[0]['id'] ?? null);
 $result = $_SESSION['ai_result'] ?? null;
 unset($_SESSION['ai_result']);

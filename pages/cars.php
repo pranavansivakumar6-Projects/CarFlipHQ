@@ -12,7 +12,7 @@ $cars = $pdo->query("
         COALESCE(c.profile_photo, (SELECT file_path FROM car_files cf WHERE cf.car_id = c.id ORDER BY cf.created_at DESC LIMIT 1)) AS photo_path,
         (SELECT COALESCE(SUM(amount), 0) FROM expenses e WHERE e.car_id = c.id) AS expense_total
     FROM cars c
-    WHERE $accessWhere
+    WHERE c.archived_at IS NULL AND $accessWhere
     ORDER BY c.created_at DESC
 ")->fetchAll(PDO::FETCH_ASSOC);
 $canManageCars = user_can('can_manage_cars');
@@ -34,8 +34,8 @@ function car_status_class(?string $status): string
         </div>
         <div class="inventory-count"><?= count($cars) ?><span>cars tracked</span></div>
     </div>
-    <?php if (isset($_GET['deleted'])): ?>
-        <div class="alert success">Car deleted.</div>
+    <?php if (isset($_GET['archived'])): ?>
+        <div class="alert success">Car archived. History is preserved.</div>
     <?php endif; ?>
     <?php if (isset($_GET['deduped'])): ?>
         <div class="alert success">Removed <?= (int) $_GET['deduped'] ?> duplicate cars.</div>
@@ -111,9 +111,9 @@ function car_status_class(?string $status): string
                 <div class="row-actions">
                     <a class="btn secondary" href="car-detail.php?id=<?= $car['id'] ?>">Open</a>
                     <?php if ($isAdmin): ?>
-                    <form method="post" action="<?= app_url('actions/delete-car.php') ?>" onsubmit="return confirm('Delete this car and all its expenses, tasks, files, parts, and purchase payments?');">
+                    <form method="post" action="<?= app_url('actions/delete-car.php') ?>" onsubmit="return confirm('Archive this car? History, expenses, tasks, files, parts, and payments will be preserved.');">
                         <input type="hidden" name="id" value="<?= (int) $car['id'] ?>">
-                        <button class="btn danger" type="submit">Delete</button>
+                        <button class="btn danger" type="submit">Archive</button>
                     </form>
                     <?php endif; ?>
                 </div>

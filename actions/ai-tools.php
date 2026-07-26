@@ -9,7 +9,7 @@ require_permission('can_use_ai');
 function car_options(PDO $pdo): array
 {
     $accessWhere = car_access_filter_sql('cars');
-    return $pdo->query("SELECT id, year, make, model, status, purchase_price, estimated_sale_price, actual_sale_price, damage_notes, notes FROM cars WHERE $accessWhere ORDER BY created_at DESC")->fetchAll(PDO::FETCH_ASSOC);
+    return $pdo->query("SELECT id, year, make, model, status, purchase_price, estimated_sale_price, actual_sale_price, damage_notes, notes FROM cars WHERE archived_at IS NULL AND $accessWhere ORDER BY created_at DESC")->fetchAll(PDO::FETCH_ASSOC);
 }
 
 function car_context(PDO $pdo, int $carId): string
@@ -47,9 +47,9 @@ function business_context(PDO $pdo): string
 {
     $carsAccessWhere = car_access_filter_sql('cars');
     $carJoinAccessWhere = car_access_filter_sql('c');
-    $cars = $pdo->query("SELECT id, year, make, model, status, purchase_price, estimated_sale_price, actual_sale_price FROM cars WHERE $carsAccessWhere ORDER BY created_at DESC")->fetchAll(PDO::FETCH_ASSOC);
-    $expenses = $pdo->query("SELECT c.id AS car_id, c.make, c.model, e.category, e.expense_name, e.amount, e.paid_by FROM expenses e JOIN cars c ON c.id = e.car_id WHERE $carJoinAccessWhere ORDER BY e.created_at DESC LIMIT 120")->fetchAll(PDO::FETCH_ASSOC);
-    $tasks = $pdo->query("SELECT c.id AS car_id, c.make, c.model, t.task_title, t.assigned_to, t.hours_spent, t.priority, t.status FROM tasks t JOIN cars c ON c.id = t.car_id WHERE $carJoinAccessWhere ORDER BY t.created_at DESC LIMIT 120")->fetchAll(PDO::FETCH_ASSOC);
+    $cars = $pdo->query("SELECT id, year, make, model, status, purchase_price, estimated_sale_price, actual_sale_price FROM cars WHERE archived_at IS NULL AND $carsAccessWhere ORDER BY created_at DESC")->fetchAll(PDO::FETCH_ASSOC);
+    $expenses = $pdo->query("SELECT c.id AS car_id, c.make, c.model, e.category, e.expense_name, e.amount, e.paid_by FROM expenses e JOIN cars c ON c.id = e.car_id WHERE c.archived_at IS NULL AND $carJoinAccessWhere ORDER BY e.created_at DESC LIMIT 120")->fetchAll(PDO::FETCH_ASSOC);
+    $tasks = $pdo->query("SELECT c.id AS car_id, c.make, c.model, t.task_title, t.assigned_to, t.hours_spent, t.priority, t.status FROM tasks t JOIN cars c ON c.id = t.car_id WHERE c.archived_at IS NULL AND $carJoinAccessWhere ORDER BY t.created_at DESC LIMIT 120")->fetchAll(PDO::FETCH_ASSOC);
 
     return json_encode([
         'cars' => $cars,

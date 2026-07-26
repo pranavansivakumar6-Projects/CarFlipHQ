@@ -10,19 +10,19 @@ $scope = $_GET['scope'] ?? 'all';
 if (!in_array($scope, ['active', 'sold', 'all'], true)) { $scope = 'all'; }
 
 $scopeWhere = [
-    'active' => "status != 'Sold'",
-    'sold' => "status = 'Sold'",
-    'all' => '1=1',
+    'active' => "status != 'Sold' AND archived_at IS NULL",
+    'sold' => "status = 'Sold' AND archived_at IS NULL",
+    'all' => 'archived_at IS NULL',
 ][$scope];
 $expenseScopeWhere = [
-    'active' => "c.status != 'Sold'",
-    'sold' => "c.status = 'Sold'",
-    'all' => '1=1',
+    'active' => "c.status != 'Sold' AND c.archived_at IS NULL",
+    'sold' => "c.status = 'Sold' AND c.archived_at IS NULL",
+    'all' => 'c.archived_at IS NULL',
 ][$scope];
 $taskScopeWhere = [
-    'active' => "cars.status != 'Sold'",
-    'sold' => "cars.status = 'Sold'",
-    'all' => '1=1',
+    'active' => "cars.status != 'Sold' AND cars.archived_at IS NULL",
+    'sold' => "cars.status = 'Sold' AND cars.archived_at IS NULL",
+    'all' => 'cars.archived_at IS NULL',
 ][$scope];
 $salesSql = $scope === 'active'
     ? 'COALESCE(SUM(estimated_sale_price),0)'
@@ -35,8 +35,8 @@ $expenseAccessWhere = car_access_filter_sql('c');
 $taskAccessWhere = car_access_filter_sql('cars');
 
 $totalCars = $pdo->query("SELECT COUNT(*) FROM cars WHERE $scopeWhere AND $carAccessWhere")->fetchColumn();
-$activeCars = $pdo->query("SELECT COUNT(*) FROM cars WHERE status != 'Sold' AND $carAccessWhere")->fetchColumn();
-$soldCars = $pdo->query("SELECT COUNT(*) FROM cars WHERE status = 'Sold' AND $carAccessWhere")->fetchColumn();
+$activeCars = $pdo->query("SELECT COUNT(*) FROM cars WHERE status != 'Sold' AND archived_at IS NULL AND $carAccessWhere")->fetchColumn();
+$soldCars = $pdo->query("SELECT COUNT(*) FROM cars WHERE status = 'Sold' AND archived_at IS NULL AND $carAccessWhere")->fetchColumn();
 $openTasks = $pdo->query("SELECT COUNT(*) FROM tasks JOIN cars ON cars.id = tasks.car_id WHERE tasks.status != 'Done' AND $taskScopeWhere AND $taskAccessWhere")->fetchColumn();
 $overdueTasks = $pdo->query("SELECT COUNT(*) FROM tasks JOIN cars ON cars.id = tasks.car_id WHERE tasks.status != 'Done' AND tasks.due_date IS NOT NULL AND tasks.due_date < CURDATE() AND $taskScopeWhere AND $taskAccessWhere")->fetchColumn();
 $readyCars = $pdo->query("SELECT COUNT(*) FROM cars WHERE status IN ('Ready for Sale','Listed') AND $scopeWhere AND $carAccessWhere")->fetchColumn();
