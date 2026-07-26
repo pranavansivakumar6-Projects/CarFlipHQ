@@ -15,6 +15,9 @@ $permissionValues = [];
 foreach (array_keys(permission_fields()) as $permission) {
     $permissionValues[$permission] = $role === 'admin' ? 1 : (isset($postedPermissions[$permission]) ? 1 : 0);
 }
+if ($role !== 'admin' && !$postedPermissionList) {
+    $permissionValues['can_view_imports'] = 1;
+}
 if (!empty($permissionValues['can_manage_finance'])) {
     $permissionValues['can_view_finance'] = 1;
 }

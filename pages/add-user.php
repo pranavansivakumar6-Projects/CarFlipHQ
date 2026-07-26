@@ -17,17 +17,16 @@ require '../header.php';
         <label>Email</label><input name="email" type="email" autocomplete="email" required>
         <label>Password</label><input name="password" type="password" autocomplete="new-password" minlength="8" required>
         <label>Role</label>
-        <select name="role">
+        <select name="role" data-role-select>
             <option value="partner">User</option>
             <option value="admin">Admin</option>
         </select>
         <h2>Permissions</h2>
         <p class="small">Admins always get full access. Choose a preset, then adjust individual permissions if needed.</p>
         <label>Access preset</label>
-        <select data-permission-preset>
+        <select data-permission-preset data-default-preset="japan">
             <option value="custom">Custom permissions</option>
-            <option value="no_access">No access until approved</option>
-            <option value="japan">Japan Hub only</option>
+            <option value="japan" selected>Japan Hub only</option>
             <option value="japan_finance">Japan Hub with import numbers</option>
             <option value="full_no_numbers">Full CarFlip without financial numbers</option>
             <option value="full">Full CarFlip access</option>

@@ -3,9 +3,9 @@
     if (!preset) {
         return;
     }
+    var roleSelect = document.querySelector('[data-role-select]');
 
     var permissionSets = {
-        no_access: [],
         japan: ['can_view_imports'],
         japan_finance: ['can_view_imports', 'can_view_import_finance'],
         full_no_numbers: [
@@ -32,8 +32,8 @@
         ]
     };
 
-    preset.addEventListener('change', function () {
-        var selected = permissionSets[preset.value];
+    function applyPreset(value) {
+        var selected = permissionSets[value];
         if (!selected) {
             return;
         }
@@ -41,5 +41,21 @@
         document.querySelectorAll('input[name="permissions[]"]').forEach(function (input) {
             input.checked = selected.indexOf(input.value) !== -1;
         });
+    }
+
+    preset.addEventListener('change', function () {
+        applyPreset(preset.value);
     });
+
+    if (roleSelect) {
+        roleSelect.addEventListener('change', function () {
+            preset.value = roleSelect.value === 'admin' ? 'full' : 'japan';
+            applyPreset(preset.value);
+        });
+    }
+
+    if (preset.dataset.defaultPreset) {
+        preset.value = preset.dataset.defaultPreset;
+        applyPreset(preset.value);
+    }
 })();

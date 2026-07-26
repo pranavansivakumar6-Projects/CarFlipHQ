@@ -28,7 +28,7 @@ require '../header.php';
         <label>New Password</label><input name="password" type="password" autocomplete="new-password" minlength="8">
         <p class="small">Leave password blank to keep the current password.</p>
         <label>Role</label>
-        <select name="role">
+        <select name="role" data-role-select>
             <?php foreach(['partner' => 'User', 'admin' => 'Admin'] as $role => $label): ?>
             <option value="<?= $role ?>" <?= $account['role'] === $role ? 'selected' : '' ?>><?= $label ?></option>
             <?php endforeach; ?>
@@ -38,7 +38,6 @@ require '../header.php';
         <label>Access preset</label>
         <select data-permission-preset>
             <option value="custom">Custom permissions</option>
-            <option value="no_access">No access until approved</option>
             <option value="japan">Japan Hub only</option>
             <option value="japan_finance">Japan Hub with import numbers</option>
             <option value="full_no_numbers">Full CarFlip without financial numbers</option>
