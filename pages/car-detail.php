@@ -66,8 +66,13 @@ $openParts = count(array_filter($parts, fn($part) => !in_array($part['status'], 
 $totalExpenses = array_sum(array_column($expenses, 'amount'));
 $totalCost = $car['purchase_price'] + $totalExpenses;
 $estimatedProfit = $car['estimated_sale_price'] - $totalCost;
-$actualProfit = $car['actual_sale_price'] > 0 ? $car['actual_sale_price'] - $totalCost : null;
-$saleValue = $car['actual_sale_price'] > 0 ? (float) $car['actual_sale_price'] : (float) $car['estimated_sale_price'];
+$isSold = ($car['status'] ?? '') === 'Sold';
+$hasActualSalePrice = (float) ($car['actual_sale_price'] ?? 0) > 0;
+$saleValue = $hasActualSalePrice ? (float) $car['actual_sale_price'] : (float) $car['estimated_sale_price'];
+$actualProfit = $isSold ? $saleValue - $totalCost : null;
+$saleValueLabel = $hasActualSalePrice
+    ? 'Actual sale price'
+    : ($isSold ? 'Estimated sale price used until actual sale price is entered' : 'Estimated sale price');
 $profitForSplit = $saleValue - $totalCost;
 $paidTotals = [];
 foreach ($expenses as $expense) {
@@ -182,7 +187,7 @@ require '../header.php';
         <div class="card"><b>Open Parts</b><div class="stat"><?= $openParts ?></div><?php if ($canViewFinance): ?><div class="small">$<?= number_format($partsCost, 2) ?> tracked</div><?php endif; ?></div>
         <?php if ($canViewFinance): ?>
         <div class="card"><b>Estimated Profit</b><div class="profit <?= $estimatedProfit >= 0 ? 'positive' : 'negative' ?>">$<?= number_format($estimatedProfit, 2) ?></div></div>
-        <div class="card"><b>Actual Profit</b><div class="profit <?= ($actualProfit ?? 0) >= 0 ? 'positive' : 'negative' ?>"><?= $actualProfit === null ? 'Not sold' : '$'.number_format($actualProfit, 2) ?></div></div>
+        <div class="card"><b>Actual Profit</b><div class="profit <?= ($actualProfit ?? 0) >= 0 ? 'positive' : 'negative' ?>"><?= $actualProfit === null ? 'Not sold' : '$'.number_format($actualProfit, 2) ?></div><?php if ($isSold && !$hasActualSalePrice): ?><div class="small">Using estimated sale price. Add actual sale price in Edit Car.</div><?php endif; ?></div>
         <?php else: ?>
         <div class="card"><b>Financials</b><div class="stat restricted-stat">Restricted</div><div class="small">An admin can enable number access.</div></div>
         <?php endif; ?>
@@ -206,13 +211,13 @@ require '../header.php';
         <div class="alert success">Profit split updated.</div>
     <?php endif; ?>
     <div class="grid">
-        <div class="card"><b>Sale Value Used</b><div class="stat">$<?= number_format($saleValue, 2) ?></div><div class="small"><?= $car['actual_sale_price'] > 0 ? 'Actual sale price' : 'Estimated sale price' ?></div></div>
+        <div class="card"><b>Sale Value Used</b><div class="stat">$<?= number_format($saleValue, 2) ?></div><div class="small"><?= detail_text($saleValueLabel) ?></div></div>
         <div class="card"><b>Total Invested</b><div class="stat">$<?= number_format($totalCost, 2) ?></div><div class="small">$<?= number_format($car['purchase_price'], 2) ?> car + $<?= number_format($totalExpenses, 2) ?> expenses</div></div>
         <div class="card"><b>Total Profit</b><div class="profit <?= $profitForSplit >= 0 ? 'positive' : 'negative' ?>">$<?= number_format($profitForSplit, 2) ?></div><div class="small">Sale minus total invested</div></div>
         <div class="card"><b>Profit Split</b><div class="profit <?= $hasSavedShares ? ($profitForSplit >= 0 ? 'positive' : 'negative') : '' ?>"><?= $hasSavedShares ? number_format($shareTotal, 2).'%' : 'Not set' ?></div><div class="small"><?= $hasSavedShares ? 'Custom split saved' : 'Choose custom percentages below' ?></div></div>
     </div>
     <table class="section-title">
-        <tr><th>Person</th><th>Split %</th><th>Total Paid</th><th>Cost Share</th><th>Cost Balance</th><th>Profit Share</th><th><?= $car['actual_sale_price'] > 0 ? 'Payout From Sale' : 'Expected Payout' ?></th></tr>
+        <tr><th>Person</th><th>Split %</th><th>Total Paid</th><th>Cost Share</th><th>Cost Balance</th><th>Profit Share</th><th><?= $isSold ? 'Payout From Sale' : 'Expected Payout' ?></th></tr>
         <?php foreach ($settlements as $name => $settlement): ?>
         <tr>
             <td><?= detail_text($name) ?></td>
