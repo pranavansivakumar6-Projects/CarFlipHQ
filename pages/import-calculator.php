@@ -260,7 +260,6 @@ require '../header.php';
         <div class="import-summary-grid" data-import-summary>
             <div class="stat-card"><span>Hammer AUD</span><strong data-output="hammerAud">$0.00</strong><small data-output="hammerJpy">Hammer price</small></div>
             <div class="stat-card"><span>Japan-side Fees</span><strong data-output="japanFeesAud">$0.00</strong><small data-output="japanFeesJpy">Fees before FOB</small></div>
-            <div class="stat-card"><span>Maximum Hammer</span><strong data-output="maxHammer">¥0</strong><small>Safe bid based on target profit</small></div>
             <div class="stat-card"><span>FOB Estimate</span><strong data-output="fobAud">$0.00</strong><small data-output="fobJpy">¥0</small></div>
             <div class="stat-card"><span>Total Pre-Sale Cost</span><strong data-output="totalCost">$0.00</strong><small>Before final sale</small></div>
             <div class="stat-card"><span>Expected Profit</span><strong data-output="profit">$0.00</strong><small data-output="margin">0.0% margin</small></div>
@@ -535,17 +534,11 @@ require '../header.php';
         const sale = get('expected_sale_price_aud');
         const profit = sale - total;
         const margin = sale > 0 ? (profit / sale) * 100 : 0;
-        const maxTotal = sale - get('target_profit_aud');
-        const maxFobAud = Math.max(0, maxTotal - nonFobCosts);
-        const maxFobJpy = maxFobAud * rate;
-        const maxHammer = Math.max(0, maxFobJpy - japanFees);
         const warnings = [];
 
         if (rate <= 0) warnings.push('Exchange rate is required.');
         if (profit < minimumProfit) warnings.push(`Expected profit is below ${money.format(minimumProfit)}.`);
-        if (hammerJpy > maxHammer && maxHammer > 0) warnings.push('Hammer price is above the calculated maximum safe hammer.');
 
-        set('maxHammer', yen.format(maxHammer));
         set('hammerAud', money.format(hammerAud));
         set('hammerJpy', yen.format(hammerJpy));
         set('japanFeesAud', money.format(japanFeesAud));
@@ -565,8 +558,7 @@ require '../header.php';
             `GST base: FOB AUD + shipping/CIF charges + duty = ${money.format(gstBase)}`,
             `GST estimate: GST base x GST rate = ${money.format(gst)}`,
             `Total pre-sale cost: FOB AUD + shipping/CIF charges + Australia costs + duty + GST = ${money.format(total)}`,
-            `Expected profit: expected sale - total pre-sale cost = ${money.format(profit)}`,
-            `Maximum hammer: ((sale - target profit - non-FOB costs) x exchange rate) - Japan fees = ${yen.format(maxHammer)}`
+            `Expected profit: expected sale - total pre-sale cost = ${money.format(profit)}`
         ].join('\n'));
     }
 

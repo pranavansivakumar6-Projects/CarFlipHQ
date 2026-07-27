@@ -62,10 +62,6 @@ function import_calculation_snapshot(array $data): array
     $total = $fobAud + $nonFobCosts;
     $sale = (float) $data['expected_sale_price_aud'];
     $profit = $sale - $total;
-    $maxTotal = $sale - (float) $data['target_profit_aud'];
-    $maxFobAud = max(0, $maxTotal - $nonFobCosts);
-    $maxFobJpy = $maxFobAud * $rate;
-    $maxHammer = max(0, $maxFobJpy - $japanFees);
 
     return [
         'japan_side_fees_jpy' => round($japanFees, 2),
@@ -78,10 +74,6 @@ function import_calculation_snapshot(array $data): array
         'total_pre_sale_cost_aud' => round($total, 2),
         'expected_profit_aud' => round($profit, 2),
         'profit_margin_percent' => $sale > 0 ? round(($profit / $sale) * 100, 2) : 0,
-        'maximum_total_cost_aud' => round($maxTotal, 2),
-        'maximum_fob_aud' => round($maxFobAud, 2),
-        'maximum_fob_jpy' => round($maxFobJpy, 2),
-        'maximum_hammer_price_jpy' => round($maxHammer, 2),
         'calculation_version' => 'jp-import-v1',
         'calculated_at' => date('c'),
     ];
