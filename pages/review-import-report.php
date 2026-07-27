@@ -32,8 +32,9 @@ $payload = json_decode((string) ($report['parsed_payload'] ?? ''), true) ?: [];
 $items = $payload['items'] ?? [];
 $reportedTotal = $payload['reported_total'] ?? ['low' => 0, 'high' => 0];
 $summary = import_calculate_cost_summary($items);
-$calculatedLow = $report['report_type'] === 'CIF Budget' ? $summary['cif_low'] : $summary['fob_low'];
-$calculatedHigh = $report['report_type'] === 'CIF Budget' ? $summary['cif_high'] : $summary['fob_high'];
+$calculatedScope = $report['report_type'] === 'CIF Budget' ? 'Shipping/CIF charges' : 'FOB total';
+$calculatedLow = $report['report_type'] === 'CIF Budget' ? $summary['shipping_low'] : $summary['fob_low'];
+$calculatedHigh = $report['report_type'] === 'CIF Budget' ? $summary['shipping_high'] : $summary['fob_high'];
 $varianceLow = (float) ($reportedTotal['low'] ?? 0) - $calculatedLow;
 $varianceHigh = (float) ($reportedTotal['high'] ?? 0) - $calculatedHigh;
 
@@ -140,6 +141,7 @@ require '../header.php';
         <section class="form-card import-section-card">
             <div class="section-kicker">Reconciliation</div>
             <h2>Reported Total vs System Total</h2>
+            <p class="small">System total checked here: <?= htmlspecialchars($calculatedScope) ?>.</p>
             <div class="report-meta-grid">
                 <div><span>Reported low</span><strong>$<?= number_format((float) ($reportedTotal['low'] ?? 0), 2) ?></strong></div>
                 <div><span>Reported high</span><strong>$<?= number_format((float) ($reportedTotal['high'] ?? 0), 2) ?></strong></div>

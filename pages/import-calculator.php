@@ -21,10 +21,14 @@ $documentRows = [];
 $costRows = [];
 $costSummary = null;
 $approvedFobRows = [];
+$approvedShippingRows = [];
 $approvedCostSummary = [
     'has_fob' => false,
     'fob_low' => 0.0,
     'fob_high' => 0.0,
+    'has_shipping' => false,
+    'shipping_low' => 0.0,
+    'shipping_high' => 0.0,
     'has_cif' => false,
     'cif_low' => 0.0,
     'cif_high' => 0.0,
@@ -84,11 +88,17 @@ if ($id) {
         if (in_array((string) $costRow['cost_code'], ['JP_PURCHASE', 'JP_AUCTION_AGENT_EXPORT', 'JP_INLAND_TRANSPORT', 'JP_EXPORT_YARD_HANDLING'], true)) {
             $approvedFobRows[] = $costRow;
         }
+        if (str_starts_with((string) $costRow['cost_code'], 'SHIP_')) {
+            $approvedShippingRows[] = $costRow;
+        }
     }
     $approvedCostSummary = [
         'has_fob' => !empty($costRows) && ((float) ($costSummary['fob_high'] ?? 0) > 0 || (float) ($costSummary['fob_low'] ?? 0) > 0),
         'fob_low' => (float) ($costSummary['fob_low'] ?? 0),
         'fob_high' => (float) ($costSummary['fob_high'] ?? 0),
+        'has_shipping' => !empty($costRows) && ((float) ($costSummary['shipping_high'] ?? 0) > 0 || (float) ($costSummary['shipping_low'] ?? 0) > 0),
+        'shipping_low' => (float) ($costSummary['shipping_low'] ?? 0),
+        'shipping_high' => (float) ($costSummary['shipping_high'] ?? 0),
         'has_cif' => !empty($costRows) && ((float) ($costSummary['cif_high'] ?? 0) > 0 || (float) ($costSummary['cif_low'] ?? 0) > 0),
         'cif_low' => (float) ($costSummary['cif_low'] ?? 0),
         'cif_high' => (float) ($costSummary['cif_high'] ?? 0),
@@ -118,6 +128,15 @@ function import_value(?array $assessment, array $settings, string $field, $fallb
 function import_date_value(?array $assessment, string $field): string
 {
     return $assessment && !empty($assessment[$field]) ? (string) $assessment[$field] : '';
+}
+
+function import_money_range(float $low, float $high): string
+{
+    if (abs($high - $low) < 0.01) {
+        return '$' . number_format($low, 2);
+    }
+
+    return '$' . number_format($low, 2) . ' - $' . number_format($high, 2);
 }
 
 $pageTitle = ($assessment ? 'Edit Import Assessment' : 'New Import Assessment') . ' | CarFlip HQ';
@@ -180,13 +199,15 @@ require '../header.php';
         <?php if ($canViewFinance): ?>
         <section class="form-card import-section-card">
             <div class="section-kicker">Cost Summary</div>
-            <h2>FOB / CIF Cost Engine</h2>
+            <h2>Approved Report Cost Engine</h2>
             <?php if ($costRows): ?>
                 <div class="import-summary-grid compact">
-                    <div class="stat-card"><span>Estimated FOB Low</span><strong>$<?= number_format((float) $costSummary['fob_low'], 2) ?></strong><small>Approved cost rows</small></div>
-                    <div class="stat-card"><span>Estimated FOB High</span><strong>$<?= number_format((float) $costSummary['fob_high'], 2) ?></strong><small>Approved cost rows</small></div>
-                    <div class="stat-card"><span>Estimated CIF Low</span><strong>$<?= number_format((float) $costSummary['cif_low'], 2) ?></strong><small>FOB plus shipping</small></div>
-                    <div class="stat-card"><span>Estimated CIF High</span><strong>$<?= number_format((float) $costSummary['cif_high'], 2) ?></strong><small>FOB plus shipping</small></div>
+                    <div class="stat-card"><span>Approved FOB Low</span><strong>$<?= number_format((float) $costSummary['fob_low'], 2) ?></strong><small>Japan report rows</small></div>
+                    <div class="stat-card"><span>Approved FOB High</span><strong>$<?= number_format((float) $costSummary['fob_high'], 2) ?></strong><small>Japan report rows</small></div>
+                    <div class="stat-card"><span>Shipping/CIF Low</span><strong>$<?= number_format((float) $costSummary['shipping_low'], 2) ?></strong><small>Freight, insurance, surcharges</small></div>
+                    <div class="stat-card"><span>Shipping/CIF High</span><strong>$<?= number_format((float) $costSummary['shipping_high'], 2) ?></strong><small>Freight, insurance, surcharges</small></div>
+                    <div class="stat-card"><span>FOB + Shipping Low</span><strong>$<?= number_format((float) $costSummary['cif_low'], 2) ?></strong><small>Before Australia costs</small></div>
+                    <div class="stat-card"><span>FOB + Shipping High</span><strong>$<?= number_format((float) $costSummary['cif_high'], 2) ?></strong><small>Before Australia costs</small></div>
                 </div>
                 <div class="table-wrap cost-summary-table">
                     <table>
@@ -295,8 +316,8 @@ require '../header.php';
 
             <section class="form-card import-section-card">
                 <div class="section-kicker">Step 2</div>
-                <h2>Hammer to FOB</h2>
-                <p class="small">Enter the auction bid and Japan-side costs. The live AUD/JPY rate is a suggestion and can be changed.</p>
+                <h2>Auction Inputs & Approved FOB</h2>
+                <p class="small">Manual fields are JPY auction inputs. Approved FOB reports are AUD values from Excel and override the live FOB estimate.</p>
                 <?php if ($canViewFinance && $approvedFobRows): ?>
                     <div class="approved-fob-panel">
                         <div class="approved-fob-head">
@@ -306,14 +327,14 @@ require '../header.php';
                             </div>
                             <div class="approved-fob-total">
                                 <span>Total Estimated FOB</span>
-                                <b>$<?= number_format((float) ($approvedCostSummary['fob_low'] ?? 0), 2) ?> - $<?= number_format((float) ($approvedCostSummary['fob_high'] ?? 0), 2) ?></b>
+                                <b><?= import_money_range((float) ($approvedCostSummary['fob_low'] ?? 0), (float) ($approvedCostSummary['fob_high'] ?? 0)) ?></b>
                             </div>
                         </div>
                         <div class="approved-fob-grid">
                             <?php foreach ($approvedFobRows as $fobRow): ?>
                                 <div>
                                     <span><?= htmlspecialchars((string) $fobRow['description']) ?></span>
-                                    <b>$<?= number_format((float) $fobRow['low_estimate'], 2) ?> - $<?= number_format((float) $fobRow['high_estimate'], 2) ?></b>
+                                    <b><?= import_money_range((float) $fobRow['low_estimate'], (float) $fobRow['high_estimate']) ?></b>
                                 </div>
                             <?php endforeach; ?>
                         </div>
@@ -343,7 +364,29 @@ require '../header.php';
             <section class="form-card import-section-card finance-card">
                 <div class="section-kicker">Step 3</div>
                 <h2>Shipping / CIF Costs</h2>
-                <p class="small">Track the sea freight and marine insurance costs that sit between FOB and landed cost.</p>
+                <p class="small">Track sea freight, marine insurance, and shipping surcharges that sit between FOB and Australian landed cost.</p>
+                <?php if ($approvedShippingRows): ?>
+                    <div class="approved-fob-panel">
+                        <div class="approved-fob-head">
+                            <div>
+                                <strong>Approved Shipping / CIF Report</strong>
+                                <small>These AUD rows came from the uploaded CIF Budget Report.</small>
+                            </div>
+                            <div class="approved-fob-total">
+                                <span>Shipping/CIF Charges</span>
+                                <b><?= import_money_range((float) ($approvedCostSummary['shipping_low'] ?? 0), (float) ($approvedCostSummary['shipping_high'] ?? 0)) ?></b>
+                            </div>
+                        </div>
+                        <div class="approved-fob-grid">
+                            <?php foreach ($approvedShippingRows as $shippingRow): ?>
+                                <div>
+                                    <span><?= htmlspecialchars((string) $shippingRow['description']) ?></span>
+                                    <b><?= import_money_range((float) $shippingRow['low_estimate'], (float) $shippingRow['high_estimate']) ?></b>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                <?php endif; ?>
                 <div class="form-grid two">
                     <div><label>Ocean Freight AUD</label><input data-calc type="number" step="0.01" min="0" name="ocean_freight_aud" value="<?= htmlspecialchars(import_value($assessment, $settings, 'ocean_freight_aud')) ?>"></div>
                     <div><label>Marine Insurance AUD</label><input data-calc type="number" step="0.01" min="0" name="marine_insurance_aud" value="<?= htmlspecialchars(import_value($assessment, $settings, 'marine_insurance_aud')) ?>"></div>
@@ -466,12 +509,15 @@ require '../header.php';
         const approvedFobHigh = Number(approvedCosts.fob_high || approvedFobLow);
         const hasApprovedFob = Boolean(approvedCosts.has_fob && (approvedFobLow > 0 || approvedFobHigh > 0));
         const fobAud = hasApprovedFob ? ((approvedFobLow + approvedFobHigh) / 2) : manualFobAud;
-        const freight = get('ocean_freight_aud');
-        const insurance = get('marine_insurance_aud');
+        const manualShippingAud = get('ocean_freight_aud') + get('marine_insurance_aud');
+        const approvedShippingLow = Number(approvedCosts.shipping_low || 0);
+        const approvedShippingHigh = Number(approvedCosts.shipping_high || approvedShippingLow);
+        const hasApprovedShipping = Boolean(approvedCosts.has_shipping && (approvedShippingLow > 0 || approvedShippingHigh > 0));
+        const shippingAud = hasApprovedShipping ? ((approvedShippingLow + approvedShippingHigh) / 2) : manualShippingAud;
         const duty = get('duty_manual_aud') > 0 ? get('duty_manual_aud') : fobAud * get('duty_rate');
-        const gstBase = fobAud + freight + insurance + duty;
+        const gstBase = fobAud + shippingAud + duty;
         const gst = gstBase * get('gst_rate');
-        const nonFobCosts = freight + insurance + get('port_charges_aud') + get('customs_broker_aud') + get('biosecurity_aud') + get('port_transport_aud') + get('compliance_aud') + get('registration_aud') + duty + gst + get('other_australia_costs_aud');
+        const nonFobCosts = shippingAud + get('port_charges_aud') + get('customs_broker_aud') + get('biosecurity_aud') + get('port_transport_aud') + get('compliance_aud') + get('registration_aud') + duty + gst + get('other_australia_costs_aud');
         const total = fobAud + nonFobCosts;
         const sale = get('expected_sale_price_aud');
         const profit = sale - total;
@@ -501,10 +547,11 @@ require '../header.php';
             `Japan-side fees: ${yen.format(japanFees)}`,
             hasApprovedFob ? `FOB AUD: approved FOB report range = ${money.format(approvedFobLow)} - ${money.format(approvedFobHigh)}` : `FOB JPY: hammer + Japan fees = ${yen.format(manualFobJpy)}`,
             hasApprovedFob ? `FOB AUD used for live estimate: midpoint = ${money.format(fobAud)}` : `FOB AUD: FOB JPY / exchange rate = ${money.format(fobAud)}`,
+            hasApprovedShipping ? `Shipping/CIF AUD: approved report range = ${money.format(approvedShippingLow)} - ${money.format(approvedShippingHigh)}, midpoint used = ${money.format(shippingAud)}` : `Shipping/CIF AUD: ocean freight + marine insurance = ${money.format(manualShippingAud)}`,
             `Duty estimate: ${money.format(duty)}`,
-            `GST base: FOB AUD + freight + insurance + duty = ${money.format(gstBase)}`,
+            `GST base: FOB AUD + shipping/CIF charges + duty = ${money.format(gstBase)}`,
             `GST estimate: GST base x GST rate = ${money.format(gst)}`,
-            `Total pre-sale cost: FOB AUD + Australian costs + duty + GST = ${money.format(total)}`,
+            `Total pre-sale cost: FOB AUD + shipping/CIF charges + Australia costs + duty + GST = ${money.format(total)}`,
             `Expected profit: expected sale - total pre-sale cost = ${money.format(profit)}`,
             `Maximum hammer: ((sale - target profit - non-FOB costs) x exchange rate) - Japan fees = ${yen.format(maxHammer)}`
         ].join('\n'));

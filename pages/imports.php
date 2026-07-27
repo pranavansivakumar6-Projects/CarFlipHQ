@@ -10,9 +10,29 @@ $user = current_user();
 $accessWhere = import_access_filter_sql('ia');
 $assessments = $pdo->query("
     SELECT ia.*,
-        creator.name AS creator_name
+        creator.name AS creator_name,
+        approved.fob_low AS approved_fob_low,
+        approved.fob_high AS approved_fob_high,
+        approved.shipping_low AS approved_shipping_low,
+        approved.shipping_high AS approved_shipping_high
     FROM import_assessments ia
     LEFT JOIN users creator ON creator.id = ia.created_by
+    LEFT JOIN (
+        SELECT latest_items.assessment_id,
+            SUM(CASE WHEN latest_items.cost_code LIKE 'JP\\_%' THEN latest_items.low_estimate ELSE 0 END) AS fob_low,
+            SUM(CASE WHEN latest_items.cost_code LIKE 'JP\\_%' THEN latest_items.high_estimate ELSE 0 END) AS fob_high,
+            SUM(CASE WHEN latest_items.cost_code LIKE 'SHIP\\_%' THEN latest_items.low_estimate ELSE 0 END) AS shipping_low,
+            SUM(CASE WHEN latest_items.cost_code LIKE 'SHIP\\_%' THEN latest_items.high_estimate ELSE 0 END) AS shipping_high
+        FROM import_cost_items latest_items
+        JOIN (
+            SELECT assessment_id, cost_code, MAX(id) AS latest_id
+            FROM import_cost_items
+            GROUP BY assessment_id, cost_code
+        ) latest ON latest.latest_id = latest_items.id
+        WHERE latest_items.treatment NOT IN ('Included Elsewhere', 'Not Applicable')
+            AND latest_items.status NOT IN ('Included Elsewhere', 'Not Applicable')
+        GROUP BY latest_items.assessment_id
+    ) approved ON approved.assessment_id = ia.id
     WHERE ia.archived_at IS NULL AND $accessWhere
     ORDER BY ia.updated_at DESC
 ")->fetchAll(PDO::FETCH_ASSOC);
@@ -47,8 +67,20 @@ require '../header.php';
         <?php foreach ($assessments as $assessment): ?>
         <?php
         $snapshot = json_decode((string) ($assessment['calculation_snapshot'] ?? ''), true) ?: [];
+        $approvedFobLow = (float) ($assessment['approved_fob_low'] ?? 0);
+        $approvedFobHigh = (float) ($assessment['approved_fob_high'] ?? 0);
+        $approvedShippingLow = (float) ($assessment['approved_shipping_low'] ?? 0);
+        $approvedShippingHigh = (float) ($assessment['approved_shipping_high'] ?? 0);
+        $approvedFob = ($approvedFobLow > 0 || $approvedFobHigh > 0) ? (($approvedFobLow + ($approvedFobHigh ?: $approvedFobLow)) / 2) : null;
+        $approvedShipping = ($approvedShippingLow > 0 || $approvedShippingHigh > 0) ? (($approvedShippingLow + ($approvedShippingHigh ?: $approvedShippingLow)) / 2) : null;
+        $fobAud = $approvedFob ?? (float) ($snapshot['fob_aud'] ?? 0);
         $totalCost = (float) ($snapshot['total_pre_sale_cost_aud'] ?? 0);
-        $profit = (float) ($snapshot['expected_profit_aud'] ?? 0);
+        if ($approvedFob !== null || $approvedShipping !== null) {
+            $snapshotFob = (float) ($snapshot['fob_aud'] ?? 0);
+            $snapshotShipping = (float) ($assessment['ocean_freight_aud'] ?? 0) + (float) ($assessment['marine_insurance_aud'] ?? 0);
+            $totalCost = $totalCost - $snapshotFob - $snapshotShipping + $fobAud + ($approvedShipping ?? $snapshotShipping);
+        }
+        $profit = (float) ($assessment['expected_sale_price_aud'] ?? 0) > 0 ? (float) $assessment['expected_sale_price_aud'] - $totalCost : (float) ($snapshot['expected_profit_aud'] ?? 0);
         ?>
         <article class="car-card import-card">
             <a class="car-card-media import-card-media" href="import-calculator.php?id=<?= (int) $assessment['id'] ?>">
@@ -62,7 +94,7 @@ require '../header.php';
                 <div class="small"><?= htmlspecialchars($assessment['import_ref']) ?> / Lot <?= htmlspecialchars((string) ($assessment['lot_number'] ?: 'TBC')) ?></div>
                 <div class="car-metrics">
                     <div><span>Hammer</span><b>¥<?= number_format((float) $assessment['hammer_price_jpy'], 0) ?></b></div>
-                    <div><span>FOB AUD</span><b><?= $canViewFinance ? '$' . number_format((float) ($snapshot['fob_aud'] ?? 0), 2) : 'Restricted' ?></b></div>
+                    <div><span><?= $approvedFob !== null ? 'Approved FOB' : 'FOB Estimate' ?></span><b><?= $canViewFinance ? '$' . number_format($fobAud, 2) : 'Restricted' ?></b></div>
                     <div><span>Total</span><b><?= $canViewFinance ? '$' . number_format($totalCost, 2) : 'Restricted' ?></b></div>
                     <div><span>Profit</span><b class="<?= $profit >= 0 ? 'positive' : 'negative' ?>"><?= $canViewFinance ? '$' . number_format($profit, 2) : 'Restricted' ?></b></div>
                 </div>

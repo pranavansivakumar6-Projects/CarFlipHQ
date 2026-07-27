@@ -63,9 +63,9 @@ foreach ($postedItems as $item) {
 $payload = json_decode((string) ($report['parsed_payload'] ?? ''), true) ?: [];
 $reported = $payload['reported_total'] ?? ['low' => 0, 'high' => 0];
 $summary = import_calculate_cost_summary($items);
-$scope = (string) $report['report_type'] === 'CIF Budget' ? 'CIF' : 'FOB';
-$calculatedLow = $scope === 'CIF' ? $summary['cif_low'] : $summary['fob_low'];
-$calculatedHigh = $scope === 'CIF' ? $summary['cif_high'] : $summary['fob_high'];
+$scope = (string) $report['report_type'] === 'CIF Budget' ? 'Shipping/CIF' : 'FOB';
+$calculatedLow = $scope === 'Shipping/CIF' ? $summary['shipping_low'] : $summary['fob_low'];
+$calculatedHigh = $scope === 'Shipping/CIF' ? $summary['shipping_high'] : $summary['fob_high'];
 $varianceLow = (float) ($reported['low'] ?? 0) - $calculatedLow;
 $varianceHigh = (float) ($reported['high'] ?? 0) - $calculatedHigh;
 $severity = (abs($varianceLow) > 0.01 || abs($varianceHigh) > 0.01) ? 'Warning' : 'Info';

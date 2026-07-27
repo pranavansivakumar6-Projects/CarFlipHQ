@@ -426,9 +426,12 @@ function import_calculate_cost_summary(array $items): array
     $summary = [
         'fob_low' => 0.0,
         'fob_high' => 0.0,
+        'shipping_low' => 0.0,
+        'shipping_high' => 0.0,
         'cif_low' => 0.0,
         'cif_high' => 0.0,
         'actual_fob' => 0.0,
+        'actual_shipping' => 0.0,
         'actual_cif' => 0.0,
     ];
 
@@ -452,17 +455,17 @@ function import_calculate_cost_summary(array $items): array
             }
         }
         if (str_starts_with($code, 'SHIP_')) {
-            $summary['cif_low'] += $low;
-            $summary['cif_high'] += $high;
+            $summary['shipping_low'] += $low;
+            $summary['shipping_high'] += $high;
             if ($actual !== null) {
-                $summary['actual_cif'] += $actual;
+                $summary['actual_shipping'] += $actual;
             }
         }
     }
 
-    $summary['cif_low'] += $summary['fob_low'];
-    $summary['cif_high'] += $summary['fob_high'];
-    $summary['actual_cif'] += $summary['actual_fob'];
+    $summary['cif_low'] = $summary['fob_low'] + $summary['shipping_low'];
+    $summary['cif_high'] = $summary['fob_high'] + $summary['shipping_high'];
+    $summary['actual_cif'] = $summary['actual_fob'] + $summary['actual_shipping'];
 
     return array_map(fn ($value) => round($value, 2), $summary);
 }
