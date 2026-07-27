@@ -334,6 +334,9 @@ function import_extract_cost_row(array $rows, string $code, array $labelNeedles,
 
         $numbers = import_structured_money_numbers_from_row($row);
         if (!$numbers) {
+            $numbers = import_money_numbers_from_report_text($label);
+        }
+        if (!$numbers) {
             $numbers = import_money_numbers_from_row($row);
         }
         $definition = import_cost_definition($code);
@@ -368,6 +371,9 @@ function import_extract_total(array $rows, array $labelNeedles): array
                 continue;
             }
             $numbers = import_structured_money_numbers_from_row($row);
+            if (!$numbers) {
+                $numbers = import_money_numbers_from_report_text($label);
+            }
             if (!$numbers) {
                 $numbers = import_money_numbers_from_row($row);
             }
@@ -407,6 +413,51 @@ function import_structured_money_numbers_from_row(array $row): array
     }
 
     return $numbers;
+}
+
+function import_money_numbers_from_report_text(string $text): array
+{
+    $text = preg_replace('/\([^)]*\)/', ' ', $text) ?? $text;
+    $text = str_replace(["\xc2\xa0", 'Â'], ' ', $text);
+    $numbers = [];
+
+    preg_match_all('/(?:A?\$|AUD)\s*([0-9][0-9,]*(?:\.\d+)?)/i', $text, $prefixed);
+    preg_match_all('/([0-9][0-9,]*(?:\.\d+)?)\s*(?:AUD|dollars?)/i', $text, $suffixed);
+    foreach (array_merge($prefixed[1] ?? [], $suffixed[1] ?? []) as $match) {
+        $numbers[] = (float) str_replace(',', '', $match);
+    }
+    if ($numbers) {
+        return array_slice($numbers, 0, 2);
+    }
+
+    preg_match_all('/-?\d+(?:,\d{3})*(?:\.\d+)?/', $text, $matches);
+    foreach ($matches[0] as $match) {
+        $numbers[] = (float) str_replace(',', '', $match);
+    }
+
+    return array_slice($numbers, 0, 2);
+}
+
+function import_cost_item_estimates(array $item): array
+{
+    $low = max(0, (float) ($item['low_estimate'] ?? 0));
+    $high = max(0, (float) ($item['high_estimate'] ?? $low));
+    if ($high <= 0 && $low > 0) {
+        $high = $low;
+    }
+
+    $code = (string) ($item['cost_code'] ?? '');
+    $sourceLabel = (string) ($item['source_label'] ?? '');
+    $sourceNumbers = $sourceLabel !== '' ? import_money_numbers_from_report_text($sourceLabel) : [];
+    if ($code === 'SHIP_OCEAN_FREIGHT' && count($sourceNumbers) >= 2) {
+        $sourceLow = max(0, (float) $sourceNumbers[0]);
+        $sourceHigh = max(0, (float) $sourceNumbers[1]);
+        if (($low < 1000 || $high < 1000 || $high < $low) && $sourceLow >= 1000 && $sourceHigh >= $sourceLow) {
+            return [$sourceLow, $sourceHigh];
+        }
+    }
+
+    return [$low, $high];
 }
 
 function import_numbers_from_values(array $values): array
@@ -484,8 +535,7 @@ function import_calculate_cost_summary(array $items): array
         }
 
         $code = (string) ($item['cost_code'] ?? '');
-        $low = (float) ($item['low_estimate'] ?? 0);
-        $high = (float) ($item['high_estimate'] ?? 0);
+        [$low, $high] = import_cost_item_estimates($item);
         $actual = $item['actual_amount'] === null || $item['actual_amount'] === '' ? null : (float) $item['actual_amount'];
 
         if ($code === 'JP_APPROVED_FOB') {

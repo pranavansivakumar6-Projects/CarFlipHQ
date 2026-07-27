@@ -100,6 +100,7 @@ require '../header.php';
                         </thead>
                         <tbody>
                         <?php foreach ($items as $index => $item): ?>
+                            <?php [$displayLow, $displayHigh] = import_cost_item_estimates($item); ?>
                             <tr>
                                 <td>
                                     <input type="hidden" name="items[<?= $index ?>][source_label]" value="<?= htmlspecialchars((string) ($item['source_label'] ?? '')) ?>">
@@ -113,8 +114,8 @@ require '../header.php';
                                         <?php endforeach; ?>
                                     </select>
                                 </td>
-                                <td><input class="money-input" type="number" step="0.01" name="items[<?= $index ?>][low_estimate]" value="<?= htmlspecialchars((string) ($item['low_estimate'] ?? 0)) ?>"></td>
-                                <td><input class="money-input" type="number" step="0.01" name="items[<?= $index ?>][high_estimate]" value="<?= htmlspecialchars((string) ($item['high_estimate'] ?? 0)) ?>"></td>
+                                <td><input class="money-input" type="number" step="0.01" name="items[<?= $index ?>][low_estimate]" value="<?= htmlspecialchars((string) $displayLow) ?>"></td>
+                                <td><input class="money-input" type="number" step="0.01" name="items[<?= $index ?>][high_estimate]" value="<?= htmlspecialchars((string) $displayHigh) ?>"></td>
                                 <td><input class="money-input" type="number" step="0.01" name="items[<?= $index ?>][actual_amount]" value="<?= htmlspecialchars((string) ($item['actual_amount'] ?? '')) ?>"></td>
                                 <td>
                                     <select name="items[<?= $index ?>][status]">

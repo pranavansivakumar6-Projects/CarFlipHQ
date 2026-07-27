@@ -305,6 +305,7 @@ require '../header.php';
                             </thead>
                             <tbody>
                             <?php foreach ($costRows as $row): ?>
+                                <?php [$displayLow, $displayHigh] = import_cost_item_estimates($row); ?>
                                 <tr>
                                     <td><?= htmlspecialchars((string) $row['category']) ?></td>
                                     <td>
@@ -313,7 +314,7 @@ require '../header.php';
                                             <small><?= htmlspecialchars((string) $row['source_label']) ?></small>
                                         <?php endif; ?>
                                     </td>
-                                    <td><?= import_money_range((float) $row['low_estimate'], (float) $row['high_estimate']) ?></td>
+                                    <td><?= import_money_range($displayLow, $displayHigh) ?></td>
                                     <td><span class="badge"><?= htmlspecialchars((string) $row['status']) ?></span></td>
                                 </tr>
                             <?php endforeach; ?>
@@ -373,9 +374,10 @@ require '../header.php';
                         </div>
                         <div class="approved-fob-grid">
                             <?php foreach ($approvedFobRows as $fobRow): ?>
+                                <?php [$displayLow, $displayHigh] = import_cost_item_estimates($fobRow); ?>
                                 <div>
                                     <span><?= htmlspecialchars((string) $fobRow['description']) ?></span>
-                                    <b><?= import_money_range((float) $fobRow['low_estimate'], (float) $fobRow['high_estimate']) ?></b>
+                                    <b><?= import_money_range($displayLow, $displayHigh) ?></b>
                                 </div>
                             <?php endforeach; ?>
                         </div>
@@ -432,9 +434,10 @@ require '../header.php';
                                 <b><?= import_money_range((float) ($approvedCostSummary['shipping_low'] ?? 0), (float) ($approvedCostSummary['shipping_high'] ?? 0)) ?></b>
                             </div>
                             <?php foreach ($approvedShippingRows as $shippingRow): ?>
+                                <?php [$displayLow, $displayHigh] = import_cost_item_estimates($shippingRow); ?>
                                 <div>
                                     <span><?= htmlspecialchars((string) $shippingRow['description']) ?></span>
-                                    <b><?= import_money_range((float) $shippingRow['low_estimate'], (float) $shippingRow['high_estimate']) ?></b>
+                                    <b><?= import_money_range($displayLow, $displayHigh) ?></b>
                                 </div>
                             <?php endforeach; ?>
                         </div>

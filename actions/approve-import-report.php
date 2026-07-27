@@ -42,7 +42,7 @@ foreach ($postedItems as $item) {
     $treatment = require_allowed_value((string) ($item['treatment'] ?? 'Separate'), import_cost_treatments(), 'treatment');
     $actualRaw = trim((string) ($item['actual_amount'] ?? ''));
 
-    $items[] = [
+    $costItem = [
         'cost_code' => $code,
         'category' => $definition[1],
         'description' => $definition[0],
@@ -58,6 +58,10 @@ foreach ($postedItems as $item) {
         'source_cell' => substr(trim((string) ($item['source_cell'] ?? '')), 0, 40),
         'notes' => trim((string) ($item['notes'] ?? '')),
     ];
+    [$cleanLow, $cleanHigh] = import_cost_item_estimates($costItem);
+    $costItem['low_estimate'] = $cleanLow;
+    $costItem['high_estimate'] = $cleanHigh;
+    $items[] = $costItem;
 }
 
 $payload = json_decode((string) ($report['parsed_payload'] ?? ''), true) ?: [];
