@@ -399,6 +399,15 @@ function import_money_numbers_from_row(array $row): array
         $hasCurrencySignal = preg_match('/[$¥]|aud|jpy|yen|dollar/i', $text) === 1;
         $hasLetters = preg_match('/[a-zA-Z\p{Hiragana}\p{Katakana}\p{Han}]/u', $text) === 1;
 
+        if ($hasLetters && $hasCurrencySignal) {
+            preg_match_all('/(?:[$¥]|aud|jpy|yen|dollars?)\s*([0-9][0-9,]*(?:\.\d+)?)/i', $text, $prefixed);
+            preg_match_all('/([0-9][0-9,]*(?:\.\d+)?)\s*(?:aud|jpy|yen|dollars?)/i', $text, $suffixed);
+            foreach (array_merge($prefixed[1] ?? [], $suffixed[1] ?? []) as $match) {
+                $numbers[] = (float) str_replace(',', '', $match);
+            }
+            continue;
+        }
+
         if ($hasLetters && !$hasCurrencySignal) {
             continue;
         }
