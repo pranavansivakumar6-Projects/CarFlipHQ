@@ -210,6 +210,8 @@ require '../header.php';
 
         <?php if ($canViewFinance): ?>
         <div class="import-summary-grid" data-import-summary>
+            <div class="stat-card"><span>Hammer AUD</span><strong data-output="hammerAud">$0.00</strong><small data-output="hammerJpy">Hammer price</small></div>
+            <div class="stat-card"><span>Japan-side Fees</span><strong data-output="japanFeesAud">$0.00</strong><small data-output="japanFeesJpy">Fees before FOB</small></div>
             <div class="stat-card"><span>Maximum Hammer</span><strong data-output="maxHammer">¥0</strong><small>Safe bid based on target profit</small></div>
             <div class="stat-card"><span>FOB</span><strong data-output="fobAud">$0.00</strong><small data-output="fobJpy">¥0</small></div>
             <div class="stat-card"><span>Total Pre-Sale Cost</span><strong data-output="totalCost">$0.00</strong><small>Before final sale</small></div>
@@ -387,6 +389,8 @@ require '../header.php';
     const rateInput = form.querySelector('[data-exchange-rate]');
     const liveRateButton = form.querySelector('[data-live-rate]');
     const liveRateStatus = form.querySelector('[data-live-rate-status]');
+    const fobLabel = form.querySelector('[data-output="fobAud"]')?.closest('.stat-card')?.querySelector('span');
+    if (fobLabel) fobLabel.textContent = 'FOB Estimate';
     const get = name => Number(form.elements[name]?.value || 0);
     const set = (key, value) => {
         const el = form.querySelector(`[data-output="${key}"]`);
@@ -399,8 +403,11 @@ require '../header.php';
 
     function calculate() {
         const rate = get('exchange_rate');
+        const hammerJpy = get('hammer_price_jpy');
+        const hammerAud = rate > 0 ? hammerJpy / rate : 0;
         const japanFees = get('auction_fee_jpy') + get('japan_agent_fee_jpy') + get('inland_transport_jpy') + get('export_docs_jpy') + get('japan_port_fees_jpy') + get('other_japan_costs_jpy');
-        const fobJpy = get('hammer_price_jpy') + japanFees;
+        const japanFeesAud = rate > 0 ? japanFees / rate : 0;
+        const fobJpy = hammerJpy + japanFees;
         const fobAud = rate > 0 ? fobJpy / rate : 0;
         const freight = get('ocean_freight_aud');
         const insurance = get('marine_insurance_aud');
@@ -420,11 +427,15 @@ require '../header.php';
 
         if (rate <= 0) warnings.push('Exchange rate is required.');
         if (profit < minimumProfit) warnings.push(`Expected profit is below ${money.format(minimumProfit)}.`);
-        if (get('hammer_price_jpy') > maxHammer && maxHammer > 0) warnings.push('Hammer price is above the calculated maximum safe hammer.');
+        if (hammerJpy > maxHammer && maxHammer > 0) warnings.push('Hammer price is above the calculated maximum safe hammer.');
 
         set('maxHammer', yen.format(maxHammer));
+        set('hammerAud', money.format(hammerAud));
+        set('hammerJpy', yen.format(hammerJpy));
+        set('japanFeesAud', money.format(japanFeesAud));
+        set('japanFeesJpy', yen.format(japanFees));
         set('fobAud', money.format(fobAud));
-        set('fobJpy', yen.format(fobJpy));
+        set('fobJpy', `${yen.format(hammerJpy)} + ${yen.format(japanFees)} fees = ${yen.format(fobJpy)}`);
         set('totalCost', money.format(total));
         set('profit', money.format(profit));
         set('margin', `${margin.toFixed(1)}% margin`);
