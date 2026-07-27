@@ -330,7 +330,7 @@ function import_extract_cost_row(array $rows, string $code, array $labelNeedles,
             continue;
         }
 
-        $numbers = import_numbers_from_values(array_values($row));
+        $numbers = import_money_numbers_from_row($row);
         $definition = import_cost_definition($code);
         return [
             'cost_code' => $code,
@@ -362,7 +362,7 @@ function import_extract_total(array $rows, array $labelNeedles): array
             if (!str_contains($normal, strtolower($needle))) {
                 continue;
             }
-            $numbers = import_numbers_from_values(array_values($row));
+            $numbers = import_money_numbers_from_row($row);
             return [
                 'low' => (float) ($numbers[0] ?? 0),
                 'high' => (float) ($numbers[1] ?? ($numbers[0] ?? 0)),
@@ -383,6 +383,32 @@ function import_numbers_from_values(array $values): array
             $numbers[] = (float) str_replace(',', '', $match);
         }
     }
+    return $numbers;
+}
+
+function import_money_numbers_from_row(array $row): array
+{
+    $numbers = [];
+
+    foreach ($row as $value) {
+        $text = trim((string) $value);
+        if ($text === '') {
+            continue;
+        }
+
+        $hasCurrencySignal = preg_match('/[$¥]|aud|jpy|yen|dollar/i', $text) === 1;
+        $hasLetters = preg_match('/[a-zA-Z\p{Hiragana}\p{Katakana}\p{Han}]/u', $text) === 1;
+
+        if ($hasLetters && !$hasCurrencySignal) {
+            continue;
+        }
+
+        preg_match_all('/\d+(?:,\d{3})*(?:\.\d+)?/', $text, $matches);
+        foreach ($matches[0] as $match) {
+            $numbers[] = (float) str_replace(',', '', $match);
+        }
+    }
+
     return $numbers;
 }
 

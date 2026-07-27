@@ -82,8 +82,8 @@ require '../header.php';
             <?php if (!$items): ?>
                 <div class="empty-state">No automatic cost lines were found. Save the workbook as .xlsx or add costs manually in the next phase.</div>
             <?php else: ?>
-                <div class="table-wrap">
-                    <table>
+                <div class="table-wrap report-review-wrap">
+                    <table class="report-review-table">
                         <thead>
                             <tr>
                                 <th>Source Label</th>
@@ -111,9 +111,9 @@ require '../header.php';
                                         <?php endforeach; ?>
                                     </select>
                                 </td>
-                                <td><input type="number" step="0.01" name="items[<?= $index ?>][low_estimate]" value="<?= htmlspecialchars((string) ($item['low_estimate'] ?? 0)) ?>"></td>
-                                <td><input type="number" step="0.01" name="items[<?= $index ?>][high_estimate]" value="<?= htmlspecialchars((string) ($item['high_estimate'] ?? 0)) ?>"></td>
-                                <td><input type="number" step="0.01" name="items[<?= $index ?>][actual_amount]" value="<?= htmlspecialchars((string) ($item['actual_amount'] ?? '')) ?>"></td>
+                                <td><input class="money-input" type="number" step="0.01" name="items[<?= $index ?>][low_estimate]" value="<?= htmlspecialchars((string) ($item['low_estimate'] ?? 0)) ?>"></td>
+                                <td><input class="money-input" type="number" step="0.01" name="items[<?= $index ?>][high_estimate]" value="<?= htmlspecialchars((string) ($item['high_estimate'] ?? 0)) ?>"></td>
+                                <td><input class="money-input" type="number" step="0.01" name="items[<?= $index ?>][actual_amount]" value="<?= htmlspecialchars((string) ($item['actual_amount'] ?? '')) ?>"></td>
                                 <td>
                                     <select name="items[<?= $index ?>][status]">
                                         <?php foreach (import_cost_statuses() as $status): ?>
