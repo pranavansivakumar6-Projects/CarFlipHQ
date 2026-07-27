@@ -2306,3 +2306,88 @@ th {
         grid-template-columns: 1fr;
     }
 }
+
+.inline-upload-form {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 18px 0;
+}
+
+.inline-upload-form input[type="file"] {
+    background: #f8fbfd;
+    border: 1px solid #cfdbe7;
+    border-radius: 8px;
+    min-height: 44px;
+    padding: 10px;
+}
+
+.report-card-grid {
+    display: grid;
+    gap: 14px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    margin-top: 18px;
+}
+
+.report-type-card {
+    background: #f8fbfd;
+    border: 1px solid #d6e3ec;
+    border-radius: 10px;
+    padding: 16px;
+}
+
+.report-type-card span,
+.report-type-card small,
+.report-meta-grid span {
+    color: #526275;
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.report-type-card strong,
+.report-meta-grid strong {
+    color: #0f172a;
+    display: block;
+    font-size: 18px;
+    margin: 4px 0 8px;
+}
+
+.report-type-card .row-actions {
+    margin-top: 12px;
+}
+
+.report-meta-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    margin-top: 14px;
+}
+
+.report-meta-grid > div {
+    background: #f8fbfd;
+    border: 1px solid #d6e3ec;
+    border-radius: 10px;
+    padding: 14px;
+}
+
+.table-wrap {
+    overflow-x: auto;
+}
+
+.import-calculator-view .table-wrap table {
+    min-width: 980px;
+}
+
+.import-calculator-view .table-wrap input,
+.import-calculator-view .table-wrap select {
+    min-width: 120px;
+}
+
+.cost-summary-table td small {
+    color: #526275;
+    font-weight: 600;
+}

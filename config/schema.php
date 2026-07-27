@@ -250,6 +250,110 @@ function ensure_database_schema(PDO $pdo): void
           FOREIGN KEY (assessment_id) REFERENCES import_assessments(id) ON DELETE CASCADE,
           FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
         )",
+        "CREATE TABLE IF NOT EXISTS import_documents (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          assessment_id INT NOT NULL,
+          document_type ENUM('Auction Sheet','Purchase Invoice','FOB Report','CIF Report','Shipping Schedule','Export Certificate','Bill of Lading','Insurance','Customs','Biosecurity','Compliance','Registration','Other') DEFAULT 'Other',
+          original_filename VARCHAR(255) NOT NULL,
+          stored_path VARCHAR(255) NOT NULL,
+          mime_type VARCHAR(120),
+          file_size INT NOT NULL DEFAULT 0,
+          checksum_sha256 CHAR(64) NOT NULL,
+          version_no INT NOT NULL DEFAULT 1,
+          is_current TINYINT(1) NOT NULL DEFAULT 1,
+          sheet_names TEXT,
+          uploaded_by INT,
+          archived_at DATETIME,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          INDEX idx_import_documents_assessment (assessment_id),
+          INDEX idx_import_documents_checksum (checksum_sha256),
+          FOREIGN KEY (assessment_id) REFERENCES import_assessments(id) ON DELETE CASCADE,
+          FOREIGN KEY (uploaded_by) REFERENCES users(id) ON DELETE SET NULL
+        )",
+        "CREATE TABLE IF NOT EXISTS import_cost_reports (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          assessment_id INT NOT NULL,
+          document_id INT NOT NULL,
+          report_type ENUM('Auction Sheet','FOB Budget','CIF Budget','Shipping Schedule','Invoice','Other') DEFAULT 'Other',
+          template_version VARCHAR(80),
+          parser_confidence DECIMAL(5,2) DEFAULT 0,
+          approval_status ENUM('Needs Review','Approved','Rejected') DEFAULT 'Needs Review',
+          parsed_payload LONGTEXT,
+          imported_by INT,
+          imported_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          approved_by INT,
+          approved_at DATETIME,
+          INDEX idx_import_cost_reports_assessment (assessment_id),
+          FOREIGN KEY (assessment_id) REFERENCES import_assessments(id) ON DELETE CASCADE,
+          FOREIGN KEY (document_id) REFERENCES import_documents(id) ON DELETE CASCADE,
+          FOREIGN KEY (imported_by) REFERENCES users(id) ON DELETE SET NULL,
+          FOREIGN KEY (approved_by) REFERENCES users(id) ON DELETE SET NULL
+        )",
+        "CREATE TABLE IF NOT EXISTS import_cost_items (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          assessment_id INT NOT NULL,
+          report_id INT,
+          document_id INT,
+          cost_code VARCHAR(60) NOT NULL,
+          category VARCHAR(80) NOT NULL,
+          description VARCHAR(180) NOT NULL,
+          stage VARCHAR(80) NOT NULL,
+          low_estimate DECIMAL(14,2) DEFAULT 0,
+          high_estimate DECIMAL(14,2) DEFAULT 0,
+          actual_amount DECIMAL(14,2),
+          currency VARCHAR(3) NOT NULL DEFAULT 'AUD',
+          status ENUM('Estimated','Pending Quote','Quoted','Confirmed','Paid','Not Applicable','Included Elsewhere','Disputed / Review') DEFAULT 'Estimated',
+          treatment ENUM('Separate','Included Elsewhere','Not Applicable','Pending') DEFAULT 'Separate',
+          conditional_flag TINYINT(1) NOT NULL DEFAULT 0,
+          source_label VARCHAR(180),
+          source_cell VARCHAR(40),
+          notes TEXT,
+          created_by INT,
+          updated_by INT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          INDEX idx_import_cost_items_assessment (assessment_id),
+          INDEX idx_import_cost_items_code (cost_code),
+          FOREIGN KEY (assessment_id) REFERENCES import_assessments(id) ON DELETE CASCADE,
+          FOREIGN KEY (report_id) REFERENCES import_cost_reports(id) ON DELETE SET NULL,
+          FOREIGN KEY (document_id) REFERENCES import_documents(id) ON DELETE SET NULL,
+          FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+          FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
+        )",
+        "CREATE TABLE IF NOT EXISTS import_cost_reconciliations (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          assessment_id INT NOT NULL,
+          report_id INT,
+          cost_scope VARCHAR(40) NOT NULL,
+          reported_low DECIMAL(14,2) DEFAULT 0,
+          reported_high DECIMAL(14,2) DEFAULT 0,
+          calculated_low DECIMAL(14,2) DEFAULT 0,
+          calculated_high DECIMAL(14,2) DEFAULT 0,
+          variance_low DECIMAL(14,2) DEFAULT 0,
+          variance_high DECIMAL(14,2) DEFAULT 0,
+          severity ENUM('Info','Warning','Error') DEFAULT 'Info',
+          resolution_status ENUM('Open','Accepted','Resolved') DEFAULT 'Open',
+          resolution_note TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (assessment_id) REFERENCES import_assessments(id) ON DELETE CASCADE,
+          FOREIGN KEY (report_id) REFERENCES import_cost_reports(id) ON DELETE SET NULL
+        )",
+        "CREATE TABLE IF NOT EXISTS import_cost_history (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          assessment_id INT NOT NULL,
+          cost_item_id INT,
+          report_id INT,
+          user_id INT,
+          action VARCHAR(80) NOT NULL,
+          before_value LONGTEXT,
+          after_value LONGTEXT,
+          reason TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (assessment_id) REFERENCES import_assessments(id) ON DELETE CASCADE,
+          FOREIGN KEY (cost_item_id) REFERENCES import_cost_items(id) ON DELETE SET NULL,
+          FOREIGN KEY (report_id) REFERENCES import_cost_reports(id) ON DELETE SET NULL,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+        )",
     ];
 
     foreach ($statements as $statement) {
@@ -317,6 +421,9 @@ function ensure_database_schema(PDO $pdo): void
     ensure_column($pdo, 'import_assessments', 'archived_by', 'INT');
     ensure_column($pdo, 'import_assessments', 'created_by', 'INT');
     ensure_column($pdo, 'import_assessments', 'updated_by', 'INT');
+    ensure_column($pdo, 'import_documents', 'sheet_names', 'TEXT');
+    ensure_column($pdo, 'import_cost_reports', 'parsed_payload', 'LONGTEXT');
+    ensure_column($pdo, 'import_cost_items', 'treatment', "ENUM('Separate','Included Elsewhere','Not Applicable','Pending') DEFAULT 'Separate'");
 
     ensure_import_status_schema($pdo);
     seed_import_settings($pdo);

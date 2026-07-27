@@ -4,6 +4,7 @@ require_once '../config/auth.php';
 require_permission('can_view_imports');
 require_once '../config/helpers.php';
 require_once '../config/import-status.php';
+require_once '../config/import-costs.php';
 
 $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 $canManageImports = user_can('can_manage_imports');
@@ -13,7 +14,12 @@ $assessment = null;
 $saveError = trim((string) ($_GET['save_error'] ?? ''));
 $saved = isset($_GET['saved']);
 $statusUpdated = isset($_GET['status_updated']);
+$reportApproved = isset($_GET['report_approved']);
 $auditRows = [];
+$reportRows = [];
+$documentRows = [];
+$costRows = [];
+$costSummary = null;
 
 if ($id) {
     require_import_assessment($pdo, $id);
@@ -31,6 +37,40 @@ if ($id) {
     ");
     $auditStmt->execute([$id]);
     $auditRows = $auditStmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $reportStmt = $pdo->prepare('
+        SELECT icr.*, idoc.original_filename, idoc.stored_path
+        FROM import_cost_reports icr
+        JOIN import_documents idoc ON idoc.id = icr.document_id
+        WHERE icr.assessment_id = ?
+        ORDER BY icr.imported_at DESC, icr.id DESC
+    ');
+    $reportStmt->execute([$id]);
+    $reportRows = $reportStmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $documentStmt = $pdo->prepare('
+        SELECT *
+        FROM import_documents
+        WHERE assessment_id = ? AND archived_at IS NULL
+        ORDER BY created_at DESC, id DESC
+    ');
+    $documentStmt->execute([$id]);
+    $documentRows = $documentStmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $costStmt = $pdo->prepare('
+        SELECT ici.*
+        FROM import_cost_items ici
+        JOIN (
+            SELECT cost_code, MAX(id) AS latest_id
+            FROM import_cost_items
+            WHERE assessment_id = ?
+            GROUP BY cost_code
+        ) latest ON latest.latest_id = ici.id
+        ORDER BY FIELD(ici.category, "Japan Purchase", "Japan Logistics", "Export", "Shipping/CIF", "Melbourne/Australia", "Final Landed Cost"), ici.id
+    ');
+    $costStmt->execute([$id]);
+    $costRows = $costStmt->fetchAll(PDO::FETCH_ASSOC);
+    $costSummary = import_calculate_cost_summary($costRows);
 }
 
 if (!$assessment && !$canManageImports) {
@@ -80,6 +120,87 @@ require '../header.php';
         <div class="alert success">Import assessment saved.</div>
     <?php elseif ($statusUpdated): ?>
         <div class="alert success">Import status updated.</div>
+    <?php elseif ($reportApproved): ?>
+        <div class="alert success">Japan report approved and cost lines committed.</div>
+    <?php endif; ?>
+
+    <?php if ($assessment): ?>
+        <section class="form-card import-section-card">
+            <div class="section-kicker">Japan Reports</div>
+            <h2>Upload Japan Report</h2>
+            <p class="small">Upload FOB or CIF Excel reports. The original file is stored first, then values are reviewed before approval.</p>
+            <?php if ($canManageImports): ?>
+                <form class="inline-upload-form" action="<?= app_url('actions/upload-import-report.php') ?>" method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="assessment_id" value="<?= (int) $assessment['id'] ?>">
+                    <input type="file" name="japan_report" accept=".xlsx,.xls" required>
+                    <button class="btn" type="submit">Upload Japan Report</button>
+                </form>
+            <?php endif; ?>
+            <?php if ($reportRows): ?>
+                <div class="report-card-grid">
+                    <?php foreach ($reportRows as $report): ?>
+                        <div class="report-type-card">
+                            <span><?= htmlspecialchars((string) $report['report_type']) ?></span>
+                            <strong><?= htmlspecialchars((string) $report['approval_status']) ?></strong>
+                            <small><?= htmlspecialchars((string) $report['original_filename']) ?></small>
+                            <div class="row-actions">
+                                <a class="btn secondary small-btn" href="review-import-report.php?id=<?= (int) $report['id'] ?>">Review</a>
+                                <a class="btn secondary small-btn" href="<?= app_url('actions/download-import-document.php?id=' . (int) $report['document_id']) ?>">Download</a>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php else: ?>
+                <div class="empty-state">No Japan reports uploaded yet.</div>
+            <?php endif; ?>
+        </section>
+
+        <?php if ($canViewFinance): ?>
+        <section class="form-card import-section-card">
+            <div class="section-kicker">Cost Summary</div>
+            <h2>FOB / CIF Cost Engine</h2>
+            <?php if ($costRows): ?>
+                <div class="import-summary-grid compact">
+                    <div class="stat-card"><span>Estimated FOB Low</span><strong>$<?= number_format((float) $costSummary['fob_low'], 2) ?></strong><small>Approved cost rows</small></div>
+                    <div class="stat-card"><span>Estimated FOB High</span><strong>$<?= number_format((float) $costSummary['fob_high'], 2) ?></strong><small>Approved cost rows</small></div>
+                    <div class="stat-card"><span>Estimated CIF Low</span><strong>$<?= number_format((float) $costSummary['cif_low'], 2) ?></strong><small>FOB plus shipping</small></div>
+                    <div class="stat-card"><span>Estimated CIF High</span><strong>$<?= number_format((float) $costSummary['cif_high'], 2) ?></strong><small>FOB plus shipping</small></div>
+                </div>
+                <div class="table-wrap cost-summary-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Section</th>
+                                <th>Cost</th>
+                                <th>Low</th>
+                                <th>High</th>
+                                <th>Actual</th>
+                                <th>Status</th>
+                                <th>Treatment</th>
+                                <th>Source</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        <?php foreach ($costRows as $row): ?>
+                            <tr>
+                                <td><?= htmlspecialchars((string) $row['category']) ?></td>
+                                <td><?= htmlspecialchars((string) $row['description']) ?></td>
+                                <td>$<?= number_format((float) $row['low_estimate'], 2) ?></td>
+                                <td>$<?= number_format((float) $row['high_estimate'], 2) ?></td>
+                                <td><?= $row['actual_amount'] === null ? '-' : '$' . number_format((float) $row['actual_amount'], 2) ?></td>
+                                <td><span class="badge"><?= htmlspecialchars((string) $row['status']) ?></span></td>
+                                <td><?= htmlspecialchars((string) $row['treatment']) ?></td>
+                                <td><small><?= htmlspecialchars((string) ($row['source_label'] ?: 'Manual')) ?></small></td>
+                            </tr>
+                        <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php else: ?>
+                <div class="empty-state">Upload and approve a Japan report to activate the normalized cost summary.</div>
+            <?php endif; ?>
+        </section>
+        <?php endif; ?>
     <?php endif; ?>
 
     <form class="import-calculator" method="post" enctype="multipart/form-data" action="<?= app_url('actions/save-import-assessment.php') ?>">
