@@ -2394,7 +2394,7 @@ th {
 }
 
 .report-review-table {
-    min-width: 1320px;
+    min-width: 1500px;
     table-layout: fixed;
 }
 
@@ -2420,7 +2420,7 @@ th {
 .report-review-table td:nth-child(4),
 .report-review-table th:nth-child(5),
 .report-review-table td:nth-child(5) {
-    width: 130px;
+    width: 170px;
 }
 
 .report-review-table th:nth-child(6),
@@ -2440,9 +2440,25 @@ th {
 
 .report-review-table input,
 .report-review-table select {
+    background: #fff;
+    border: 1px solid #b9c8d8;
+    border-radius: 10px;
     box-sizing: border-box;
+    color: #071426;
+    font-size: 15px;
+    font-weight: 700;
+    height: 48px;
+    line-height: 1.2;
     min-width: 0;
+    padding: 0 14px;
     width: 100%;
+}
+
+.report-review-table input:focus,
+.report-review-table select:focus {
+    border-color: #43d3c9;
+    box-shadow: 0 0 0 3px rgba(67, 211, 201, 0.18);
+    outline: none;
 }
 
 .report-review-table small {
@@ -2455,6 +2471,7 @@ th {
 
 .report-review-table .money-input {
     font-variant-numeric: tabular-nums;
+    min-width: 150px;
     text-align: right;
 }
 
