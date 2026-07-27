@@ -37,6 +37,7 @@ function import_generate_ref(PDO $pdo): string
 function import_calculation_snapshot(array $data): array
 {
     $rate = (float) ($data['exchange_rate'] ?? 0);
+    $shippingAud = (float) $data['ocean_freight_aud'] + (float) $data['marine_insurance_aud'];
     $japanFees = (float) $data['auction_fee_jpy']
         + (float) $data['japan_agent_fee_jpy']
         + (float) $data['inland_transport_jpy']
@@ -46,11 +47,10 @@ function import_calculation_snapshot(array $data): array
     $fobJpy = (float) $data['hammer_price_jpy'] + $japanFees;
     $fobAud = $rate > 0 ? $fobJpy / $rate : 0;
     $duty = (float) $data['duty_manual_aud'] > 0 ? (float) $data['duty_manual_aud'] : $fobAud * (float) $data['duty_rate'];
-    $gstBase = $fobAud + (float) $data['ocean_freight_aud'] + (float) $data['marine_insurance_aud'] + $duty;
+    $cifAud = $fobAud + $shippingAud;
+    $gstBase = $cifAud + $duty;
     $gst = $gstBase * (float) $data['gst_rate'];
-    $nonFobCosts = (float) $data['ocean_freight_aud']
-        + (float) $data['marine_insurance_aud']
-        + (float) $data['port_charges_aud']
+    $melbourneCosts = (float) $data['port_charges_aud']
         + (float) $data['customs_broker_aud']
         + (float) $data['biosecurity_aud']
         + (float) $data['port_transport_aud']
@@ -59,7 +59,7 @@ function import_calculation_snapshot(array $data): array
         + $duty
         + $gst
         + (float) $data['other_australia_costs_aud'];
-    $total = $fobAud + $nonFobCosts;
+    $total = $cifAud + $melbourneCosts;
     $sale = (float) $data['expected_sale_price_aud'];
     $profit = $sale - $total;
 
@@ -67,14 +67,17 @@ function import_calculation_snapshot(array $data): array
         'japan_side_fees_jpy' => round($japanFees, 2),
         'fob_jpy' => round($fobJpy, 2),
         'fob_aud' => round($fobAud, 2),
+        'shipping_cif_addons_aud' => round($shippingAud, 2),
+        'cif_before_melbourne_aud' => round($cifAud, 2),
         'duty_aud' => round($duty, 2),
         'gst_base_aud' => round($gstBase, 2),
         'gst_aud' => round($gst, 2),
-        'non_fob_costs_aud' => round($nonFobCosts, 2),
+        'melbourne_onroad_costs_aud' => round($melbourneCosts, 2),
+        'total_landed_cost_aud' => round($total, 2),
         'total_pre_sale_cost_aud' => round($total, 2),
         'expected_profit_aud' => round($profit, 2),
         'profit_margin_percent' => $sale > 0 ? round(($profit / $sale) * 100, 2) : 0,
-        'calculation_version' => 'jp-import-v1',
+        'calculation_version' => 'jp-import-v2',
         'calculated_at' => date('c'),
     ];
 }
@@ -145,7 +148,7 @@ if ($canViewFinance) {
 }
 
 $baseData['calculation_snapshot'] = json_encode(import_calculation_snapshot($baseData));
-$baseData['calculation_version'] = 'jp-import-v1';
+$baseData['calculation_version'] = 'jp-import-v2';
 $baseData['updated_by'] = (int) $user['id'];
 
 try {

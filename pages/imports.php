@@ -84,7 +84,7 @@ require '../header.php';
         $approvedFob = ($approvedFobLow > 0 || $approvedFobHigh > 0) ? (($approvedFobLow + ($approvedFobHigh ?: $approvedFobLow)) / 2) : null;
         $approvedShipping = ($approvedShippingLow > 0 || $approvedShippingHigh > 0) ? (($approvedShippingLow + ($approvedShippingHigh ?: $approvedShippingLow)) / 2) : null;
         $fobAud = $approvedFob ?? (float) ($snapshot['fob_aud'] ?? 0);
-        $totalCost = (float) ($snapshot['total_pre_sale_cost_aud'] ?? 0);
+        $totalCost = (float) ($snapshot['total_landed_cost_aud'] ?? ($snapshot['total_pre_sale_cost_aud'] ?? 0));
         if ($approvedFob !== null || $approvedShipping !== null) {
             $snapshotFob = (float) ($snapshot['fob_aud'] ?? 0);
             $snapshotShipping = (float) ($assessment['ocean_freight_aud'] ?? 0) + (float) ($assessment['marine_insurance_aud'] ?? 0);
@@ -105,7 +105,7 @@ require '../header.php';
                 <div class="car-metrics">
                     <div><span>Hammer</span><b>¥<?= number_format((float) $assessment['hammer_price_jpy'], 0) ?></b></div>
                     <div><span><?= $approvedFob !== null ? 'Approved FOB' : 'FOB Estimate' ?></span><b><?= $canViewFinance ? '$' . number_format($fobAud, 2) : 'Restricted' ?></b></div>
-                    <div><span>Total</span><b><?= $canViewFinance ? '$' . number_format($totalCost, 2) : 'Restricted' ?></b></div>
+                    <div><span>Total Landed</span><b><?= $canViewFinance ? '$' . number_format($totalCost, 2) : 'Restricted' ?></b></div>
                     <div><span>Profit</span><b class="<?= $profit >= 0 ? 'positive' : 'negative' ?>"><?= $canViewFinance ? '$' . number_format($profit, 2) : 'Restricted' ?></b></div>
                 </div>
                 <div class="card-title-row">

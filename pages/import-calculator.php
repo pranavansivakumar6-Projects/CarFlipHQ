@@ -156,7 +156,7 @@ require '../header.php';
         <div>
             <div class="eyebrow">Japan Import Hub</div>
             <h1><?= $assessment ? htmlspecialchars((string) $assessment['import_ref']) : 'Auction & Landed Cost Calculator' ?></h1>
-            <p class="small">Estimate FOB, Australian landed cost, expected profit, and the safest maximum hammer bid before auction.</p>
+            <p class="small">Build a clean import position from vehicle details, FOB, CIF/shipping, Melbourne on-road costs, and expected profit.</p>
         </div>
         <a class="btn secondary" href="imports.php">Back to Japan Hub</a>
     </div>
@@ -205,50 +205,6 @@ require '../header.php';
             <?php endif; ?>
         </section>
 
-        <?php if ($canViewFinance): ?>
-        <section class="form-card import-section-card">
-            <div class="section-kicker">Cost Summary</div>
-            <h2>Approved Japan Cost Summary</h2>
-            <?php if ($costRows): ?>
-                <div class="import-summary-grid compact">
-                    <div class="stat-card"><span>FOB Cost</span><strong><?= import_money_range((float) $costSummary['fob_low'], (float) $costSummary['fob_high']) ?></strong><small>Vehicle and Japan export costs</small></div>
-                    <div class="stat-card"><span>Shipping Add-ons</span><strong><?= import_money_range((float) $costSummary['shipping_low'], (float) $costSummary['shipping_high']) ?></strong><small>Freight, insurance, surcharges</small></div>
-                    <div class="stat-card"><span>CIF Before Melbourne</span><strong><?= import_money_range((float) $costSummary['cif_low'], (float) $costSummary['cif_high']) ?></strong><small>Before GST, customs, compliance</small></div>
-                    <div class="stat-card"><span>Still To Add</span><strong>Local Costs</strong><small>Customs, compliance, RWC, transport</small></div>
-                </div>
-                <div class="table-wrap cost-summary-table">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Section</th>
-                                <th>Cost</th>
-                                <th>Estimate</th>
-                                <th>Actual</th>
-                                <th>Status</th>
-                                <th>Treatment</th>
-                                <th>Source</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        <?php foreach ($costRows as $row): ?>
-                            <tr>
-                                <td><?= htmlspecialchars((string) $row['category']) ?></td>
-                                <td><?= htmlspecialchars((string) $row['description']) ?></td>
-                                <td><?= import_money_range((float) $row['low_estimate'], (float) $row['high_estimate']) ?></td>
-                                <td><?= $row['actual_amount'] === null ? '-' : '$' . number_format((float) $row['actual_amount'], 2) ?></td>
-                                <td><span class="badge"><?= htmlspecialchars((string) $row['status']) ?></span></td>
-                                <td><?= htmlspecialchars((string) $row['treatment']) ?></td>
-                                <td><small><?= htmlspecialchars((string) ($row['source_label'] ?: 'Manual')) ?></small></td>
-                            </tr>
-                        <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            <?php else: ?>
-                <div class="empty-state">Upload and approve a Japan report to activate the normalized cost summary.</div>
-            <?php endif; ?>
-        </section>
-        <?php endif; ?>
     <?php endif; ?>
 
     <form class="import-calculator" method="post" enctype="multipart/form-data" action="<?= app_url('actions/save-import-assessment.php') ?>">
@@ -257,12 +213,37 @@ require '../header.php';
         <?php endif; ?>
 
         <?php if ($canViewFinance): ?>
-        <div class="import-summary-grid" data-import-summary>
-            <div class="stat-card"><span>Hammer AUD</span><strong data-output="hammerAud">$0.00</strong><small data-output="hammerJpy">Hammer price</small></div>
-            <div class="stat-card"><span>Japan-side Fees</span><strong data-output="japanFeesAud">$0.00</strong><small data-output="japanFeesJpy">Fees before FOB</small></div>
-            <div class="stat-card"><span>FOB Estimate</span><strong data-output="fobAud">$0.00</strong><small data-output="fobJpy">¥0</small></div>
-            <div class="stat-card"><span>Total Pre-Sale Cost</span><strong data-output="totalCost">$0.00</strong><small>Before final sale</small></div>
-            <div class="stat-card"><span>Expected Profit</span><strong data-output="profit">$0.00</strong><small data-output="margin">0.0% margin</small></div>
+        <div class="import-cost-flow" data-import-summary>
+            <div class="flow-card">
+                <span>FOB Cost</span>
+                <strong data-output="fobAud">$0.00</strong>
+                <small data-output="fobSource">Vehicle purchase plus Japan export costs</small>
+            </div>
+            <div class="flow-card">
+                <span>Shipping / CIF Add-ons</span>
+                <strong data-output="shippingAud">$0.00</strong>
+                <small>Ocean freight, EBS, insurance, heat treatment</small>
+            </div>
+            <div class="flow-card">
+                <span>CIF Before Melbourne</span>
+                <strong data-output="cifAud">$0.00</strong>
+                <small>FOB plus shipping before GST and local costs</small>
+            </div>
+            <div class="flow-card">
+                <span>Melbourne & On-road</span>
+                <strong data-output="melbourneAud">$0.00</strong>
+                <small>Customs, compliance, RWC, rego, transport, GST</small>
+            </div>
+            <div class="flow-card primary">
+                <span>Total Landed Cost</span>
+                <strong data-output="totalCost">$0.00</strong>
+                <small>Estimated all-in cost before sale</small>
+            </div>
+            <div class="flow-card profit-card">
+                <span>Expected Profit</span>
+                <strong data-output="profit">$0.00</strong>
+                <small data-output="margin">0.0% margin</small>
+            </div>
         </div>
         <div class="import-warnings" data-output="warnings"></div>
         <?php endif; ?>
@@ -290,11 +271,67 @@ require '../header.php';
         </section>
         <?php endif; ?>
 
+        <?php if ($canViewFinance): ?>
+        <section class="form-card import-section-card japan-report-summary">
+            <div class="section-kicker">Approved Report Data</div>
+            <h2>Cost Trail</h2>
+            <p class="small">Use uploaded FOB and CIF reports as the source of truth. Melbourne costs are added separately below.</p>
+            <?php if ($costRows): ?>
+                <div class="cost-trail">
+                    <div>
+                        <span>FOB from Japan report</span>
+                        <strong><?= import_money_range((float) $approvedCostSummary['fob_low'], (float) $approvedCostSummary['fob_high']) ?></strong>
+                    </div>
+                    <div>
+                        <span>Shipping/CIF add-ons</span>
+                        <strong><?= import_money_range((float) $approvedCostSummary['shipping_low'], (float) $approvedCostSummary['shipping_high']) ?></strong>
+                    </div>
+                    <div>
+                        <span>CIF before Melbourne</span>
+                        <strong><?= import_money_range((float) $approvedCostSummary['cif_low'], (float) $approvedCostSummary['cif_high']) ?></strong>
+                    </div>
+                </div>
+                <details class="report-lines">
+                    <summary>Review approved line items</summary>
+                    <div class="table-wrap cost-summary-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Stage</th>
+                                    <th>Cost Item</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            <?php foreach ($costRows as $row): ?>
+                                <tr>
+                                    <td><?= htmlspecialchars((string) $row['category']) ?></td>
+                                    <td>
+                                        <strong><?= htmlspecialchars((string) $row['description']) ?></strong>
+                                        <?php if (!empty($row['source_label'])): ?>
+                                            <small><?= htmlspecialchars((string) $row['source_label']) ?></small>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td><?= import_money_range((float) $row['low_estimate'], (float) $row['high_estimate']) ?></td>
+                                    <td><span class="badge"><?= htmlspecialchars((string) $row['status']) ?></span></td>
+                                </tr>
+                            <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </details>
+            <?php else: ?>
+                <div class="empty-state">No approved report data yet. Upload and approve FOB/CIF reports when you have them.</div>
+            <?php endif; ?>
+        </section>
+        <?php endif; ?>
+
         <div class="import-layout">
             <section class="form-card import-section-card">
                 <div class="section-kicker">Step 1</div>
                 <h2>Vehicle & Auction</h2>
-                <p class="small">Start with the car identity and auction reference. Access is controlled by the users you select below.</p>
+                <p class="small">Start with the car identity and auction reference.</p>
                 <div class="form-grid two">
                     <div><label>Make</label><input name="make" value="<?= htmlspecialchars(import_value($assessment, $settings, 'make')) ?>" required></div>
                     <div><label>Model</label><input name="model" value="<?= htmlspecialchars(import_value($assessment, $settings, 'model')) ?>" required></div>
@@ -320,8 +357,8 @@ require '../header.php';
 
             <section class="form-card import-section-card">
                 <div class="section-kicker">Step 2</div>
-                <h2>Auction Inputs & Approved FOB</h2>
-                <p class="small">Manual fields are JPY auction inputs. Approved FOB reports are AUD values from Excel and override the live FOB estimate.</p>
+                <h2>Japan Purchase & FOB</h2>
+                <p class="small">FOB is the vehicle purchase plus Japan export costs before shipping to Australia.</p>
                 <?php if ($canViewFinance && $approvedFobRows): ?>
                     <div class="approved-fob-panel">
                         <div class="approved-fob-head">
@@ -344,6 +381,9 @@ require '../header.php';
                         </div>
                     </div>
                 <?php endif; ?>
+                <details class="manual-cost-details" <?= $approvedFobRows ? '' : 'open' ?>>
+                    <summary>Manual auction estimate</summary>
+                    <p class="small">Use this when there is no approved FOB report yet. If a report is approved, the report total is used for the main calculation.</p>
                 <div class="form-grid two">
                     <div class="exchange-rate-field">
                         <div class="field-label-row">
@@ -362,13 +402,14 @@ require '../header.php';
                     <div><label>Other Japan Costs JPY</label><input data-calc type="number" step="1" min="0" name="other_japan_costs_jpy" value="<?= htmlspecialchars(import_value($assessment, $settings, 'other_japan_costs_jpy')) ?>"></div>
                 </div>
                 <label>Other Japan Cost Notes</label><input name="other_japan_costs_notes" value="<?= htmlspecialchars(import_value($assessment, $settings, 'other_japan_costs_notes')) ?>">
+                </details>
             </section>
 
             <?php if ($canViewFinance): ?>
             <section class="form-card import-section-card finance-card">
                 <div class="section-kicker">Step 3</div>
-                <h2>CIF & Shipping</h2>
-                <p class="small">CIF is FOB plus shipping. Once a CIF report is approved, these manual freight fields are only a fallback.</p>
+                <h2>Shipping & CIF</h2>
+                <p class="small">CIF is FOB plus freight, insurance, and shipping surcharges before Melbourne costs.</p>
                 <?php if ($approvedShippingRows): ?>
                     <div class="approved-fob-panel">
                         <div class="approved-fob-head">
@@ -407,8 +448,8 @@ require '../header.php';
 
             <section class="form-card import-section-card finance-card">
                 <div class="section-kicker">Step 4</div>
-                <h2>Customs & Melbourne Costs</h2>
-                <p class="small">Add the missing local costs after CIF: customs, GST, compliance, RWC, registration, and transport.</p>
+                <h2>Melbourne & Sale Position</h2>
+                <p class="small">Add the remaining local costs after CIF, then compare the all-in cost against expected sale.</p>
                 <div class="form-grid two">
                     <div><label>Expected Sale AUD</label><input data-calc type="number" step="0.01" min="0" name="expected_sale_price_aud" value="<?= htmlspecialchars(import_value($assessment, $settings, 'expected_sale_price_aud')) ?>"></div>
                     <div><label>Target Profit AUD</label><input data-calc type="number" step="0.01" min="0" name="target_profit_aud" value="<?= htmlspecialchars(import_value($assessment, $settings, 'target_profit_aud')) ?>"></div>
@@ -497,8 +538,6 @@ require '../header.php';
     const rateInput = form.querySelector('[data-exchange-rate]');
     const liveRateButton = form.querySelector('[data-live-rate]');
     const liveRateStatus = form.querySelector('[data-live-rate-status]');
-    const fobLabel = form.querySelector('[data-output="fobAud"]')?.closest('.stat-card')?.querySelector('span');
-    if (fobLabel) fobLabel.textContent = 'FOB Estimate';
     const get = name => Number(form.elements[name]?.value || 0);
     const set = (key, value) => {
         const el = form.querySelector(`[data-output="${key}"]`);
@@ -512,9 +551,7 @@ require '../header.php';
     function calculate() {
         const rate = get('exchange_rate');
         const hammerJpy = get('hammer_price_jpy');
-        const hammerAud = rate > 0 ? hammerJpy / rate : 0;
         const japanFees = get('auction_fee_jpy') + get('japan_agent_fee_jpy') + get('inland_transport_jpy') + get('export_docs_jpy') + get('japan_port_fees_jpy') + get('other_japan_costs_jpy');
-        const japanFeesAud = rate > 0 ? japanFees / rate : 0;
         const manualFobJpy = hammerJpy + japanFees;
         const manualFobAud = rate > 0 ? manualFobJpy / rate : 0;
         const approvedFobLow = Number(approvedCosts.fob_low || 0);
@@ -526,39 +563,44 @@ require '../header.php';
         const approvedShippingHigh = Number(approvedCosts.shipping_high || approvedShippingLow);
         const hasApprovedShipping = Boolean(approvedCosts.has_shipping && (approvedShippingLow > 0 || approvedShippingHigh > 0));
         const shippingAud = hasApprovedShipping ? ((approvedShippingLow + approvedShippingHigh) / 2) : manualShippingAud;
+        const approvedCifLow = Number(approvedCosts.cif_low || 0);
+        const approvedCifHigh = Number(approvedCosts.cif_high || approvedCifLow);
+        const hasApprovedCif = Boolean(approvedCosts.has_cif && (approvedCifLow > 0 || approvedCifHigh > 0));
+        const cifAud = hasApprovedCif ? ((approvedCifLow + approvedCifHigh) / 2) : fobAud + shippingAud;
         const duty = get('duty_manual_aud') > 0 ? get('duty_manual_aud') : fobAud * get('duty_rate');
-        const gstBase = fobAud + shippingAud + duty;
+        const gstBase = cifAud + duty;
         const gst = gstBase * get('gst_rate');
-        const nonFobCosts = shippingAud + get('port_charges_aud') + get('customs_broker_aud') + get('biosecurity_aud') + get('port_transport_aud') + get('compliance_aud') + get('registration_aud') + duty + gst + get('other_australia_costs_aud');
-        const total = fobAud + nonFobCosts;
+        const melbourneCosts = get('port_charges_aud') + get('customs_broker_aud') + get('biosecurity_aud') + get('port_transport_aud') + get('compliance_aud') + get('registration_aud') + duty + gst + get('other_australia_costs_aud');
+        const total = cifAud + melbourneCosts;
         const sale = get('expected_sale_price_aud');
         const profit = sale - total;
         const margin = sale > 0 ? (profit / sale) * 100 : 0;
         const warnings = [];
+        const manualFobNeedsRate = !hasApprovedFob && (hammerJpy > 0 || japanFees > 0);
 
-        if (rate <= 0) warnings.push('Exchange rate is required.');
-        if (profit < minimumProfit) warnings.push(`Expected profit is below ${money.format(minimumProfit)}.`);
+        if (manualFobNeedsRate && rate <= 0) warnings.push('Exchange rate is required for manual JPY auction inputs.');
+        if (sale > 0 && profit < minimumProfit) warnings.push(`Expected profit is below ${money.format(minimumProfit)}.`);
 
-        set('hammerAud', money.format(hammerAud));
-        set('hammerJpy', yen.format(hammerJpy));
-        set('japanFeesAud', money.format(japanFeesAud));
-        set('japanFeesJpy', yen.format(japanFees));
         set('fobAud', hasApprovedFob && Math.abs(approvedFobHigh - approvedFobLow) > 0.01 ? `${money.format(approvedFobLow)} - ${money.format(approvedFobHigh)}` : money.format(fobAud));
-        set('fobJpy', hasApprovedFob ? 'Approved FOB report total' : `${yen.format(hammerJpy)} + ${yen.format(japanFees)} fees = ${yen.format(manualFobJpy)}`);
+        set('fobSource', hasApprovedFob ? 'Approved FOB report total' : `${yen.format(hammerJpy)} purchase + ${yen.format(japanFees)} Japan fees`);
+        set('shippingAud', hasApprovedShipping && Math.abs(approvedShippingHigh - approvedShippingLow) > 0.01 ? `${money.format(approvedShippingLow)} - ${money.format(approvedShippingHigh)}` : money.format(shippingAud));
+        set('cifAud', hasApprovedCif && Math.abs(approvedCifHigh - approvedCifLow) > 0.01 ? `${money.format(approvedCifLow)} - ${money.format(approvedCifHigh)}` : money.format(cifAud));
+        set('melbourneAud', money.format(melbourneCosts));
         set('totalCost', money.format(total));
         set('profit', money.format(profit));
         set('margin', `${margin.toFixed(1)}% margin`);
         setHtml('warnings', warnings.map(w => `<div class="alert warning">${w}</div>`).join(''));
         set('formula', [
             `Japan-side fees: ${yen.format(japanFees)}`,
-            hasApprovedFob ? `FOB AUD: approved FOB report range = ${money.format(approvedFobLow)} - ${money.format(approvedFobHigh)}` : `FOB JPY: hammer + Japan fees = ${yen.format(manualFobJpy)}`,
-            hasApprovedFob ? `FOB AUD used for live estimate: midpoint = ${money.format(fobAud)}` : `FOB AUD: FOB JPY / exchange rate = ${money.format(fobAud)}`,
-            hasApprovedShipping ? `Shipping/CIF AUD: approved report range = ${money.format(approvedShippingLow)} - ${money.format(approvedShippingHigh)}, midpoint used = ${money.format(shippingAud)}` : `Shipping/CIF AUD: ocean freight + marine insurance = ${money.format(manualShippingAud)}`,
+            hasApprovedFob ? `FOB AUD: approved report range = ${money.format(approvedFobLow)} - ${money.format(approvedFobHigh)}` : `FOB AUD: (${yen.format(manualFobJpy)}) / exchange rate = ${money.format(fobAud)}`,
+            hasApprovedShipping ? `Shipping/CIF add-ons: approved report range = ${money.format(approvedShippingLow)} - ${money.format(approvedShippingHigh)}, midpoint used = ${money.format(shippingAud)}` : `Shipping/CIF add-ons: ocean freight + marine insurance = ${money.format(manualShippingAud)}`,
+            hasApprovedCif ? `CIF before Melbourne: approved report range = ${money.format(approvedCifLow)} - ${money.format(approvedCifHigh)}, midpoint used = ${money.format(cifAud)}` : `CIF before Melbourne: FOB + shipping/CIF add-ons = ${money.format(cifAud)}`,
             `Duty estimate: ${money.format(duty)}`,
-            `GST base: FOB AUD + shipping/CIF charges + duty = ${money.format(gstBase)}`,
+            `GST base: CIF before Melbourne + duty = ${money.format(gstBase)}`,
             `GST estimate: GST base x GST rate = ${money.format(gst)}`,
-            `Total pre-sale cost: FOB AUD + shipping/CIF charges + Australia costs + duty + GST = ${money.format(total)}`,
-            `Expected profit: expected sale - total pre-sale cost = ${money.format(profit)}`
+            `Melbourne & on-road costs: local charges + duty + GST = ${money.format(melbourneCosts)}`,
+            `Total landed cost: CIF before Melbourne + Melbourne & on-road costs = ${money.format(total)}`,
+            `Expected profit: expected sale - total landed cost = ${money.format(profit)}`
         ].join('\n'));
     }
 

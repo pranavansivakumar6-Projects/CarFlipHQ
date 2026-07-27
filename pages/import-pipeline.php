@@ -69,6 +69,7 @@ require '../header.php';
                         <?php
                         $snapshot = json_decode((string) ($assessment['calculation_snapshot'] ?? ''), true) ?: [];
                         $profit = (float) ($snapshot['expected_profit_aud'] ?? 0);
+                        $landedCost = (float) ($snapshot['total_landed_cost_aud'] ?? ($snapshot['total_pre_sale_cost_aud'] ?? 0));
                         ?>
                         <article class="pipeline-card">
                             <div class="pipeline-card-title">
@@ -81,7 +82,7 @@ require '../header.php';
                             </div>
                             <?php if ($canViewFinance): ?>
                                 <div class="pipeline-finance">
-                                    <span>Total $<?= number_format((float) ($snapshot['total_pre_sale_cost_aud'] ?? 0), 2) ?></span>
+                                    <span>Landed $<?= number_format($landedCost, 2) ?></span>
                                     <strong class="<?= $profit >= 0 ? 'positive' : 'negative' ?>">Profit $<?= number_format($profit, 2) ?></strong>
                                 </div>
                             <?php endif; ?>
