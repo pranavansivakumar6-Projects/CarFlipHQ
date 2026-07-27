@@ -13,6 +13,8 @@ $assessments = $pdo->query("
         creator.name AS creator_name,
         approved.fob_low AS approved_fob_low,
         approved.fob_high AS approved_fob_high,
+        approved.aggregate_fob_low AS aggregate_fob_low,
+        approved.aggregate_fob_high AS aggregate_fob_high,
         approved.shipping_low AS approved_shipping_low,
         approved.shipping_high AS approved_shipping_high
     FROM import_assessments ia
@@ -21,6 +23,8 @@ $assessments = $pdo->query("
         SELECT latest_items.assessment_id,
             SUM(CASE WHEN latest_items.cost_code LIKE 'JP\\_%' THEN latest_items.low_estimate ELSE 0 END) AS fob_low,
             SUM(CASE WHEN latest_items.cost_code LIKE 'JP\\_%' THEN latest_items.high_estimate ELSE 0 END) AS fob_high,
+            SUM(CASE WHEN latest_items.cost_code = 'JP_APPROVED_FOB' THEN latest_items.low_estimate ELSE 0 END) AS aggregate_fob_low,
+            SUM(CASE WHEN latest_items.cost_code = 'JP_APPROVED_FOB' THEN latest_items.high_estimate ELSE 0 END) AS aggregate_fob_high,
             SUM(CASE WHEN latest_items.cost_code LIKE 'SHIP\\_%' THEN latest_items.low_estimate ELSE 0 END) AS shipping_low,
             SUM(CASE WHEN latest_items.cost_code LIKE 'SHIP\\_%' THEN latest_items.high_estimate ELSE 0 END) AS shipping_high
         FROM import_cost_items latest_items
@@ -69,6 +73,12 @@ require '../header.php';
         $snapshot = json_decode((string) ($assessment['calculation_snapshot'] ?? ''), true) ?: [];
         $approvedFobLow = (float) ($assessment['approved_fob_low'] ?? 0);
         $approvedFobHigh = (float) ($assessment['approved_fob_high'] ?? 0);
+        $aggregateFobLow = (float) ($assessment['aggregate_fob_low'] ?? 0);
+        $aggregateFobHigh = (float) ($assessment['aggregate_fob_high'] ?? 0);
+        if ($aggregateFobLow > 0 || $aggregateFobHigh > 0) {
+            $approvedFobLow = $aggregateFobLow;
+            $approvedFobHigh = $aggregateFobHigh;
+        }
         $approvedShippingLow = (float) ($assessment['approved_shipping_low'] ?? 0);
         $approvedShippingHigh = (float) ($assessment['approved_shipping_high'] ?? 0);
         $approvedFob = ($approvedFobLow > 0 || $approvedFobHigh > 0) ? (($approvedFobLow + ($approvedFobHigh ?: $approvedFobLow)) / 2) : null;

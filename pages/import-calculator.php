@@ -21,7 +21,9 @@ $documentRows = [];
 $costRows = [];
 $costSummary = null;
 $approvedFobRows = [];
+$aggregateFobRows = [];
 $approvedShippingRows = [];
+$approvedFobFromCif = false;
 $approvedCostSummary = [
     'has_fob' => false,
     'fob_low' => 0.0,
@@ -85,7 +87,10 @@ if ($id) {
     $costRows = $costStmt->fetchAll(PDO::FETCH_ASSOC);
     $costSummary = import_calculate_cost_summary($costRows);
     foreach ($costRows as $costRow) {
-        if (in_array((string) $costRow['cost_code'], ['JP_PURCHASE', 'JP_AUCTION_AGENT_EXPORT', 'JP_INLAND_TRANSPORT', 'JP_EXPORT_YARD_HANDLING'], true)) {
+        if ((string) $costRow['cost_code'] === 'JP_APPROVED_FOB') {
+            $aggregateFobRows[] = $costRow;
+        }
+        if (in_array((string) $costRow['cost_code'], ['JP_PURCHASE', 'JP_AUCTION_AGENT_EXPORT', 'JP_INLAND_TRANSPORT', 'JP_EXPORT_YARD_HANDLING', 'JP_APPROVED_FOB'], true)) {
             $approvedFobRows[] = $costRow;
         }
         if (str_starts_with((string) $costRow['cost_code'], 'SHIP_')) {
@@ -103,6 +108,10 @@ if ($id) {
         'cif_low' => (float) ($costSummary['cif_low'] ?? 0),
         'cif_high' => (float) ($costSummary['cif_high'] ?? 0),
     ];
+    if ($aggregateFobRows) {
+        $approvedFobRows = $aggregateFobRows;
+        $approvedFobFromCif = true;
+    }
 }
 
 if (!$assessment && !$canManageImports) {
@@ -199,15 +208,13 @@ require '../header.php';
         <?php if ($canViewFinance): ?>
         <section class="form-card import-section-card">
             <div class="section-kicker">Cost Summary</div>
-            <h2>Approved Report Cost Engine</h2>
+            <h2>Approved Japan Cost Summary</h2>
             <?php if ($costRows): ?>
                 <div class="import-summary-grid compact">
-                    <div class="stat-card"><span>Approved FOB Low</span><strong>$<?= number_format((float) $costSummary['fob_low'], 2) ?></strong><small>Japan report rows</small></div>
-                    <div class="stat-card"><span>Approved FOB High</span><strong>$<?= number_format((float) $costSummary['fob_high'], 2) ?></strong><small>Japan report rows</small></div>
-                    <div class="stat-card"><span>Shipping/CIF Low</span><strong>$<?= number_format((float) $costSummary['shipping_low'], 2) ?></strong><small>Freight, insurance, surcharges</small></div>
-                    <div class="stat-card"><span>Shipping/CIF High</span><strong>$<?= number_format((float) $costSummary['shipping_high'], 2) ?></strong><small>Freight, insurance, surcharges</small></div>
-                    <div class="stat-card"><span>FOB + Shipping Low</span><strong>$<?= number_format((float) $costSummary['cif_low'], 2) ?></strong><small>Before Australia costs</small></div>
-                    <div class="stat-card"><span>FOB + Shipping High</span><strong>$<?= number_format((float) $costSummary['cif_high'], 2) ?></strong><small>Before Australia costs</small></div>
+                    <div class="stat-card"><span>FOB Cost</span><strong><?= import_money_range((float) $costSummary['fob_low'], (float) $costSummary['fob_high']) ?></strong><small>Vehicle and Japan export costs</small></div>
+                    <div class="stat-card"><span>Shipping Add-ons</span><strong><?= import_money_range((float) $costSummary['shipping_low'], (float) $costSummary['shipping_high']) ?></strong><small>Freight, insurance, surcharges</small></div>
+                    <div class="stat-card"><span>CIF Before Melbourne</span><strong><?= import_money_range((float) $costSummary['cif_low'], (float) $costSummary['cif_high']) ?></strong><small>Before GST, customs, compliance</small></div>
+                    <div class="stat-card"><span>Still To Add</span><strong>Local Costs</strong><small>Customs, compliance, RWC, transport</small></div>
                 </div>
                 <div class="table-wrap cost-summary-table">
                     <table>
@@ -215,8 +222,7 @@ require '../header.php';
                             <tr>
                                 <th>Section</th>
                                 <th>Cost</th>
-                                <th>Low</th>
-                                <th>High</th>
+                                <th>Estimate</th>
                                 <th>Actual</th>
                                 <th>Status</th>
                                 <th>Treatment</th>
@@ -228,8 +234,7 @@ require '../header.php';
                             <tr>
                                 <td><?= htmlspecialchars((string) $row['category']) ?></td>
                                 <td><?= htmlspecialchars((string) $row['description']) ?></td>
-                                <td>$<?= number_format((float) $row['low_estimate'], 2) ?></td>
-                                <td>$<?= number_format((float) $row['high_estimate'], 2) ?></td>
+                                <td><?= import_money_range((float) $row['low_estimate'], (float) $row['high_estimate']) ?></td>
                                 <td><?= $row['actual_amount'] === null ? '-' : '$' . number_format((float) $row['actual_amount'], 2) ?></td>
                                 <td><span class="badge"><?= htmlspecialchars((string) $row['status']) ?></span></td>
                                 <td><?= htmlspecialchars((string) $row['treatment']) ?></td>
@@ -322,8 +327,8 @@ require '../header.php';
                     <div class="approved-fob-panel">
                         <div class="approved-fob-head">
                             <div>
-                                <strong>Approved FOB Report</strong>
-                                <small>These values came from the uploaded FOB Budget Report.</small>
+                                <strong><?= $approvedFobFromCif ? 'Approved FOB Total' : 'Approved FOB Report' ?></strong>
+                                <small><?= $approvedFobFromCif ? 'This FOB total was brought down inside the CIF Budget Report.' : 'These values came from the uploaded FOB Budget Report.' ?></small>
                             </div>
                             <div class="approved-fob-total">
                                 <span>Total Estimated FOB</span>
@@ -363,21 +368,29 @@ require '../header.php';
             <?php if ($canViewFinance): ?>
             <section class="form-card import-section-card finance-card">
                 <div class="section-kicker">Step 3</div>
-                <h2>Shipping / CIF Costs</h2>
-                <p class="small">Track sea freight, marine insurance, and shipping surcharges that sit between FOB and Australian landed cost.</p>
+                <h2>CIF & Shipping</h2>
+                <p class="small">CIF is FOB plus shipping. Once a CIF report is approved, these manual freight fields are only a fallback.</p>
                 <?php if ($approvedShippingRows): ?>
                     <div class="approved-fob-panel">
                         <div class="approved-fob-head">
                             <div>
-                                <strong>Approved Shipping / CIF Report</strong>
-                                <small>These AUD rows came from the uploaded CIF Budget Report.</small>
+                                <strong>Approved CIF Report</strong>
+                                <small>FOB is brought down from the report, then shipping add-ons are added to reach CIF.</small>
                             </div>
                             <div class="approved-fob-total">
-                                <span>Shipping/CIF Charges</span>
-                                <b><?= import_money_range((float) ($approvedCostSummary['shipping_low'] ?? 0), (float) ($approvedCostSummary['shipping_high'] ?? 0)) ?></b>
+                                <span>Total CIF Before Melbourne</span>
+                                <b><?= import_money_range((float) ($approvedCostSummary['cif_low'] ?? 0), (float) ($approvedCostSummary['cif_high'] ?? 0)) ?></b>
                             </div>
                         </div>
                         <div class="approved-fob-grid">
+                            <div>
+                                <span>FOB Cost</span>
+                                <b><?= import_money_range((float) ($approvedCostSummary['fob_low'] ?? 0), (float) ($approvedCostSummary['fob_high'] ?? 0)) ?></b>
+                            </div>
+                            <div>
+                                <span>Shipping Add-ons</span>
+                                <b><?= import_money_range((float) ($approvedCostSummary['shipping_low'] ?? 0), (float) ($approvedCostSummary['shipping_high'] ?? 0)) ?></b>
+                            </div>
                             <?php foreach ($approvedShippingRows as $shippingRow): ?>
                                 <div>
                                     <span><?= htmlspecialchars((string) $shippingRow['description']) ?></span>
@@ -395,8 +408,8 @@ require '../header.php';
 
             <section class="form-card import-section-card finance-card">
                 <div class="section-kicker">Step 4</div>
-                <h2>Australia Landed Costs</h2>
-                <p class="small">Adjust port, compliance, GST, duty, and on-road assumptions to see the real landed position.</p>
+                <h2>Customs & Melbourne Costs</h2>
+                <p class="small">Add the missing local costs after CIF: customs, GST, compliance, RWC, registration, and transport.</p>
                 <div class="form-grid two">
                     <div><label>Expected Sale AUD</label><input data-calc type="number" step="0.01" min="0" name="expected_sale_price_aud" value="<?= htmlspecialchars(import_value($assessment, $settings, 'expected_sale_price_aud')) ?>"></div>
                     <div><label>Target Profit AUD</label><input data-calc type="number" step="0.01" min="0" name="target_profit_aud" value="<?= htmlspecialchars(import_value($assessment, $settings, 'target_profit_aud')) ?>"></div>

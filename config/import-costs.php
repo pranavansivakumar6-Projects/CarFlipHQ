@@ -6,6 +6,7 @@ function import_cost_definitions(): array
         'JP_AUCTION_AGENT_EXPORT' => ['Auction Agent & Export Fees', 'Japan Purchase', 'Japan Purchase', 'Quoted bundle', 'Included in FOB'],
         'JP_INLAND_TRANSPORT' => ['Inland Transport - Japan', 'Japan Logistics', 'Japan Logistics', 'Variable', 'Included in FOB'],
         'JP_EXPORT_YARD_HANDLING' => ['Export Yard & Handling', 'Export', 'Japan Export', 'Schedule/quoted', 'Included in FOB'],
+        'JP_APPROVED_FOB' => ['Approved FOB Total', 'Japan FOB', 'Japan Export', 'Approved report total', 'Used when the CIF report brings down the FOB calculation'],
         'JP_STORAGE' => ['Japan Storage', 'Export', 'Japan Export', 'Conditional', 'Included in FOB when charged'],
         'JP_OTHER' => ['Other Japan Cost', 'Japan', 'Japan', 'Variable', 'Configurable'],
         'SHIP_OCEAN_FREIGHT' => ['Ocean Freight', 'Shipping/CIF', 'Shipping', 'Variable quote', 'Included in CIF'],
@@ -290,6 +291,7 @@ function import_build_parsed_payload(array $parsed, string $reportType): array
         $reported = import_extract_total($parsed['rows'], ['total estimated fob', 'estimated fob']);
     } elseif ($reportType === 'CIF Budget') {
         $rows = [
+            import_extract_cost_row($parsed['rows'], 'JP_APPROVED_FOB', ['total estimated fob'], 'AUD'),
             import_extract_cost_row($parsed['rows'], 'SHIP_OCEAN_FREIGHT', ['ocean freight'], 'AUD'),
             import_extract_cost_row($parsed['rows'], 'SHIP_EBS', ['emergency bunker', 'ebs'], 'AUD', true),
             import_extract_cost_row($parsed['rows'], 'SHIP_INSURANCE', ['marine insurance', 'insurance'], 'AUD'),
@@ -330,7 +332,10 @@ function import_extract_cost_row(array $rows, string $code, array $labelNeedles,
             continue;
         }
 
-        $numbers = import_money_numbers_from_row($row);
+        $numbers = import_structured_money_numbers_from_row($row);
+        if (!$numbers) {
+            $numbers = import_money_numbers_from_row($row);
+        }
         $definition = import_cost_definition($code);
         return [
             'cost_code' => $code,
@@ -362,7 +367,10 @@ function import_extract_total(array $rows, array $labelNeedles): array
             if (!str_contains($normal, strtolower($needle))) {
                 continue;
             }
-            $numbers = import_money_numbers_from_row($row);
+            $numbers = import_structured_money_numbers_from_row($row);
+            if (!$numbers) {
+                $numbers = import_money_numbers_from_row($row);
+            }
             return [
                 'low' => (float) ($numbers[0] ?? 0),
                 'high' => (float) ($numbers[1] ?? ($numbers[0] ?? 0)),
@@ -372,6 +380,33 @@ function import_extract_total(array $rows, array $labelNeedles): array
     }
 
     return ['low' => 0, 'high' => 0, 'source_label' => ''];
+}
+
+function import_structured_money_numbers_from_row(array $row): array
+{
+    $numbers = [];
+    ksort($row, SORT_NATURAL);
+
+    foreach ($row as $value) {
+        $text = trim((string) $value);
+        if ($text === '') {
+            continue;
+        }
+
+        $hasLetters = preg_match('/[a-zA-Z\p{Hiragana}\p{Katakana}\p{Han}]/u', $text) === 1;
+        if ($hasLetters) {
+            continue;
+        }
+
+        $clean = str_replace([',', '$', 'A$', 'AUD', 'aud', ' '], '', $text);
+        if (preg_match('/^-?\d+(?:\.\d+)?$/', $clean) !== 1) {
+            continue;
+        }
+
+        $numbers[] = (float) $clean;
+    }
+
+    return $numbers;
 }
 
 function import_numbers_from_values(array $values): array
@@ -434,6 +469,12 @@ function import_calculate_cost_summary(array $items): array
         'actual_shipping' => 0.0,
         'actual_cif' => 0.0,
     ];
+    $aggregateFob = [
+        'low' => 0.0,
+        'high' => 0.0,
+        'actual' => 0.0,
+        'has_value' => false,
+    ];
 
     foreach ($items as $item) {
         $treatment = (string) ($item['treatment'] ?? 'Separate');
@@ -446,6 +487,16 @@ function import_calculate_cost_summary(array $items): array
         $low = (float) ($item['low_estimate'] ?? 0);
         $high = (float) ($item['high_estimate'] ?? 0);
         $actual = $item['actual_amount'] === null || $item['actual_amount'] === '' ? null : (float) $item['actual_amount'];
+
+        if ($code === 'JP_APPROVED_FOB') {
+            $aggregateFob['low'] += $low;
+            $aggregateFob['high'] += $high;
+            $aggregateFob['has_value'] = $aggregateFob['has_value'] || $low > 0 || $high > 0;
+            if ($actual !== null) {
+                $aggregateFob['actual'] += $actual;
+            }
+            continue;
+        }
 
         if (str_starts_with($code, 'JP_')) {
             $summary['fob_low'] += $low;
@@ -461,6 +512,12 @@ function import_calculate_cost_summary(array $items): array
                 $summary['actual_shipping'] += $actual;
             }
         }
+    }
+
+    if ($aggregateFob['has_value']) {
+        $summary['fob_low'] = $aggregateFob['low'];
+        $summary['fob_high'] = $aggregateFob['high'];
+        $summary['actual_fob'] = $aggregateFob['actual'];
     }
 
     $summary['cif_low'] = $summary['fob_low'] + $summary['shipping_low'];

@@ -32,9 +32,10 @@ $payload = json_decode((string) ($report['parsed_payload'] ?? ''), true) ?: [];
 $items = $payload['items'] ?? [];
 $reportedTotal = $payload['reported_total'] ?? ['low' => 0, 'high' => 0];
 $summary = import_calculate_cost_summary($items);
-$calculatedScope = $report['report_type'] === 'CIF Budget' ? 'Shipping/CIF charges' : 'FOB total';
-$calculatedLow = $report['report_type'] === 'CIF Budget' ? $summary['shipping_low'] : $summary['fob_low'];
-$calculatedHigh = $report['report_type'] === 'CIF Budget' ? $summary['shipping_high'] : $summary['fob_high'];
+$hasFobTotal = array_filter($items, fn ($item) => (string) ($item['cost_code'] ?? '') === 'JP_APPROVED_FOB');
+$calculatedScope = $report['report_type'] === 'CIF Budget' ? ($hasFobTotal ? 'CIF total before Melbourne' : 'Shipping/CIF charges') : 'FOB total';
+$calculatedLow = $report['report_type'] === 'CIF Budget' ? ($hasFobTotal ? $summary['cif_low'] : $summary['shipping_low']) : $summary['fob_low'];
+$calculatedHigh = $report['report_type'] === 'CIF Budget' ? ($hasFobTotal ? $summary['cif_high'] : $summary['shipping_high']) : $summary['fob_high'];
 $varianceLow = (float) ($reportedTotal['low'] ?? 0) - $calculatedLow;
 $varianceHigh = (float) ($reportedTotal['high'] ?? 0) - $calculatedHigh;
 
