@@ -20,6 +20,14 @@ $reportRows = [];
 $documentRows = [];
 $costRows = [];
 $costSummary = null;
+$approvedCostSummary = [
+    'has_fob' => false,
+    'fob_low' => 0.0,
+    'fob_high' => 0.0,
+    'has_cif' => false,
+    'cif_low' => 0.0,
+    'cif_high' => 0.0,
+];
 
 if ($id) {
     require_import_assessment($pdo, $id);
@@ -71,6 +79,14 @@ if ($id) {
     $costStmt->execute([$id]);
     $costRows = $costStmt->fetchAll(PDO::FETCH_ASSOC);
     $costSummary = import_calculate_cost_summary($costRows);
+    $approvedCostSummary = [
+        'has_fob' => !empty($costRows) && ((float) ($costSummary['fob_high'] ?? 0) > 0 || (float) ($costSummary['fob_low'] ?? 0) > 0),
+        'fob_low' => (float) ($costSummary['fob_low'] ?? 0),
+        'fob_high' => (float) ($costSummary['fob_high'] ?? 0),
+        'has_cif' => !empty($costRows) && ((float) ($costSummary['cif_high'] ?? 0) > 0 || (float) ($costSummary['cif_low'] ?? 0) > 0),
+        'cif_low' => (float) ($costSummary['cif_low'] ?? 0),
+        'cif_high' => (float) ($costSummary['cif_high'] ?? 0),
+    ];
 }
 
 if (!$assessment && !$canManageImports) {
@@ -213,7 +229,7 @@ require '../header.php';
             <div class="stat-card"><span>Hammer AUD</span><strong data-output="hammerAud">$0.00</strong><small data-output="hammerJpy">Hammer price</small></div>
             <div class="stat-card"><span>Japan-side Fees</span><strong data-output="japanFeesAud">$0.00</strong><small data-output="japanFeesJpy">Fees before FOB</small></div>
             <div class="stat-card"><span>Maximum Hammer</span><strong data-output="maxHammer">¥0</strong><small>Safe bid based on target profit</small></div>
-            <div class="stat-card"><span>FOB</span><strong data-output="fobAud">$0.00</strong><small data-output="fobJpy">¥0</small></div>
+            <div class="stat-card"><span>FOB Estimate</span><strong data-output="fobAud">$0.00</strong><small data-output="fobJpy">¥0</small></div>
             <div class="stat-card"><span>Total Pre-Sale Cost</span><strong data-output="totalCost">$0.00</strong><small>Before final sale</small></div>
             <div class="stat-card"><span>Expected Profit</span><strong data-output="profit">$0.00</strong><small data-output="margin">0.0% margin</small></div>
         </div>
@@ -385,6 +401,7 @@ require '../header.php';
     const money = new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' });
     const yen = new Intl.NumberFormat('ja-JP', { style: 'currency', currency: 'JPY', maximumFractionDigits: 0 });
     const minimumProfit = <?= json_encode((float) ($settings['minimum_profit_aud'] ?? 2000)) ?>;
+    const approvedCosts = <?= json_encode($approvedCostSummary) ?>;
     const fields = [...form.querySelectorAll('[data-calc]')];
     const rateInput = form.querySelector('[data-exchange-rate]');
     const liveRateButton = form.querySelector('[data-live-rate]');
@@ -407,8 +424,12 @@ require '../header.php';
         const hammerAud = rate > 0 ? hammerJpy / rate : 0;
         const japanFees = get('auction_fee_jpy') + get('japan_agent_fee_jpy') + get('inland_transport_jpy') + get('export_docs_jpy') + get('japan_port_fees_jpy') + get('other_japan_costs_jpy');
         const japanFeesAud = rate > 0 ? japanFees / rate : 0;
-        const fobJpy = hammerJpy + japanFees;
-        const fobAud = rate > 0 ? fobJpy / rate : 0;
+        const manualFobJpy = hammerJpy + japanFees;
+        const manualFobAud = rate > 0 ? manualFobJpy / rate : 0;
+        const approvedFobLow = Number(approvedCosts.fob_low || 0);
+        const approvedFobHigh = Number(approvedCosts.fob_high || approvedFobLow);
+        const hasApprovedFob = Boolean(approvedCosts.has_fob && (approvedFobLow > 0 || approvedFobHigh > 0));
+        const fobAud = hasApprovedFob ? ((approvedFobLow + approvedFobHigh) / 2) : manualFobAud;
         const freight = get('ocean_freight_aud');
         const insurance = get('marine_insurance_aud');
         const duty = get('duty_manual_aud') > 0 ? get('duty_manual_aud') : fobAud * get('duty_rate');
@@ -434,16 +455,16 @@ require '../header.php';
         set('hammerJpy', yen.format(hammerJpy));
         set('japanFeesAud', money.format(japanFeesAud));
         set('japanFeesJpy', yen.format(japanFees));
-        set('fobAud', money.format(fobAud));
-        set('fobJpy', `${yen.format(hammerJpy)} + ${yen.format(japanFees)} fees = ${yen.format(fobJpy)}`);
+        set('fobAud', hasApprovedFob && Math.abs(approvedFobHigh - approvedFobLow) > 0.01 ? `${money.format(approvedFobLow)} - ${money.format(approvedFobHigh)}` : money.format(fobAud));
+        set('fobJpy', hasApprovedFob ? 'Approved FOB report total' : `${yen.format(hammerJpy)} + ${yen.format(japanFees)} fees = ${yen.format(manualFobJpy)}`);
         set('totalCost', money.format(total));
         set('profit', money.format(profit));
         set('margin', `${margin.toFixed(1)}% margin`);
         setHtml('warnings', warnings.map(w => `<div class="alert warning">${w}</div>`).join(''));
         set('formula', [
             `Japan-side fees: ${yen.format(japanFees)}`,
-            `FOB JPY: hammer + Japan fees = ${yen.format(fobJpy)}`,
-            `FOB AUD: FOB JPY / exchange rate = ${money.format(fobAud)}`,
+            hasApprovedFob ? `FOB AUD: approved FOB report range = ${money.format(approvedFobLow)} - ${money.format(approvedFobHigh)}` : `FOB JPY: hammer + Japan fees = ${yen.format(manualFobJpy)}`,
+            hasApprovedFob ? `FOB AUD used for live estimate: midpoint = ${money.format(fobAud)}` : `FOB AUD: FOB JPY / exchange rate = ${money.format(fobAud)}`,
             `Duty estimate: ${money.format(duty)}`,
             `GST base: FOB AUD + freight + insurance + duty = ${money.format(gstBase)}`,
             `GST estimate: GST base x GST rate = ${money.format(gst)}`,
@@ -609,3 +630,4 @@ require '../header.php';
 </script>
 <?php endif; ?>
 <?php require '../footer.php'; ?>
+
