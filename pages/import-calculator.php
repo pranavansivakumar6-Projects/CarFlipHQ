@@ -20,6 +20,7 @@ $reportRows = [];
 $documentRows = [];
 $costRows = [];
 $costSummary = null;
+$approvedFobRows = [];
 $approvedCostSummary = [
     'has_fob' => false,
     'fob_low' => 0.0,
@@ -79,6 +80,11 @@ if ($id) {
     $costStmt->execute([$id]);
     $costRows = $costStmt->fetchAll(PDO::FETCH_ASSOC);
     $costSummary = import_calculate_cost_summary($costRows);
+    foreach ($costRows as $costRow) {
+        if (in_array((string) $costRow['cost_code'], ['JP_PURCHASE', 'JP_AUCTION_AGENT_EXPORT', 'JP_INLAND_TRANSPORT', 'JP_EXPORT_YARD_HANDLING'], true)) {
+            $approvedFobRows[] = $costRow;
+        }
+    }
     $approvedCostSummary = [
         'has_fob' => !empty($costRows) && ((float) ($costSummary['fob_high'] ?? 0) > 0 || (float) ($costSummary['fob_low'] ?? 0) > 0),
         'fob_low' => (float) ($costSummary['fob_low'] ?? 0),
@@ -291,6 +297,28 @@ require '../header.php';
                 <div class="section-kicker">Step 2</div>
                 <h2>Hammer to FOB</h2>
                 <p class="small">Enter the auction bid and Japan-side costs. The live AUD/JPY rate is a suggestion and can be changed.</p>
+                <?php if ($canViewFinance && $approvedFobRows): ?>
+                    <div class="approved-fob-panel">
+                        <div class="approved-fob-head">
+                            <div>
+                                <strong>Approved FOB Report</strong>
+                                <small>These values came from the uploaded FOB Budget Report.</small>
+                            </div>
+                            <div class="approved-fob-total">
+                                <span>Total Estimated FOB</span>
+                                <b>$<?= number_format((float) ($approvedCostSummary['fob_low'] ?? 0), 2) ?> - $<?= number_format((float) ($approvedCostSummary['fob_high'] ?? 0), 2) ?></b>
+                            </div>
+                        </div>
+                        <div class="approved-fob-grid">
+                            <?php foreach ($approvedFobRows as $fobRow): ?>
+                                <div>
+                                    <span><?= htmlspecialchars((string) $fobRow['description']) ?></span>
+                                    <b>$<?= number_format((float) $fobRow['low_estimate'], 2) ?> - $<?= number_format((float) $fobRow['high_estimate'], 2) ?></b>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                <?php endif; ?>
                 <div class="form-grid two">
                     <div class="exchange-rate-field">
                         <div class="field-label-row">
