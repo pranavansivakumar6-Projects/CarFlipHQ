@@ -342,13 +342,21 @@ require '../header.php';
             <?php if ($canViewFinance): ?>
             <section class="form-card import-section-card finance-card">
                 <div class="section-kicker">Step 3</div>
+                <h2>Shipping / CIF Costs</h2>
+                <p class="small">Track the sea freight and marine insurance costs that sit between FOB and landed cost.</p>
+                <div class="form-grid two">
+                    <div><label>Ocean Freight AUD</label><input data-calc type="number" step="0.01" min="0" name="ocean_freight_aud" value="<?= htmlspecialchars(import_value($assessment, $settings, 'ocean_freight_aud')) ?>"></div>
+                    <div><label>Marine Insurance AUD</label><input data-calc type="number" step="0.01" min="0" name="marine_insurance_aud" value="<?= htmlspecialchars(import_value($assessment, $settings, 'marine_insurance_aud')) ?>"></div>
+                </div>
+            </section>
+
+            <section class="form-card import-section-card finance-card">
+                <div class="section-kicker">Step 4</div>
                 <h2>Australia Landed Costs</h2>
-                <p class="small">Adjust default freight, compliance, GST, duty, and selling assumptions to see the real landed position.</p>
+                <p class="small">Adjust port, compliance, GST, duty, and on-road assumptions to see the real landed position.</p>
                 <div class="form-grid two">
                     <div><label>Expected Sale AUD</label><input data-calc type="number" step="0.01" min="0" name="expected_sale_price_aud" value="<?= htmlspecialchars(import_value($assessment, $settings, 'expected_sale_price_aud')) ?>"></div>
                     <div><label>Target Profit AUD</label><input data-calc type="number" step="0.01" min="0" name="target_profit_aud" value="<?= htmlspecialchars(import_value($assessment, $settings, 'target_profit_aud')) ?>"></div>
-                    <div><label>Ocean Freight</label><input data-calc type="number" step="0.01" min="0" name="ocean_freight_aud" value="<?= htmlspecialchars(import_value($assessment, $settings, 'ocean_freight_aud')) ?>"></div>
-                    <div><label>Marine Insurance</label><input data-calc type="number" step="0.01" min="0" name="marine_insurance_aud" value="<?= htmlspecialchars(import_value($assessment, $settings, 'marine_insurance_aud')) ?>"></div>
                     <div><label>Port Charges</label><input data-calc type="number" step="0.01" min="0" name="port_charges_aud" value="<?= htmlspecialchars(import_value($assessment, $settings, 'port_charges_aud')) ?>"></div>
                     <div><label>Customs Broker</label><input data-calc type="number" step="0.01" min="0" name="customs_broker_aud" value="<?= htmlspecialchars(import_value($assessment, $settings, 'customs_broker_aud')) ?>"></div>
                     <div><label>Biosecurity</label><input data-calc type="number" step="0.01" min="0" name="biosecurity_aud" value="<?= htmlspecialchars(import_value($assessment, $settings, 'biosecurity_aud')) ?>"></div>
