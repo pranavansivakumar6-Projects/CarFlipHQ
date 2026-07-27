@@ -54,8 +54,8 @@ foreach ($postedItems as $item) {
         'status' => $status,
         'treatment' => $treatment,
         'conditional_flag' => in_array($code, ['SHIP_EBS', 'SHIP_BAF', 'SHIP_HEAT_TREATMENT', 'JP_STORAGE'], true) ? 1 : 0,
-        'source_label' => trim((string) ($item['source_label'] ?? '')),
-        'source_cell' => trim((string) ($item['source_cell'] ?? '')),
+        'source_label' => substr(trim((string) ($item['source_label'] ?? '')), 0, 180),
+        'source_cell' => substr(trim((string) ($item['source_cell'] ?? '')), 0, 40),
         'notes' => trim((string) ($item['notes'] ?? '')),
     ];
 }
@@ -158,7 +158,7 @@ try {
         $pdo->rollBack();
     }
     error_log('Import report approval failed: ' . $e->getMessage());
-    redirect_to('pages/review-import-report.php?id=' . (int) $reportId . '&error=' . urlencode('Could not approve the report. No cost data was changed.'));
+    redirect_to('pages/review-import-report.php?id=' . (int) $reportId . '&error=' . urlencode('Could not approve the report: ' . $e->getMessage()));
 }
 
 redirect_to('pages/import-calculator.php?id=' . $assessmentId . '&report_approved=1');
