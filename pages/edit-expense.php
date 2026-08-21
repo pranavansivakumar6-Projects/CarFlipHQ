@@ -42,7 +42,7 @@ require '../header.php';
         <?php if (!empty($expense['receipt_file'])): ?>
         <p><a href="../<?= htmlspecialchars($expense['receipt_file']) ?>" target="_blank">View current receipt</a></p>
         <?php endif; ?>
-        <label>Replace Receipt / Bill Photo</label><input name="receipt_file" type="file" accept="image/*" capture="environment">
+        <label>Replace Receipt / Bill Photo</label><input name="receipt_file" type="file" accept="image/avif,image/*" capture="environment">
         <label>Notes</label><textarea name="notes"><?= htmlspecialchars($expense['notes']) ?></textarea><br><br>
         <button class="btn" type="submit">Update Expense</button>
         <a class="btn secondary" href="car-detail.php?id=<?= (int) $expense['car_id'] ?>">Cancel</a>

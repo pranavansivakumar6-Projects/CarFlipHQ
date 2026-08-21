@@ -18,7 +18,7 @@ require '../header.php';
         <label>Year</label><input name="year" type="number">
         <label>Color</label><input name="color">
         <label>Body Type</label><input name="body_type" placeholder="Sedan, hatch, wagon, SUV">
-        <label>Profile Photo</label><input name="profile_photo" type="file" accept="image/*">
+        <label>Profile Photo</label><input name="profile_photo" type="file" accept="image/avif,image/*">
         <label>VIN</label><input name="vin">
         <label>Rego</label><input name="rego">
         <label>Odometer</label><input name="odometer" type="number">

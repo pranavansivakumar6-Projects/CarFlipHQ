@@ -289,13 +289,14 @@ function save_uploaded_image(string $field, string $folder): ?string
     $allowed = [
         'image/jpeg' => 'jpg',
         'image/png' => 'png',
+        'image/avif' => 'avif',
         'image/webp' => 'webp',
         'image/gif' => 'gif',
     ];
     $mime = mime_content_type($_FILES[$field]['tmp_name']);
     if (!isset($allowed[$mime])) {
         http_response_code(400);
-        die('Only JPG, PNG, WebP, or GIF images are allowed.');
+        die('Only JPG, PNG, AVIF, WebP, or GIF images are allowed.');
     }
 
     $safeFolder = trim($folder, '/');
@@ -334,6 +335,7 @@ function save_uploaded_file(string $field, string $folder): ?string
     $allowed = [
         'image/jpeg' => 'jpg',
         'image/png' => 'png',
+        'image/avif' => 'avif',
         'image/webp' => 'webp',
         'image/gif' => 'gif',
         'application/pdf' => 'pdf',

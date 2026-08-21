@@ -45,7 +45,7 @@ require '../header.php';
         <?php if (!empty($task['task_photo'])): ?>
         <p><a href="../<?= htmlspecialchars($task['task_photo']) ?>" target="_blank">View current task photo</a></p>
         <?php endif; ?>
-        <label>Replace Task Photo</label><input name="task_photo" type="file" accept="image/*" capture="environment">
+        <label>Replace Task Photo</label><input name="task_photo" type="file" accept="image/avif,image/*" capture="environment">
         <label>Due Date</label><input name="due_date" type="date" value="<?= htmlspecialchars($task['due_date']) ?>"><br><br>
         <button class="btn" type="submit">Update Task</button>
         <a class="btn secondary" href="car-detail.php?id=<?= (int) $task['car_id'] ?>">Cancel</a>

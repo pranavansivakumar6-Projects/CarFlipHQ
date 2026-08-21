@@ -471,6 +471,17 @@ table,
     box-shadow: none;
 }
 
+.btn.danger.outline {
+    background: transparent;
+    border: 1px solid rgba(224, 32, 32, .55);
+    color: var(--red);
+}
+
+.btn.danger.outline:hover {
+    background: var(--red);
+    color: #fff;
+}
+
 .small-btn {
     min-height: 34px;
     padding: 7px 10px;
@@ -487,6 +498,45 @@ table,
 
 .row-actions form {
     margin: 0;
+}
+
+.file-drop-zone {
+    border: 1px dashed #b8c7d9;
+    background: #f8fbff;
+    padding: 14px;
+    transition: border-color .2s ease, background .2s ease, box-shadow .2s ease;
+}
+
+.file-drop-zone.is-dragging {
+    border-color: var(--teal);
+    background: rgba(70, 210, 199, .08);
+    box-shadow: 0 0 0 4px rgba(70, 210, 199, .14);
+}
+
+.file-drop-zone input[type="file"] {
+    margin: 0;
+}
+
+.file-drop-hint {
+    color: var(--muted);
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin-top: 10px;
+    font-size: 13px;
+}
+
+.file-drop-hint strong {
+    color: var(--ink);
+    font-size: 14px;
+}
+
+.file-drop-status {
+    color: var(--teal-strong);
+    font-size: 13px;
+    font-weight: 700;
+    margin-top: 8px;
+    min-height: 18px;
 }
 
 .mini-form {

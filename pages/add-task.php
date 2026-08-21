@@ -29,7 +29,7 @@ require '../header.php';
 <label>Priority</label><select name="priority"><option>Low</option><option selected>Medium</option><option>High</option></select>
 <label>Status</label><select name="status"><option selected>To Do</option><option>In Progress</option><option>Done</option></select>
 <label>Hours Spent</label><input name="hours_spent" type="number" step="0.25" min="0" value="0">
-<label>Task Photo</label><input name="task_photo" type="file" accept="image/*" capture="environment">
+<label>Task Photo</label><input name="task_photo" type="file" accept="image/avif,image/*" capture="environment">
 <label>Due Date</label><input name="due_date" type="date"><br><br>
 <button class="btn" type="submit">Save Task</button>
 </form></div><?php require '../footer.php'; ?>

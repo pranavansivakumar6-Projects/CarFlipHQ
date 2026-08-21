@@ -31,7 +31,7 @@ $pageTitle='Edit Car | CarFlip HQ'; require '../header.php';
 <?php if (!empty($car['profile_photo'])): ?>
 <div class="profile-photo-preview"><img src="../<?= htmlspecialchars($car['profile_photo']) ?>" alt="Current car profile photo"></div>
 <?php endif; ?>
-<label>Profile Photo</label><input name="profile_photo" type="file" accept="image/*">
+<label>Profile Photo</label><input name="profile_photo" type="file" accept="image/avif,image/*">
 <label>VIN</label><input name="vin" value="<?= htmlspecialchars((string) ($car['vin'] ?? '')) ?>">
 <label>Rego</label><input name="rego" value="<?= htmlspecialchars((string) ($car['rego'] ?? '')) ?>">
 <label>Odometer</label><input name="odometer" type="number" value="<?= htmlspecialchars((string) ($car['odometer'] ?? '')) ?>">

@@ -175,7 +175,7 @@ require '../header.php';
             <input type="hidden" name="tool" value="receipt">
             <h2>Read Receipt</h2>
             <label>Receipt photo</label>
-            <input type="file" name="receipt_image" accept="image/*" capture="environment">
+            <input type="file" name="receipt_image" accept="image/avif,image/*" capture="environment">
             <label>Notes</label>
             <textarea name="notes" rows="4" placeholder="Optional: who paid, what car it belongs to, or anything written on the receipt."></textarea>
             <button class="btn" type="submit">Extract Details</button>

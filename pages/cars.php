@@ -37,6 +37,9 @@ function car_status_class(?string $status): string
     <?php if (isset($_GET['archived'])): ?>
         <div class="alert success">Car archived. History is preserved.</div>
     <?php endif; ?>
+    <?php if (isset($_GET['deleted'])): ?>
+        <div class="alert success">Car permanently deleted.</div>
+    <?php endif; ?>
     <?php if (isset($_GET['deduped'])): ?>
         <div class="alert success">Removed <?= (int) $_GET['deduped'] ?> duplicate cars.</div>
     <?php endif; ?>
@@ -114,6 +117,10 @@ function car_status_class(?string $status): string
                     <form method="post" action="<?= app_url('actions/delete-car.php') ?>" onsubmit="return confirm('Archive this car? History, expenses, tasks, files, parts, and payments will be preserved.');">
                         <input type="hidden" name="id" value="<?= (int) $car['id'] ?>">
                         <button class="btn danger" type="submit">Archive</button>
+                    </form>
+                    <form method="post" action="<?= app_url('actions/delete-car-permanent.php') ?>" onsubmit="return confirm('Permanently delete this car and all related expenses, tasks, files, parts, payments, and photos? This cannot be undone.');">
+                        <input type="hidden" name="id" value="<?= (int) $car['id'] ?>">
+                        <button class="btn danger outline" type="submit">Delete</button>
                     </form>
                     <?php endif; ?>
                 </div>

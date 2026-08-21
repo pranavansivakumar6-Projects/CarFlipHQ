@@ -23,7 +23,7 @@ require '../header.php';
 <label>Amount</label><input name="amount" type="number" step="0.01" required>
 <label>Paid By</label><select name="paid_by"><option value="">Select person</option><?php foreach ($users as $name): ?><option value="<?= htmlspecialchars($name) ?>"><?= htmlspecialchars($name) ?></option><?php endforeach; ?></select>
 <label>Date</label><input name="expense_date" type="date">
-<label>Receipt / Bill Photo</label><input name="receipt_file" type="file" accept="image/*" capture="environment">
+<label>Receipt / Bill Photo</label><input name="receipt_file" type="file" accept="image/avif,image/*" capture="environment">
 <label>Notes</label><textarea name="notes"></textarea><br><br>
 <button class="btn" type="submit">Save Expense</button>
 </form></div><?php require '../footer.php'; ?>

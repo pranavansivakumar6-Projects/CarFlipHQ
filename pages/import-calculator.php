@@ -256,7 +256,7 @@ require '../header.php';
             <div class="ai-extract-grid">
                 <div>
                     <label>Auction sheet image</label>
-                    <input data-ai-image type="file" accept="image/*" capture="environment">
+                    <input data-ai-image type="file" accept="image/avif,image/*" capture="environment">
                 </div>
                 <div>
                     <label>Auction / listing link</label>

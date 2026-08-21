@@ -20,7 +20,7 @@ require '../header.php';
         <input type="hidden" name="car_id" value="<?= (int) $carId ?>">
         <label>Type</label><select name="file_type"><option value="photo">Photo</option><option value="document">Document</option></select>
         <label>Title</label><input name="title" required>
-        <label>File</label><input name="car_file" type="file" accept="image/*,application/pdf" capture="environment" required>
+        <label>File</label><input name="car_file" type="file" accept="image/avif,image/*,application/pdf" capture="environment" required>
         <label>Notes</label><textarea name="notes"></textarea><br><br>
         <button class="btn" type="submit">Save File</button>
         <a class="btn secondary" href="car-detail.php?id=<?= (int) $carId ?>">Cancel</a>

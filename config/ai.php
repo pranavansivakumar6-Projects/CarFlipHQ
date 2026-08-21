@@ -29,7 +29,7 @@ function ai_text_request(string $systemPrompt, string $userPrompt, ?array $image
 
     if ($imageUpload && ($imageUpload['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
         $mime = mime_content_type($imageUpload['tmp_name']);
-        if (in_array($mime, ['image/jpeg', 'image/png', 'image/webp', 'image/gif'], true)) {
+        if (in_array($mime, ['image/jpeg', 'image/png', 'image/avif', 'image/webp', 'image/gif'], true)) {
             $content[] = [
                 'type' => 'input_image',
                 'image_url' => 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($imageUpload['tmp_name'])),
