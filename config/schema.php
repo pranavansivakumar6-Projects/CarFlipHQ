@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/import-status.php';
 
+if (!function_exists('ensure_database_schema')) {
 function ensure_database_schema(PDO $pdo): void
 {
     static $schemaChecked = false;
@@ -428,7 +429,9 @@ function ensure_database_schema(PDO $pdo): void
     ensure_import_status_schema($pdo);
     seed_import_settings($pdo);
 }
+}
 
+if (!function_exists('ensure_import_status_schema')) {
 function ensure_import_status_schema(PDO $pdo): void
 {
     $legacyAndCurrent = import_status_options_for_schema(true);
@@ -458,13 +461,17 @@ function ensure_import_status_schema(PDO $pdo): void
 
     $pdo->exec('ALTER TABLE import_assessments MODIFY status ' . import_status_enum_sql($pdo, $current) . " DEFAULT 'Under Assessment'");
 }
+}
 
+if (!function_exists('import_status_enum_sql')) {
 function import_status_enum_sql(PDO $pdo, array $statuses): string
 {
     $quotedStatuses = array_map(fn ($status) => $pdo->quote($status), $statuses);
     return 'ENUM(' . implode(',', $quotedStatuses) . ')';
 }
+}
 
+if (!function_exists('seed_import_settings')) {
 function seed_import_settings(PDO $pdo): void
 {
     $defaults = [
@@ -486,7 +493,9 @@ function seed_import_settings(PDO $pdo): void
         $stmt->execute($default);
     }
 }
+}
 
+if (!function_exists('ensure_column')) {
 function ensure_column(PDO $pdo, string $table, string $column, string $definition): void
 {
     $stmt = $pdo->prepare("
@@ -501,5 +510,6 @@ function ensure_column(PDO $pdo, string $table, string $column, string $definiti
     if ((int) $stmt->fetchColumn() === 0) {
         $pdo->exec("ALTER TABLE `$table` ADD COLUMN `$column` $definition");
     }
+}
 }
 ?>

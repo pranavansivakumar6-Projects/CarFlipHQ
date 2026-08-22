@@ -182,9 +182,10 @@ try {
     }
 } catch (PDOException $e) {
     error_log('Could not save import assessment: ' . $e->getMessage());
-    $target = 'pages/import-calculator.php?save_error=' . urlencode('Could not create the import assessment. The database has been refreshed, so please try Create Assessment again.');
+    $errorMessage = 'Could not create the import assessment. Database error: ' . $e->getMessage();
+    $target = 'pages/import-calculator.php?save_error=' . urlencode($errorMessage);
     if ($id) {
-        $target = 'pages/import-calculator.php?id=' . $id . '&save_error=' . urlencode('Could not save the import assessment. Please try again.');
+        $target = 'pages/import-calculator.php?id=' . $id . '&save_error=' . urlencode('Could not save the import assessment. Database error: ' . $e->getMessage());
     }
     redirect_to($target);
 }
