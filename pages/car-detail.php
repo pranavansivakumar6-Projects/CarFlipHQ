@@ -130,11 +130,19 @@ foreach ($tasks as $task) {
     $taskStatus = $task['status'] ?? 'To Do';
     $tasksByStatus[$taskStatus][] = $task;
 }
+$workspaceCounts = [
+    'finance' => count($partnerNames),
+    'expenses' => count($expenses),
+    'tasks' => count($tasks),
+    'parts' => count($parts),
+    'files' => count($carFiles),
+    'listings' => count($listings),
+];
 $pageTitle = $car['make'].' '.$car['model'].' | CarFlip HQ';
 require '../header.php';
 ?>
 <div class="container">
-    <div class="detail-hero">
+    <div id="overview" class="detail-hero">
         <div class="detail-hero-photo">
             <?php if (!empty($car['profile_photo'])): ?>
                 <img src="../<?= htmlspecialchars($car['profile_photo']) ?>" alt="<?= detail_text($car['year'].' '.$car['make'].' '.$car['model']) ?>">
@@ -148,19 +156,27 @@ require '../header.php';
             <p class="small"><?= detail_text($car['color'], 'No color set') ?><?= $car['body_type'] ? ' / ' . detail_text($car['body_type']) : '' ?></p>
         </div>
     </div>
-    <div class="actions">
-        <?php if ($canManageCars): ?>
-        <a class="btn secondary" href="edit-car.php?id=<?= $id ?>">Edit Car</a>
-        <?php endif; ?>
-        <?php if ($canImportExport): ?>
-        <a class="btn secondary" href="../actions/export-car-sheet.php?id=<?= $id ?>">Download Sheet</a>
-        <?php endif; ?>
-        <?php if ($canUseAi): ?>
-        <a class="btn secondary" href="ai.php?car_id=<?= $id ?>">AI Tools</a>
-        <?php endif; ?>
+    <div class="workspace-bar">
+        <nav class="workspace-tabs" aria-label="Car workspace sections">
+            <a href="#overview">Overview</a>
+            <?php if ($canViewFinance): ?><a href="#finance">Finance <span><?= (int) $workspaceCounts['finance'] ?></span></a><?php endif; ?>
+            <a href="#tasks">Tasks <span><?= (int) $workspaceCounts['tasks'] ?></span></a>
+            <a href="#expenses">Expenses <span><?= (int) $workspaceCounts['expenses'] ?></span></a>
+            <a href="#parts">Parts <span><?= (int) $workspaceCounts['parts'] ?></span></a>
+            <a href="#files">Files <span><?= (int) $workspaceCounts['files'] ?></span></a>
+            <a href="#listings">Listings <span><?= (int) $workspaceCounts['listings'] ?></span></a>
+        </nav>
+        <div class="workspace-actions">
+            <?php if ($canManageFinance): ?><a class="btn" href="add-expense.php?car_id=<?= $id ?>">+ Expense</a><?php endif; ?>
+            <?php if ($canManageTasks): ?><a class="btn" href="add-task.php?car_id=<?= $id ?>">+ Task</a><?php endif; ?>
+            <?php if ($canManageTasks): ?><a class="btn secondary" href="add-part.php?car_id=<?= $id ?>">+ Part</a><?php endif; ?>
+            <?php if ($canManageCars): ?><a class="btn secondary" href="edit-car.php?id=<?= $id ?>">Edit Car</a><?php endif; ?>
+            <?php if ($canImportExport): ?><a class="btn secondary" href="../actions/export-car-sheet.php?id=<?= $id ?>">Download Sheet</a><?php endif; ?>
+            <?php if ($canUseAi): ?><a class="btn secondary" href="ai.php?car_id=<?= $id ?>">AI Tools</a><?php endif; ?>
+        </div>
     </div>
 
-    <div class="grid section-title">
+    <div class="grid section-title overview-grid">
         <div class="card">
             <b>Status</b>
             <?php if ($canManageCars): ?>
@@ -206,7 +222,7 @@ require '../header.php';
     </div>
 
     <?php if ($canViewFinance): ?>
-    <h2 class="section-title">Finance Split</h2>
+    <h2 id="finance" class="section-title">Finance Split</h2>
     <?php if (isset($_GET['shares'])): ?>
         <div class="alert success">Profit split updated.</div>
     <?php endif; ?>
@@ -254,7 +270,7 @@ require '../header.php';
     </details>
     <?php endif; ?>
 
-    <h2 class="section-title">Purchase Payments</h2>
+    <h2 id="purchase-payments" class="section-title">Purchase Payments</h2>
     <table>
         <tr><th>Date</th><th>Paid By</th><th>Amount</th><th>Notes</th><th>Action</th></tr>
         <?php foreach ($purchasePayments as $payment): ?>
@@ -284,7 +300,7 @@ require '../header.php';
     <?php endif; ?>
     <?php endif; ?>
 
-    <h2 class="section-title">Car Details</h2>
+    <h2 id="details" class="section-title">Car Details</h2>
     <div class="card">
         <p><b>Color:</b> <?= detail_text($car['color'], 'N/A') ?></p>
         <p><b>Body Type:</b> <?= detail_text($car['body_type'], 'N/A') ?></p>
@@ -296,7 +312,7 @@ require '../header.php';
         <p><b>Notes:</b> <?= detail_lines($car['notes']) ?></p>
     </div>
 
-    <h2 class="section-title">Photos & Documents</h2>
+    <h2 id="files" class="section-title">Photos & Documents</h2>
     <div class="grid">
         <?php foreach ($carFiles as $file): ?>
         <div class="card">
@@ -321,7 +337,7 @@ require '../header.php';
     <p><a class="btn" href="add-car-file.php?car_id=<?= $id ?>">+ Add Photo / Document</a></p>
     <?php endif; ?>
 
-    <h2 class="section-title">Parts</h2>
+    <h2 id="parts" class="section-title">Parts</h2>
     <table>
         <tr><th>Part</th><th>Supplier</th><?php if ($canViewFinance): ?><th>Cost</th><?php endif; ?><th>Status</th><th>Dates</th><th>Action</th></tr>
         <?php foreach ($parts as $part): ?>
@@ -347,7 +363,7 @@ require '../header.php';
     <p><a class="btn" href="add-part.php?car_id=<?= $id ?>">+ Add Part</a></p>
     <?php endif; ?>
 
-    <h2 class="section-title">Sale Listings & Offers</h2>
+    <h2 id="listings" class="section-title">Sale Listings & Offers</h2>
     <table>
         <tr><th>Platform</th><?php if ($canViewFinance): ?><th>Price</th><?php endif; ?><th>Status</th><th>Buyer</th><th>Notes</th><th>Action</th></tr>
         <?php foreach ($listings as $listing): ?>
@@ -373,7 +389,7 @@ require '../header.php';
     <p><a class="btn" href="add-listing.php?car_id=<?= $id ?>">+ Add Listing / Offer</a></p>
     <?php endif; ?>
 
-    <h2 class="section-title">Expenses</h2>
+    <h2 id="expenses" class="section-title">Expenses</h2>
     <table>
         <tr><th>Date</th><th>Category</th><th>Name</th><?php if ($canViewFinance): ?><th>Amount</th><th>Paid By</th><?php endif; ?><th>Receipt</th><th>Notes</th><th>Action</th></tr>
         <?php foreach ($expenses as $e): ?>
@@ -411,7 +427,7 @@ require '../header.php';
     <p><a class="btn" href="add-expense.php?car_id=<?= $id ?>">+ Add Expense</a></p>
     <?php endif; ?>
 
-    <h2 class="section-title">Tasks</h2>
+    <h2 id="tasks" class="section-title">Tasks</h2>
     <div class="task-board">
         <?php foreach ($tasksByStatus as $statusName => $statusTasks): ?>
         <section class="task-column">

@@ -45,6 +45,38 @@ $totalExpenses = (float) $pdo->query("SELECT COALESCE(SUM(e.amount),0) FROM expe
 $salesValue = (float) $pdo->query("SELECT $salesSql FROM cars WHERE $scopeWhere AND $carAccessWhere")->fetchColumn();
 $expectedProfit = $salesValue - $totalPurchase - $totalExpenses;
 $recentCars = $pdo->query("SELECT * FROM cars WHERE $scopeWhere AND $carAccessWhere ORDER BY created_at DESC LIMIT 8")->fetchAll(PDO::FETCH_ASSOC);
+$overdueTaskList = $pdo->query("
+    SELECT tasks.task_title, tasks.due_date, cars.id AS car_id, cars.year, cars.make, cars.model
+    FROM tasks
+    JOIN cars ON cars.id = tasks.car_id
+    WHERE tasks.status != 'Done'
+      AND tasks.due_date IS NOT NULL
+      AND tasks.due_date < CURDATE()
+      AND $taskScopeWhere
+      AND $taskAccessWhere
+    ORDER BY tasks.due_date ASC
+    LIMIT 4
+")->fetchAll(PDO::FETCH_ASSOC);
+$missingSalePriceCars = $pdo->query("
+    SELECT id, year, make, model
+    FROM cars
+    WHERE status != 'Sold'
+      AND archived_at IS NULL
+      AND COALESCE(estimated_sale_price, 0) = 0
+      AND $carAccessWhere
+    ORDER BY created_at DESC
+    LIMIT 4
+")->fetchAll(PDO::FETCH_ASSOC);
+$missingSoldPriceCars = $canViewFinance ? $pdo->query("
+    SELECT id, year, make, model
+    FROM cars
+    WHERE status = 'Sold'
+      AND archived_at IS NULL
+      AND COALESCE(actual_sale_price, 0) = 0
+      AND $carAccessWhere
+    ORDER BY created_at DESC
+    LIMIT 4
+")->fetchAll(PDO::FETCH_ASSOC) : [];
 ?>
 <div class="container dashboard-view">
     <div class="dashboard-hero">
@@ -80,6 +112,49 @@ $recentCars = $pdo->query("SELECT * FROM cars WHERE $scopeWhere AND $carAccessWh
         <div class="card"><div><?= htmlspecialchars($profitLabel) ?></div><div class="profit <?= $expectedProfit >= 0 ? 'positive' : 'negative' ?>">$<?= number_format($expectedProfit, 2) ?></div></div>
         <?php else: ?>
         <div class="card"><div>Financials</div><div class="stat restricted-stat">Restricted</div><div class="small">Ask an admin for number access.</div></div>
+        <?php endif; ?>
+    </div>
+    <div class="work-queue">
+        <div class="queue-card">
+            <div>
+                <span class="eyebrow">Attention</span>
+                <h3>Overdue Tasks</h3>
+            </div>
+            <?php if ($overdueTaskList): ?>
+                <?php foreach ($overdueTaskList as $task): ?>
+                    <a href="pages/car-detail.php?id=<?= (int) $task['car_id'] ?>#tasks"><?= htmlspecialchars($task['task_title']) ?><span><?= htmlspecialchars($task['year'].' '.$task['make'].' '.$task['model']) ?> / <?= htmlspecialchars($task['due_date']) ?></span></a>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <p class="small">No overdue tasks for this view.</p>
+            <?php endif; ?>
+        </div>
+        <div class="queue-card">
+            <div>
+                <span class="eyebrow">Setup</span>
+                <h3>Missing Sale Estimates</h3>
+            </div>
+            <?php if ($missingSalePriceCars): ?>
+                <?php foreach ($missingSalePriceCars as $missingCar): ?>
+                    <a href="pages/edit-car.php?id=<?= (int) $missingCar['id'] ?>"><?= htmlspecialchars($missingCar['year'].' '.$missingCar['make'].' '.$missingCar['model']) ?><span>Add expected sale price</span></a>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <p class="small">Every active car has an expected sale price.</p>
+            <?php endif; ?>
+        </div>
+        <?php if ($canViewFinance): ?>
+        <div class="queue-card">
+            <div>
+                <span class="eyebrow">Sales</span>
+                <h3>Sold Price Needed</h3>
+            </div>
+            <?php if ($missingSoldPriceCars): ?>
+                <?php foreach ($missingSoldPriceCars as $soldCar): ?>
+                    <a href="pages/edit-car.php?id=<?= (int) $soldCar['id'] ?>"><?= htmlspecialchars($soldCar['year'].' '.$soldCar['make'].' '.$soldCar['model']) ?><span>Add actual sold price</span></a>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <p class="small">Sold cars have actual sale prices recorded.</p>
+            <?php endif; ?>
+        </div>
         <?php endif; ?>
     </div>
     <div class="page-heading section-title">
