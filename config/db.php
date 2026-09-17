@@ -29,10 +29,12 @@ try {
         PDO::ATTR_EMULATE_PREPARES => false,
     ]);
 
-    require_once __DIR__ . '/schema.php';
-    ensure_database_schema($pdo);
 } catch (PDOException $e) {
     error_log('Database connection failed: ' . $e->getMessage());
+    if (PHP_SAPI === 'cli') {
+        fwrite(STDERR, 'Database connection failed: ' . $e->getMessage() . PHP_EOL);
+        exit(1);
+    }
     die('Database connection failed.');
 }
 ?>

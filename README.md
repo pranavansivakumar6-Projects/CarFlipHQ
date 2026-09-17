@@ -8,10 +8,37 @@ Vehicle acquisition, repair management, task tracking, expense tracking, and pro
 
 1. Copy the `carfliphq` folder into `htdocs`.
 2. Start Apache and MySQL in XAMPP.
-3. Open phpMyAdmin.
-4. Import `sql/carfliphq.sql`.
+3. Create an empty `carfliphq` database if it does not already exist.
+4. From the application directory, run `php migrate.php`.
 5. Open: `http://localhost/carfliphq/index.php`
 6. Create the first admin account when prompted.
+
+## Database migrations
+
+Normal web requests only connect to the database. They never install or upgrade the schema.
+
+Before applying migrations to a populated database, create a backup:
+
+```bash
+mysqldump --single-transaction --routines --triggers -h HOST -P PORT -u USER -p DATABASE > carfliphq-before-migration.sql
+```
+
+Then run pending migrations explicitly from the application directory:
+
+```bash
+php migrate.php
+```
+
+The runner creates a `schema_migrations` ledger and executes each file in `migrations/` once, in filename order. A failed migration is not recorded, later migrations are not run, and a database lock prevents two migration processes from running concurrently.
+
+For future database changes, add a timestamp-prefixed PHP file to `migrations/` that returns a callable accepting `PDO`. Migrations should be additive and idempotent where practical. Never run `migrate.php` from a public URL or from a normal page request.
+
+Rollback procedure:
+
+1. Stop the deployment if a migration fails.
+2. Revert the application release.
+3. Restore the pre-migration SQL backup if the failed migration changed schema or data.
+4. Correct the migration and run `php migrate.php` again.
 
 ## Deploying on Railway
 
@@ -19,8 +46,8 @@ Vehicle acquisition, repair management, task tracking, expense tracking, and pro
 2. Add a MySQL database service to the same Railway project.
 3. Deploy the web service from this repo. Railway will use the included `Dockerfile`.
 4. Set `APP_BASE_PATH` to an empty value for the Railway web service.
-5. Import `sql/carfliphq.sql` into the Railway MySQL database.
-6. Run any newer migration files in `sql/` that are not already included in the imported database.
+5. Create a Railway database backup before upgrading an existing installation.
+6. Run `php migrate.php` once as an explicit deployment command with the Railway database variables available.
 7. Open the Railway public URL and create the first admin account.
 
 Railway storage is not the same as permanent cPanel disk storage. Uploaded receipts/photos may need a Railway volume or external object storage before serious production use.
